@@ -5,8 +5,8 @@ const User = require('../models/user');
 // register user
 router.post('/register', async (req: any, res: any) => {
     try {
-        const { name, email, password, role } = req.body;
-        const user = new User({ name, email, password, role });
+        const { nome, genero, data_nascimento, email, password, tipo } = req.body;
+        const user = new User({ nome, genero, data_nascimento, email, password, tipo });
         await user.save();
 
         const safeUser = user.toObject();
