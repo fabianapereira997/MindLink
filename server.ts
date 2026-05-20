@@ -2,23 +2,30 @@ import express = require('express');
 import mongoose = require('mongoose');
 import bodyParser = require('body-parser');
 import cors = require('cors');
+import dotenv = require('dotenv');
+dotenv.config();
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
-// Ligar ao MongoDB — substitui pela tua connection string
-mongoose.connect('mongodb+srv://1231198_db_user:1231198@mindlink.c6xgmy8.mongodb.net/?appName=mindLink')
+// MongoDB
+mongoose.connect(process.env.MONGO_URI!)
     .then(() => console.log('MongoDB connected'))
     .catch((err) => console.log(err));
 
 // Rotas
-const { userRoutes } = require('./routes/UserRoutes');
-app.use('/api/users', userRoutes);
+const { userRoutes }      = require('./routes/UserRoutes');
+const { psicologoRoutes } = require('./routes/PsicologoRoutes');
+const { pacienteRoutes }  = require('./routes/PacienteRoutes');
+
+app.use('/api/users',      userRoutes);
+app.use('/api/psicologos', psicologoRoutes);
+app.use('/api/pacientes',  pacienteRoutes);
 
 // Iniciar servidor
 app.listen(PORT, () => {

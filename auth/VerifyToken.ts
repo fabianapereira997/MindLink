@@ -1,18 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 const jwt = require('jsonwebtoken');
 
-export const JWT_SECRET = 'secret123';
-
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization?.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1]; // expects "Bearer <token>"
+
     if (!token) {
-        return res.status(403).json({ error: 'No token provided' });
+        return res.status(401).json({ error: 'Token não fornecido' });
     }
 
     try {
-        (req as any).user = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+        (req as any).user = decoded; // { id, tipo }
         next();
     } catch {
-        res.status(401).json({ error: 'Invalid token' });
+        return res.status(401).json({ error: 'Token inválido ou expirado' });
     }
 };
