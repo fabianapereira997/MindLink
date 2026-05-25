@@ -1,11 +1,12 @@
+import { Request, Response } from 'express';
 const express = require('express');
 const router = express.Router();
 const Paciente = require('../models/paciente');
-const { verifyToken } = require('../auth/VerifyToken');
-const { verifyTokenByRole } = require('../auth/VerifyTokenByRole');
+const { verifyToken } = require('../middleware/VerifyToken');
+const { verifyTokenByRole } = require('../middleware/VerifyTokenByRole');
 
 // POST /api/pacientes — create paciente profile
-router.post('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: any, res: any) => {
+router.post('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: Request, res: Response) => {
     try {
         const { user, psicologo, doenca, formulario } = req.body;
         const paciente = new Paciente({ user, psicologo, doenca, formulario });
@@ -17,7 +18,7 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (re
 });
 
 // GET /api/pacientes — list all pacientes
-router.get('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: any, res: any) => {
+router.get('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (_req: Request, res: Response) => {
     try {
         const pacientes = await Paciente.find()
             .populate('user', '-password')
@@ -30,9 +31,9 @@ router.get('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req
 
 // GET /api/pacientes/psicologo/:psicologoId — get all pacientes of a psicologo
 // (must come before /:id to avoid route conflict)
-router.get('/psicologo/:psicologoId', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: any, res: any) => {
+router.get('/psicologo/:psicologoId', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: Request, res: Response) => {
     try {
-        const pacientes = await Paciente.find({ psicologo: req.params.psicologoId })
+        const pacientes = await Paciente.find({ psicologo: req.params['psicologoId'] })
             .populate('user', '-password')
             .populate('psicologo');
         res.json(pacientes);
@@ -42,9 +43,9 @@ router.get('/psicologo/:psicologoId', verifyToken, verifyTokenByRole('psicologo'
 });
 
 // GET /api/pacientes/:id — get paciente by id
-router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admin'), async (req: any, res: any) => {
+router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admin'), async (req: Request, res: Response) => {
     try {
-        const paciente = await Paciente.findById(req.params.id)
+        const paciente = await Paciente.findById(req.params['id'])
             .populate('user', '-password')
             .populate('psicologo');
         if (!paciente) {
@@ -57,10 +58,10 @@ router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admi
 });
 
 // PUT /api/pacientes/:id — update paciente
-router.put('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: any, res: any) => {
+router.put('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: Request, res: Response) => {
     try {
         const paciente = await Paciente.findByIdAndUpdate(
-            req.params.id,
+            req.params['id'],
             req.body,
             { new: true, runValidators: true }
         ).populate('user', '-password');
@@ -74,9 +75,9 @@ router.put('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (
 });
 
 // DELETE /api/pacientes/:id — delete paciente
-router.delete('/:id', verifyToken, verifyTokenByRole('admin'), async (req: any, res: any) => {
+router.delete('/:id', verifyToken, verifyTokenByRole('admin'), async (req: Request, res: Response) => {
     try {
-        const paciente = await Paciente.findByIdAndDelete(req.params.id);
+        const paciente = await Paciente.findByIdAndDelete(req.params['id']);
         if (!paciente) {
             return res.status(404).json({ error: 'Paciente não encontrado' });
         }

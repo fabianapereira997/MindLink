@@ -1,11 +1,12 @@
+import { Request, Response } from 'express';
 const express = require('express');
 const router = express.Router();
 const Psicologo = require('../models/psicologo');
-const { verifyToken } = require('../auth/VerifyToken');
-const { verifyTokenByRole } = require('../auth/VerifyTokenByRole');
+const { verifyToken } = require('../middleware/VerifyToken');
+const { verifyTokenByRole } = require('../middleware/VerifyTokenByRole');
 
 // POST /api/psicologos — create psicologo profile
-router.post('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: any, res: any) => {
+router.post('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: Request, res: Response) => {
     try {
         const { user, especialidade } = req.body;
         const psicologo = new Psicologo({ user, especialidade });
@@ -17,7 +18,7 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (re
 });
 
 // GET /api/psicologos — list all psicologos
-router.get('/', verifyToken, async (req: any, res: any) => {
+router.get('/', verifyToken, async (_req: Request, res: Response) => {
     try {
         const psicologos = await Psicologo.find().populate('user', '-password');
         res.json(psicologos);
@@ -27,9 +28,9 @@ router.get('/', verifyToken, async (req: any, res: any) => {
 });
 
 // GET /api/psicologos/:id — get psicologo by id
-router.get('/:id', verifyToken, async (req: any, res: any) => {
+router.get('/:id', verifyToken, async (req: Request, res: Response) => {
     try {
-        const psicologo = await Psicologo.findById(req.params.id).populate('user', '-password');
+        const psicologo = await Psicologo.findById(req.params['id']).populate('user', '-password');
         if (!psicologo) {
             return res.status(404).json({ error: 'Psicólogo não encontrado' });
         }
@@ -40,10 +41,10 @@ router.get('/:id', verifyToken, async (req: any, res: any) => {
 });
 
 // PUT /api/psicologos/:id — update psicologo
-router.put('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: any, res: any) => {
+router.put('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: Request, res: Response) => {
     try {
         const psicologo = await Psicologo.findByIdAndUpdate(
-            req.params.id,
+            req.params['id'],
             req.body,
             { new: true, runValidators: true }
         ).populate('user', '-password');
@@ -57,9 +58,9 @@ router.put('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (
 });
 
 // DELETE /api/psicologos/:id — delete psicologo
-router.delete('/:id', verifyToken, verifyTokenByRole('admin'), async (req: any, res: any) => {
+router.delete('/:id', verifyToken, verifyTokenByRole('admin'), async (req: Request, res: Response) => {
     try {
-        const psicologo = await Psicologo.findByIdAndDelete(req.params.id);
+        const psicologo = await Psicologo.findByIdAndDelete(req.params['id']);
         if (!psicologo) {
             return res.status(404).json({ error: 'Psicólogo não encontrado' });
         }
