@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import {
     getPsicologoByUserId,
-    getPacienteByUserId,
     isPsicologoAssignedToPaciente,
     isValidObjectId,
 } from '../utils/helpers';
@@ -12,41 +11,27 @@ const Alerta  = require('../models/alerta');
 const { verifyToken }       = require('../middleware/VerifyToken');
 const { verifyTokenByRole } = require('../middleware/VerifyTokenByRole');
 
-// ─── POST /api/alertas (dev/testing only) ─────────────────────────────────────
-// In production, alerts are created by AnaliseRoutes. This endpoint is for
-// manual testing and admin use only.
-router.post('/', verifyToken, verifyTokenByRole('admin'), async (req: Request, res: Response) => {
-    try {
-        const alerta = new Alerta(req.body);
-        await alerta.save();
-        res.status(201).json(alerta);
-    } catch (error) {
-        res.status(400).json({ error: (error as Error).message });
-    }
+// ─── POST /api/alertas — disabled ─────────────────────────────────────────────
+// Alertas are created exclusively by the analysis engine (AnaliseRoutes).
+// Manual creation is not permitted.
+router.post('/', verifyToken, (_req: Request, res: Response) => {
+    res.status(403).json({ error: 'Alertas são criados automaticamente pelo sistema de análise' });
 });
 
-// ─── GET /api/alertas/paciente/:pacienteId ─────────────────────────────────────
-// Paciente: only their own. Psicologo: only if that paciente is assigned to them.
-// Must come before /:id.
-router.get('/paciente/:pacienteId', verifyToken, verifyTokenByRole('paciente', 'psicologo', 'admin'), async (req: Request, res: Response) => {
+// ─── GET /api/alertas/paciente/:pacienteId — alertas for a paciente ───────────
+// Psicologo only: only if that paciente is assigned to them.
+// Paciente must NOT access alertas — these are clinical notifications for the psicologo.
+// Must come before /:id to avoid route conflict.
+router.get('/paciente/:pacienteId', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
     try {
         const { pacienteId } = req.params;
         if (!isValidObjectId(pacienteId)) {
             return res.status(400).json({ error: 'ID de paciente inválido' });
         }
 
-        if (req.user!.tipo === 'paciente') {
-            const pacienteProfile = await getPacienteByUserId(req.user!.id);
-            if (!pacienteProfile || pacienteProfile._id.toString() !== pacienteId) {
-                return res.status(403).json({ error: 'Acesso negado: não pode ver alertas de outro paciente' });
-            }
-        }
-
-        if (req.user!.tipo === 'psicologo') {
-            const assigned = await isPsicologoAssignedToPaciente(req.user!.id, pacienteId);
-            if (!assigned) {
-                return res.status(403).json({ error: 'Acesso negado: paciente não associado a este psicólogo' });
-            }
+        const assigned = await isPsicologoAssignedToPaciente(req.user!.id, pacienteId);
+        if (!assigned) {
+            return res.status(403).json({ error: 'Acesso negado: paciente não associado a este psicólogo' });
         }
 
         const alertas = await Alerta.find({ paciente: pacienteId })
@@ -59,22 +44,19 @@ router.get('/paciente/:pacienteId', verifyToken, verifyTokenByRole('paciente', '
     }
 });
 
-// ─── GET /api/alertas/psicologo/:psicologoId ──────────────────────────────────
-// Psicologo: only if :psicologoId matches their own profile.
-// Returns all alertas where psicologo === psicologoId.
-// Must come before /:id.
-router.get('/psicologo/:psicologoId', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: Request, res: Response) => {
+// ─── GET /api/alertas/psicologo/:psicologoId — alertas for a psicologo ────────
+// Psicologo only: only if :psicologoId matches their own profile.
+// Must come before /:id to avoid route conflict.
+router.get('/psicologo/:psicologoId', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
     try {
         const { psicologoId } = req.params;
         if (!isValidObjectId(psicologoId)) {
             return res.status(400).json({ error: 'ID de psicólogo inválido' });
         }
 
-        if (req.user!.tipo === 'psicologo') {
-            const psicologoProfile = await getPsicologoByUserId(req.user!.id);
-            if (!psicologoProfile || psicologoProfile._id.toString() !== psicologoId) {
-                return res.status(403).json({ error: 'Acesso negado: não pode ver alertas de outro psicólogo' });
-            }
+        const psicologoProfile = await getPsicologoByUserId(req.user!.id);
+        if (!psicologoProfile || psicologoProfile._id.toString() !== psicologoId) {
+            return res.status(403).json({ error: 'Acesso negado: não pode ver alertas de outro psicólogo' });
         }
 
         const alertas = await Alerta.find({ psicologo: psicologoId })
@@ -87,11 +69,11 @@ router.get('/psicologo/:psicologoId', verifyToken, verifyTokenByRole('psicologo'
     }
 });
 
-// ─── PATCH /api/alertas/:id/lido ──────────────────────────────────────────────
-// Paciente: can mark their own alerta as lido.
-// Psicologo: can mark an alerta as lido only if it belongs to one of their pacientes.
-// Must come before /:id.
-router.patch('/:id/lido', verifyToken, verifyTokenByRole('paciente', 'psicologo'), async (req: Request, res: Response) => {
+// ─── PATCH /api/alertas/:id/lido — mark alerta as read ────────────────────────
+// Psicologo only: only for alertas belonging to their assigned pacientes.
+// Paciente must NOT mark alertas as read — lido tracks psicologo acknowledgement.
+// Must come before /:id to avoid route conflict.
+router.patch('/:id/lido', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidObjectId(id)) {
@@ -103,18 +85,9 @@ router.patch('/:id/lido', verifyToken, verifyTokenByRole('paciente', 'psicologo'
             return res.status(404).json({ error: 'Alerta não encontrado' });
         }
 
-        if (req.user!.tipo === 'paciente') {
-            const pacienteProfile = await getPacienteByUserId(req.user!.id);
-            if (!pacienteProfile || alerta.paciente.toString() !== pacienteProfile._id.toString()) {
-                return res.status(403).json({ error: 'Acesso negado: alerta não pertence a este paciente' });
-            }
-        }
-
-        if (req.user!.tipo === 'psicologo') {
-            const psicologoProfile = await getPsicologoByUserId(req.user!.id);
-            if (!psicologoProfile || alerta.psicologo.toString() !== psicologoProfile._id.toString()) {
-                return res.status(403).json({ error: 'Acesso negado: alerta não pertence a este psicólogo' });
-            }
+        const psicologoProfile = await getPsicologoByUserId(req.user!.id);
+        if (!psicologoProfile || alerta.psicologo.toString() !== psicologoProfile._id.toString()) {
+            return res.status(403).json({ error: 'Acesso negado: alerta não pertence a este psicólogo' });
         }
 
         alerta.lido = true;
@@ -125,9 +98,9 @@ router.patch('/:id/lido', verifyToken, verifyTokenByRole('paciente', 'psicologo'
     }
 });
 
-// ─── GET /api/alertas/:id ──────────────────────────────────────────────────────
-// Paciente: only their own. Psicologo: only if they are the assigned psicologo.
-router.get('/:id', verifyToken, verifyTokenByRole('paciente', 'psicologo', 'admin'), async (req: Request, res: Response) => {
+// ─── GET /api/alertas/:id — get alerta by id ──────────────────────────────────
+// Psicologo only: only if they are the assigned psicologo for this alerta.
+router.get('/:id', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidObjectId(id)) {
@@ -141,18 +114,9 @@ router.get('/:id', verifyToken, verifyTokenByRole('paciente', 'psicologo', 'admi
             return res.status(404).json({ error: 'Alerta não encontrado' });
         }
 
-        if (req.user!.tipo === 'paciente') {
-            const pacienteProfile = await getPacienteByUserId(req.user!.id);
-            if (!pacienteProfile || alerta.paciente._id.toString() !== pacienteProfile._id.toString()) {
-                return res.status(403).json({ error: 'Acesso negado: alerta não pertence a este paciente' });
-            }
-        }
-
-        if (req.user!.tipo === 'psicologo') {
-            const psicologoProfile = await getPsicologoByUserId(req.user!.id);
-            if (!psicologoProfile || alerta.psicologo._id.toString() !== psicologoProfile._id.toString()) {
-                return res.status(403).json({ error: 'Acesso negado: alerta não pertence a este psicólogo' });
-            }
+        const psicologoProfile = await getPsicologoByUserId(req.user!.id);
+        if (!psicologoProfile || alerta.psicologo._id.toString() !== psicologoProfile._id.toString()) {
+            return res.status(403).json({ error: 'Acesso negado: alerta não pertence a este psicólogo' });
         }
 
         res.json(alerta);
@@ -161,10 +125,8 @@ router.get('/:id', verifyToken, verifyTokenByRole('paciente', 'psicologo', 'admi
     }
 });
 
-// ─── DELETE /api/alertas/:id ───────────────────────────────────────────────────
-// Psicologo: only if alerta belongs to one of their pacientes.
-// Admin: any.
-router.delete('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: Request, res: Response) => {
+// ─── DELETE /api/alertas/:id — psicologo only, must own the alerta ────────────
+router.delete('/:id', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidObjectId(id)) {
@@ -176,11 +138,9 @@ router.delete('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), asyn
             return res.status(404).json({ error: 'Alerta não encontrado' });
         }
 
-        if (req.user!.tipo === 'psicologo') {
-            const psicologoProfile = await getPsicologoByUserId(req.user!.id);
-            if (!psicologoProfile || alerta.psicologo.toString() !== psicologoProfile._id.toString()) {
-                return res.status(403).json({ error: 'Acesso negado: alerta não pertence a este psicólogo' });
-            }
+        const psicologoProfile = await getPsicologoByUserId(req.user!.id);
+        if (!psicologoProfile || alerta.psicologo.toString() !== psicologoProfile._id.toString()) {
+            return res.status(403).json({ error: 'Acesso negado: alerta não pertence a este psicólogo' });
         }
 
         await Alerta.findByIdAndDelete(id);

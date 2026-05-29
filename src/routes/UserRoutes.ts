@@ -1,50 +1,69 @@
 import { Request, Response } from 'express';
-const express = require('express');
-const router = express.Router();
-const User = require('../models/user');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+import { isValidObjectId } from '../utils/helpers';
 
-// POST /api/users/register — create a new user
+const express = require('express');
+const router  = express.Router();
+const User    = require('../models/user');
+const bcrypt  = require('bcryptjs');
+const jwt     = require('jsonwebtoken');
+const { verifyToken } = require('../middleware/VerifyToken');
+
+// ─── POST /api/users/register — public ────────────────────────────────────────
 router.post('/register', async (req: Request, res: Response) => {
     try {
         const { nome, genero, data_nascimento, email, password, tipo } = req.body;
 
-        // check for duplicate email
         const exists = await User.findOne({ email });
         if (exists) {
             return res.status(409).json({ error: 'Email já registado' });
         }
 
-        // hash password before saving
         const hashedPassword = await bcrypt.hash(password, 12);
-
         const user = new User({ nome, genero, data_nascimento, email, password: hashedPassword, tipo });
         await user.save();
 
         const safeUser = user.toObject();
         delete safeUser.password;
-
         res.status(201).json(safeUser);
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });
     }
 });
 
-// GET /api/users — list all users (passwords excluded)
-router.get('/', async (_req: Request, res: Response) => {
+// ─── POST /api/users/login — public ───────────────────────────────────────────
+router.post('/login', async (req: Request, res: Response) => {
     try {
-        const users = await User.find().select('-password');
-        res.json(users);
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(401).json({ error: 'Email ou password incorretos' });
+        }
+
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            return res.status(401).json({ error: 'Email ou password incorretos' });
+        }
+
+        const token = jwt.sign(
+            { id: user._id, tipo: user.tipo },
+            process.env.JWT_SECRET!,
+            { expiresIn: '7d' }
+        );
+
+        const safeUser = user.toObject();
+        delete safeUser.password;
+        res.json({ token, user: safeUser });
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
     }
 });
 
-// GET /api/users/:id — get user by id
-router.get('/:id', async (req: Request, res: Response) => {
+// ─── GET /api/users — returns only the logged-in user's own data ───────────────
+// Not public. A user may only see their own record.
+router.get('/', verifyToken, async (req: Request, res: Response) => {
     try {
-        const user = await User.findById(req.params['id']).select('-password');
+        const user = await User.findById(req.user!.id).select('-password');
         if (!user) {
             return res.status(404).json({ error: 'Utilizador não encontrado' });
         }
@@ -54,37 +73,61 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
-// POST /api/users/login — authenticate and return JWT
-router.post('/login', async (req: Request, res: Response) => {
+// ─── GET /api/users/:id — authenticated; user may only view their own record ──
+router.get('/:id', verifyToken, async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
-
-        // find user by email
-        const user = await User.findOne({ email });
+        const { id } = req.params;
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ error: 'ID de utilizador inválido' });
+        }
+        if (id !== req.user!.id) {
+            return res.status(403).json({ error: 'Acesso negado: não pode ver dados de outro utilizador' });
+        }
+        const user = await User.findById(id).select('-password');
         if (!user) {
-            return res.status(401).json({ error: 'Email ou password incorretos' });
+            return res.status(404).json({ error: 'Utilizador não encontrado' });
         }
-
-        // compare password with stored hash
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) {
-            return res.status(401).json({ error: 'Email ou password incorretos' });
-        }
-
-        // sign JWT with id and tipo
-        const token = jwt.sign(
-            { id: user._id, tipo: user.tipo },
-            process.env.JWT_SECRET!,
-            { expiresIn: '7d' }
-        );
-
-        const safeUser = user.toObject();
-        delete safeUser.password;
-
-        res.json({ token, user: safeUser });
+        res.json(user);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
     }
+});
+
+// ─── PUT /api/users/:id — user may only update their own record ────────────────
+// `tipo` is stripped from the body to prevent role escalation.
+router.put('/:id', verifyToken, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ error: 'ID de utilizador inválido' });
+        }
+        if (id !== req.user!.id) {
+            return res.status(403).json({ error: 'Acesso negado: não pode editar dados de outro utilizador' });
+        }
+
+        // Strip sensitive/protected fields from the body
+        const { password: _pw, tipo: _tipo, ...safeBody } = req.body;
+        void _pw; void _tipo;
+
+        // Hash new password if provided
+        if (req.body.password) {
+            safeBody.password = await bcrypt.hash(req.body.password, 12);
+        }
+
+        const user = await User.findByIdAndUpdate(id, safeBody, { new: true, runValidators: true }).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: 'Utilizador não encontrado' });
+        }
+        res.json(user);
+    } catch (error) {
+        res.status(400).json({ error: (error as Error).message });
+    }
+});
+
+// ─── DELETE /api/users/:id — disabled ─────────────────────────────────────────
+// Not available without an admin role. Returns 403 for all requests.
+router.delete('/:id', verifyToken, (_req: Request, res: Response) => {
+    res.status(403).json({ error: 'Operação não permitida' });
 });
 
 module.exports = { userRoutes: router };
