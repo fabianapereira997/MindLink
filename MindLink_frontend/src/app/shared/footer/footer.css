@@ -49,3 +49,30 @@
   padding-top: var(--space-lg);
   border-top: 1px solid rgba(255,255,255,0.1);
 }
+
+
+
+.footer__contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.footer__contacts a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: rgba(255,255,255,0.6); /* mesma cor da frase */
+  font-size: 0.9rem;
+  transition: color var(--transition-fast);
+}
+
+.footer__contacts a:hover {
+  color: white;
+}
+
+.footer__contacts .material-icons {
+  font-size: 1.1rem;
+}
