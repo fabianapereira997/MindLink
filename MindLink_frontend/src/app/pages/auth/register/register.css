@@ -1,0 +1,65 @@
+/* Reuse the same layout as login */
+.auth-page {
+  min-height: calc(100vh - 68px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-2xl);
+}
+
+.auth-card__header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.auth-card__logo {
+  display: inline-block;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-bottom: var(--space-lg);
+  text-decoration: none;
+}
+
+.auth-card__header h1 {
+  font-size: 1.75rem;
+  margin-bottom: var(--space-xs);
+}
+
+.auth-card__header p {
+  color: var(--color-text-secondary);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.auth-field { width: 100%; }
+
+.auth-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--space-sm);
+  padding: 0.875rem !important;
+  font-size: 1rem !important;
+}
+
+.auth-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-card__switch {
+  text-align: center;
+  margin-top: var(--space-lg);
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}

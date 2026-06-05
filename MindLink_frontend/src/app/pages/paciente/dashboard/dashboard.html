@@ -1,0 +1,56 @@
+<div class="dashboard">
+  <div class="container">
+
+    <div class="dashboard__header">
+      <h1>Evolução do humor</h1>
+      <div class="period-tabs">
+        @for (p of periods; track p.key) {
+          <button
+            class="period-tab"
+            [class.active]="period() === p.key"
+            (click)="setPeriod(p.key)"
+          >{{ p.label }}</button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else {
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card card">
+          <div class="stat-card__value">{{ allQuestionarios().length }}</div>
+          <div class="stat-card__label">Total de registos</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__value">{{ avg() }}<span class="unit">/5</span></div>
+          <div class="stat-card__label">Humor médio no período</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__value">{{ streak() }}</div>
+          <div class="stat-card__label">Dias consecutivos</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__value">{{ filtered().length }}</div>
+          <div class="stat-card__label">Registos no período</div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      @if (filtered().length > 0) {
+        <div class="card chart-card">
+          <div class="chart-wrap">
+            <canvas #moodChart></canvas>
+          </div>
+        </div>
+      } @else {
+        <div class="card empty-card">
+          <p>Sem registos para o período selecionado.</p>
+        </div>
+      }
+
+    }
+  </div>
+</div>

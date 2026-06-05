@@ -1,0 +1,206 @@
+.home-page {
+  padding: var(--space-2xl) 0 var(--space-4xl);
+}
+
+.loading {
+  text-align: center;
+  padding: var(--space-4xl);
+  color: var(--color-text-muted);
+}
+
+/* Header */
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-2xl);
+}
+
+.home-header h1 { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 4px; }
+
+/* Banners */
+.banner {
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.95rem;
+  margin-bottom: var(--space-lg);
+}
+
+.banner--success {
+  background: rgba(38,135,78,0.1);
+  color: var(--color-primary-dark);
+  border: 1px solid rgba(38,135,78,0.25);
+}
+
+.banner--error {
+  background: rgba(220,38,38,0.08);
+  color: #dc2626;
+  border: 1px solid rgba(220,38,38,0.2);
+}
+
+/* Check-in card */
+.checkin-card {
+  margin-bottom: var(--space-2xl);
+}
+
+.checkin-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.checkin-card__top h2 { font-size: 1.15rem; margin-bottom: 4px; }
+.checkin-card__top p { color: var(--color-text-secondary); font-size: 0.9rem; }
+
+.checkin-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.form-field { width: 100%; }
+.form-field--full { grid-column: 1 / -1; }
+
+.checkin-form__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge--done {
+  background: rgba(38,135,78,0.1);
+  color: var(--color-primary);
+}
+
+.badge--agendada {
+  background: rgba(38,135,78,0.1);
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* Section */
+.home-section { margin-bottom: var(--space-2xl); }
+.home-section > h2 { font-size: 1.2rem; margin-bottom: var(--space-md); }
+
+.section-sub {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-muted);
+  margin: var(--space-lg) 0 var(--space-sm);
+}
+
+/* Empty */
+.empty-card {
+  text-align: center;
+  padding: var(--space-xl);
+}
+.empty-card p { color: var(--color-text-muted); }
+
+/* Desafio */
+.desafio-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.desafio-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.desafio-card__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.desafio-card__desc {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.desafio-card__sugestao {
+  font-size: 0.85rem;
+  color: var(--color-primary);
+  margin: var(--space-xs) 0 0;
+  font-style: italic;
+}
+
+.desafio-card__date {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: var(--space-xs) 0 0;
+}
+
+/* Consultas */
+.consulta-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.consulta-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.consulta-card__date {
+  width: 52px;
+  flex-shrink: 0;
+  text-align: center;
+  background: rgba(38,135,78,0.08);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+}
+
+.consulta-card__day {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.consulta-card__month {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.consulta-card__info { flex: 1; }
+
+.consulta-card__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.consulta-card__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+@media (max-width: 500px) {
+  .checkin-form { grid-template-columns: 1fr; }
+  .form-field--full { grid-column: 1; }
+}

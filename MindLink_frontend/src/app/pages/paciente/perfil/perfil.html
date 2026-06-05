@@ -1,0 +1,93 @@
+<div class="perfil-page">
+  <div class="container">
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else {
+
+      <div class="perfil-header">
+        <div class="perfil-avatar">{{ initials() }}</div>
+        <div>
+          <h1>{{ auth.user()?.nome }}</h1>
+          <p>{{ auth.user()?.email }}</p>
+        </div>
+      </div>
+
+      <div class="perfil-grid">
+
+        <!-- Dados pessoais -->
+        <div class="card perfil-section">
+          <h2>Dados pessoais</h2>
+          <div class="info-list">
+            <div class="info-item">
+              <span class="info-label">Nome completo</span>
+              <span class="info-value">{{ auth.user()?.nome }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Email</span>
+              <span class="info-value">{{ auth.user()?.email }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Género</span>
+              <span class="info-value">{{ auth.user()?.genero }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Data de nascimento</span>
+              <span class="info-value">{{ auth.user()?.data_nascimento | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dados clínicos -->
+        @if (profile()) {
+          <div class="card perfil-section">
+            <h2>Dados clínicos</h2>
+            <div class="info-list">
+              <div class="info-item">
+                <span class="info-label">Diagnóstico / doença</span>
+                <span class="info-value">{{ profile()?.doenca }}</span>
+              </div>
+              @if (profile()?.formulario?.historicoMedico?.comorbilidades?.length) {
+                <div class="info-item">
+                  <span class="info-label">Comorbilidades</span>
+                  <span class="info-value">{{ profile()?.formulario?.historicoMedico?.comorbilidades?.join(', ') }}</span>
+                </div>
+              }
+              <div class="info-item">
+                <span class="info-label">Exercício regular</span>
+                <span class="info-value">
+                  {{ profile()?.formulario?.estiloDeVida?.exercicioRegular === true ? 'Sim'
+                   : profile()?.formulario?.estiloDeVida?.exercicioRegular === false ? 'Não'
+                   : '—' }}
+                </span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Fumador</span>
+                <span class="info-value">
+                  {{ profile()?.formulario?.estiloDeVida?.fumador === true ? 'Sim'
+                   : profile()?.formulario?.estiloDeVida?.fumador === false ? 'Não'
+                   : '—' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Psicólogo atribuído -->
+          <div class="card perfil-section">
+            <h2>Psicólogo atribuído</h2>
+            <div class="psicologo-card">
+              <div class="psicologo-avatar">
+                {{ profile()?.psicologo?.user?.nome?.charAt(0) ?? 'P' }}
+              </div>
+              <div>
+                <div class="psicologo-name">{{ profile()?.psicologo?.user?.nome ?? 'Psicólogo' }}</div>
+                <div class="psicologo-esp">{{ profile()?.psicologo?.especialidade }}</div>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+    }
+  </div>
+</div>

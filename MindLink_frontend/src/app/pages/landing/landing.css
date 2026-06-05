@@ -1,0 +1,148 @@
+/* ── Hero ── */
+.hero {
+  position: relative;
+  padding: var(--space-4xl) 0 var(--space-3xl);
+  overflow: hidden;
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-lg);
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.hero__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 1rem;
+  background: rgba(38, 135, 78, 0.1);
+  color: var(--color-primary);
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.hero__title {
+  max-width: 680px;
+}
+
+.hero__title--accent {
+  color: var(--color-primary);
+}
+
+.hero__subtitle {
+  font-size: 1.15rem;
+  max-width: 560px;
+  line-height: 1.75;
+}
+
+.hero__actions {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-sm);
+}
+
+/* Decorative background blob */
+.hero__bg-blob {
+  position: absolute;
+  top: -120px;
+  right: -180px;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(77,167,104,0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Section header ── */
+.section-header {
+  margin-bottom: var(--space-3xl);
+}
+
+.section-header__sub {
+  margin-top: var(--space-md);
+  font-size: 1.1rem;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Features grid ── */
+.features__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+}
+
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.feature-card__icon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.feature-card__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.feature-card__desc {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--color-text-secondary);
+}
+
+/* ── CTA ── */
+.cta {
+  background: linear-gradient(135deg, var(--color-green-400) 0%, var(--color-green-500) 100%);
+  padding: var(--space-4xl) 0;
+}
+
+.cta__inner {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.cta h2 {
+  color: white;
+}
+
+.cta p {
+  color: rgba(255,255,255,0.8);
+  font-size: 1.1rem;
+  max-width: 480px;
+}
+
+.cta .btn-primary {
+  background: white;
+  color: var(--color-primary-dark);
+}
+
+.cta .btn-primary:hover {
+  background: var(--color-off-white);
+}

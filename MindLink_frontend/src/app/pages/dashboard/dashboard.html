@@ -1,0 +1,48 @@
+<div class="dashboard">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="dashboard__header">
+      <div>
+        <h1>Good morning, {{ userName }} 👋</h1>
+        <p>Here's how you've been doing.</p>
+      </div>
+      <button class="btn-primary">
+        + Log today's mood
+      </button>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-grid">
+      @for (stat of stats; track stat.label) {
+        <div class="stat-card card">
+          <span class="stat-card__icon">{{ stat.icon }}</span>
+          <div>
+            <div class="stat-card__value">{{ stat.value }}</div>
+            <div class="stat-card__label">{{ stat.label }}</div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Recent entries -->
+    <div class="dashboard__section">
+      <h2>Recent check-ins</h2>
+
+      <div class="entries-list">
+        @for (entry of recentEntries; track entry.date) {
+          <div class="entry card">
+            <div class="entry__mood" [style.background-color]="getMoodColor(entry.mood)">
+              {{ entry.mood }}
+            </div>
+            <div class="entry__content">
+              <span class="entry__date">{{ entry.date }}</span>
+              <p class="entry__note">{{ entry.note }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+</div>

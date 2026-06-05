@@ -1,0 +1,48 @@
+<!-- Hero -->
+<section class="hero">
+  <div class="container hero__inner">
+    <div class="hero__badge">Plataforma de Saúde Mental</div>
+    <h1 class="hero__title">
+      Compreenda a sua mente,<br />
+      <span class="hero__title--accent">um dia de cada vez.</span>
+    </h1>
+    <p class="hero__subtitle">
+      O MindLink ajuda pacientes e psicólogos a monitorizar o bem-estar mental — de forma simples,
+      privada e colaborativa.
+    </p>
+    <div class="hero__actions">
+      <a routerLink="/login" class="btn-primary">Entrar na plataforma</a>
+    </div>
+  </div>
+  <div class="hero__bg-blob" aria-hidden="true"></div>
+</section>
+
+<!-- Features -->
+<section class="section features">
+  <div class="container">
+    <div class="section-header text-center">
+      <h2>Tudo o que precisa para acompanhar o seu bem-estar</h2>
+      <p class="section-header__sub">
+        Um conjunto de ferramentas desenhadas em torno da saúde mental — nada mais, nada menos.
+      </p>
+    </div>
+
+    <div class="features__grid">
+      @for (feature of features; track feature.title) {
+        <div class="feature-card card">
+          <h3 class="feature-card__title">{{ feature.title }}</h3>
+          <p class="feature-card__desc">{{ feature.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="container cta__inner">
+    <h2>Pronto para começar?</h2>
+    <p>Aceda à plataforma com as credenciais fornecidas pelo seu psicólogo.</p>
+    <a routerLink="/login" class="btn-primary">Entrar</a>
+  </div>
+</section>

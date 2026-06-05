@@ -1,0 +1,94 @@
+.profile-page {
+  padding: var(--space-2xl) 0 var(--space-4xl);
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-green-300), var(--color-green-500));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.profile-header h1 {
+  font-size: 1.75rem;
+  margin-bottom: var(--space-xs);
+}
+
+.profile-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  max-width: 640px;
+}
+
+.profile-section h2 {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-lg);
+}
+
+.profile-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.profile-field {
+  width: 100%;
+}
+
+.profile-field--full {
+  grid-column: 1 / -1;
+}
+
+.profile-form__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Danger zone */
+.profile-section--danger {
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.profile-section--danger h2 { color: #dc2626; }
+.profile-section--danger p { margin-bottom: var(--space-lg); font-size: 0.9rem; }
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.5rem;
+  background: transparent;
+  color: #dc2626;
+  border: 1.5px solid #dc2626;
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  color: white;
+}
+
+@media (max-width: 500px) {
+  .profile-form { grid-template-columns: 1fr; }
+  .profile-field--full { grid-column: 1; }
+}

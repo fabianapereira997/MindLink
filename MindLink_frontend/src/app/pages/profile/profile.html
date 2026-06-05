@@ -1,0 +1,46 @@
+<div class="profile-page">
+  <div class="container">
+    <div class="profile-header">
+      <div class="profile-avatar">TB</div>
+      <div>
+        <h1>Profile & Settings</h1>
+        <p>Manage your account details.</p>
+      </div>
+    </div>
+
+    <div class="profile-body">
+      <div class="card profile-section">
+        <h2>Personal information</h2>
+
+        <form [formGroup]="form" (ngSubmit)="onSave()" class="profile-form">
+          <mat-form-field appearance="fill" class="profile-field">
+            <mat-label>Full name</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="profile-field">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="profile-field profile-field--full">
+            <mat-label>Bio</mat-label>
+            <textarea matInput formControlName="bio" rows="3"></textarea>
+          </mat-form-field>
+
+          <div class="profile-form__actions">
+            <button type="submit" class="btn-primary" [disabled]="form.pristine">
+              Save changes
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card profile-section profile-section--danger">
+        <h2>Danger zone</h2>
+        <p>Once you delete your account, all of your data will be permanently removed.</p>
+        <button class="btn-danger">Delete account</button>
+      </div>
+    </div>
+  </div>
+</div>

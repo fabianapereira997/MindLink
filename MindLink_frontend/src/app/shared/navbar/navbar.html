@@ -1,0 +1,55 @@
+<nav class="navbar">
+  <div class="container navbar__inner">
+
+    <!-- Logo: inside app → home route; outside → landing -->
+    <a [routerLink]="auth.isLoggedIn() ? auth.homeRoute() : '/'" class="navbar__logo">
+      <img src="/logo1.png" alt="MindLink" class="navbar__logo-img"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='inline'" />
+      <span class="navbar__logo-text" style="display:none">MindLink</span>
+    </a>
+
+    @if (auth.isLoggedIn()) {
+      <!-- Nav links -->
+      <div class="navbar__links" [class.open]="menuOpen">
+        <a [routerLink]="auth.homeRoute()" routerLinkActive="active"
+           [routerLinkActiveOptions]="{exact: true}">Início</a>
+        <a [routerLink]="dashboardRoute" routerLinkActive="active">Dashboard</a>
+      </div>
+
+      <!-- User dropdown -->
+      <div class="navbar__actions">
+        <div class="navbar__user-btn" (click)="toggleDropdown()">
+          <div class="navbar__avatar">{{ auth.firstName().charAt(0) }}</div>
+          <span class="navbar__user-name">{{ auth.firstName() }}</span>
+          <svg class="navbar__chevron" [class.rotated]="dropdownOpen"
+               width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+
+        @if (dropdownOpen) {
+          <div class="navbar__dropdown">
+            @if (auth.role() === 'paciente') {
+              <a [routerLink]="perfilRoute" class="navbar__dropdown-item" (click)="dropdownOpen = false">
+                Perfil
+              </a>
+            }
+            <button class="navbar__dropdown-item navbar__dropdown-item--danger"
+                    (click)="auth.logout()">
+              Terminar sessão
+            </button>
+          </div>
+        }
+      </div>
+
+    } @else {
+      <div class="navbar__actions">
+        <a routerLink="/login" class="btn-primary btn--sm">Entrar</a>
+      </div>
+    }
+
+    <button class="navbar__burger" (click)="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>

@@ -1,0 +1,161 @@
+<div class="home-page">
+  <div class="container">
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else {
+
+      <!-- Greeting -->
+      <div class="home-header">
+        <div>
+          <h1>Olá, {{ auth.firstName() }}</h1>
+          <p>Como está hoje?</p>
+        </div>
+        <a routerLink="/paciente/dashboard" class="btn-secondary btn--sm">Ver evolução</a>
+      </div>
+
+      <!-- Success -->
+      @if (submitDone()) {
+        <div class="banner banner--success">Registo de humor submetido com sucesso!</div>
+      }
+
+      <!-- Daily check-in card -->
+      <div class="card checkin-card">
+        <div class="checkin-card__top">
+          <div>
+            <h2>Registo diário de humor</h2>
+            <p>
+              @if (todayDone()) { Já registou o seu humor hoje. }
+              @else { Ainda não fez o registo de hoje. }
+            </p>
+          </div>
+
+          @if (!todayDone()) {
+            <button class="btn-primary" (click)="showForm.set(!showForm())">
+              {{ showForm() ? 'Cancelar' : 'Registar agora' }}
+            </button>
+          } @else {
+            <span class="badge badge--done">Concluído hoje</span>
+          }
+        </div>
+
+        @if (showForm()) {
+          @if (submitError()) {
+            <div class="banner banner--error">{{ submitError() }}</div>
+          }
+          <form [formGroup]="checkInForm" (ngSubmit)="submitCheckIn()" class="checkin-form">
+            <mat-form-field appearance="fill" class="form-field">
+              <mat-label>Humor (1–5)</mat-label>
+              <mat-select formControlName="humor">
+                @for (n of [1,2,3,4,5]; track n) {
+                  <mat-option [value]="n">{{ humorLabels[n] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="form-field">
+              <mat-label>Sintomas (opcional)</mat-label>
+              <input matInput formControlName="sintomas" placeholder="Ex: ansiedade, cansaço..." />
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="form-field form-field--full">
+              <mat-label>Notas (opcional)</mat-label>
+              <textarea matInput formControlName="notas" rows="3" placeholder="Como foi o seu dia?"></textarea>
+            </mat-form-field>
+
+            <div class="checkin-form__actions">
+              <button type="submit" class="btn-primary" [disabled]="checkInForm.invalid">Guardar</button>
+            </div>
+          </form>
+        }
+      </div>
+
+      <!-- Challenges -->
+      <div class="home-section">
+        <h2>Desafios do psicólogo</h2>
+
+        @if (desafiosDiarios().length === 0 && desafiosSemanais().length === 0) {
+          <div class="card empty-card">
+            <p>Não há desafios ativos de momento.</p>
+          </div>
+        } @else {
+
+          @if (desafiosDiarios().length > 0) {
+            <h3 class="section-sub">Diário</h3>
+            <div class="desafio-list">
+              @for (d of desafiosDiarios(); track d._id) {
+                <div class="desafio-card card">
+                  <div class="desafio-card__body">
+                    <div class="desafio-card__title">{{ d.titulo }}</div>
+                    <p class="desafio-card__desc">{{ d.descricao }}</p>
+                    @if (d.sugestao) {
+                      <p class="desafio-card__sugestao">Sugestão: {{ d.sugestao }}</p>
+                    }
+                  </div>
+                  <button class="btn-primary btn--sm" (click)="marcarConcluido(d)">
+                    Marcar como feito
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          @if (desafiosSemanais().length > 0) {
+            <h3 class="section-sub">Semanal</h3>
+            <div class="desafio-list">
+              @for (d of desafiosSemanais(); track d._id) {
+                <div class="desafio-card card">
+                  <div class="desafio-card__body">
+                    <div class="desafio-card__title">{{ d.titulo }}</div>
+                    <p class="desafio-card__desc">{{ d.descricao }}</p>
+                    @if (d.sugestao) {
+                      <p class="desafio-card__sugestao">Sugestão: {{ d.sugestao }}</p>
+                    }
+                    <p class="desafio-card__date">Até {{ d.data_fim | date:'dd/MM/yyyy' }}</p>
+                  </div>
+                  <button class="btn-primary btn--sm" (click)="marcarConcluido(d)">
+                    Marcar como feito
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+        }
+      </div>
+
+      <!-- Upcoming consultas -->
+      <div class="home-section">
+        <h2>Próximas consultas</h2>
+
+        @if (consultas().length === 0) {
+          <div class="card empty-card">
+            <p>Não há consultas agendadas.</p>
+          </div>
+        } @else {
+          <div class="consulta-list">
+            @for (c of consultas(); track c._id) {
+              <div class="consulta-card card">
+                <div class="consulta-card__date">
+                  <span class="consulta-card__day">{{ c.data | date:'d' }}</span>
+                  <span class="consulta-card__month">{{ c.data | date:'MMM' }}</span>
+                </div>
+                <div class="consulta-card__info">
+                  <div class="consulta-card__title">
+                    Dr(a). {{ c.psicologo?.user?.nome ?? 'Psicólogo' }}
+                  </div>
+                  <div class="consulta-card__meta">
+                    {{ c.data | date:'HH:mm' }} &middot; {{ c.duracao }} min
+                    @if (c.psicologo?.especialidade) { &middot; {{ c.psicologo.especialidade }} }
+                  </div>
+                </div>
+                <span class="badge badge--agendada">Agendada</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    }
+  </div>
+</div>
