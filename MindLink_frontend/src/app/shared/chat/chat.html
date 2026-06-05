@@ -1,0 +1,154 @@
+@if (auth.isLoggedIn() && (role() === 'paciente' || role() === 'psicologo')) {
+
+  <!-- ── FAB ── -->
+  <button
+    class="chat-fab"
+    [style.bottom.px]="fabBottom()"
+    (click)="toggleChat()"
+    [attr.aria-label]="isOpen() ? 'Fechar chat' : 'Abrir chat'"
+  >
+    @if (hasUnread() && !isOpen()) {
+      <span class="chat-fab__dot"></span>
+    }
+    @if (!isOpen()) {
+      <!-- Chat icon -->
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    } @else {
+      <!-- Close icon -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    }
+  </button>
+
+  <!-- ── Panel ── -->
+  @if (isOpen()) {
+
+    <!-- PATIENT: single conversation window -->
+    @if (role() === 'paciente') {
+      <div class="chat-window" [style.bottom.px]="fabBottom() + 68">
+        <div class="chat-window__header">
+          <div class="chat-window__avatar">{{ psicologoName().charAt(0) }}</div>
+          <div>
+            <div class="chat-window__name">Dr(a). {{ psicologoName() }}</div>
+            <div class="chat-window__sub">Psicólogo</div>
+          </div>
+        </div>
+
+        <div class="chat-window__messages" #messagesEl>
+          @if (mensagens().length === 0) {
+            <div class="chat-empty">Sem mensagens ainda. Diga olá!</div>
+          }
+          @for (m of mensagens(); track m._id) {
+            <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+              <div class="bubble" [class.bubble--mine]="isMine(m)">
+                {{ m.mensagem }}
+                <span class="bubble__time">{{ m.data | date:'HH:mm' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (sendError()) {
+          <div class="chat-error">{{ sendError() }}</div>
+        }
+
+        <div class="chat-window__input">
+          <textarea
+            class="chat-input"
+            [formControl]="input"
+            placeholder="Escreva uma mensagem..."
+            rows="1"
+            (keydown)="onKeydown($event)"
+          ></textarea>
+          <button class="chat-send" (click)="send()" [disabled]="!input.value?.trim()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- PSYCHOLOGIST: sidebar + conversation -->
+    @if (role() === 'psicologo') {
+      <div class="chat-panel" [style.bottom.px]="fabBottom() + 68">
+
+        <!-- Left: patient list -->
+        <aside class="chat-panel__sidebar">
+          <div class="chat-panel__sidebar-header">Pacientes</div>
+          @if (pacientes().length === 0) {
+            <div class="chat-empty chat-empty--sm">Sem pacientes associados.</div>
+          }
+          @for (p of pacientes(); track p._id) {
+            <button
+              class="patient-item"
+              [class.patient-item--active]="selectedPaciente()?._id === p._id"
+              (click)="selectPaciente(p)"
+            >
+              <div class="patient-item__avatar">{{ patientName(p).charAt(0) }}</div>
+              <span class="patient-item__name">{{ patientName(p) }}</span>
+              @if (hasUnreadForPaciente(p)) {
+                <span class="patient-item__dot"></span>
+              }
+            </button>
+          }
+        </aside>
+
+        <!-- Right: conversation -->
+        <div class="chat-panel__main">
+          @if (!selectedPaciente()) {
+            <div class="chat-panel__placeholder">
+              Selecione um paciente para ver a conversa.
+            </div>
+          } @else {
+            <div class="chat-window__header">
+              <div class="chat-window__avatar">{{ patientName(selectedPaciente()!).charAt(0) }}</div>
+              <div>
+                <div class="chat-window__name">{{ patientName(selectedPaciente()!) }}</div>
+                <div class="chat-window__sub">Paciente</div>
+              </div>
+            </div>
+
+            <div class="chat-window__messages" #messagesEl>
+              @if (mensagens().length === 0) {
+                <div class="chat-empty">Sem mensagens ainda.</div>
+              }
+              @for (m of mensagens(); track m._id) {
+                <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+                  <div class="bubble" [class.bubble--mine]="isMine(m)">
+                    {{ m.mensagem }}
+                    <span class="bubble__time">{{ m.data | date:'HH:mm' }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (sendError()) {
+              <div class="chat-error">{{ sendError() }}</div>
+            }
+
+            <div class="chat-window__input">
+              <textarea
+                class="chat-input"
+                [formControl]="input"
+                placeholder="Escreva uma mensagem..."
+                rows="1"
+                (keydown)="onKeydown($event)"
+              ></textarea>
+              <button class="chat-send" (click)="send()" [disabled]="!input.value?.trim()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+  }
+
+}

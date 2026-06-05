@@ -65,8 +65,8 @@ router.get('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req
         }
 
         const desafios = await Desafio.find(filter)
-            .populate('paciente')
-            .populate('psicologo');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         res.json(desafios);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
@@ -99,8 +99,8 @@ router.get('/paciente/:pacienteId', verifyToken, verifyTokenByRole('psicologo', 
         }
 
         const desafios = await Desafio.find({ paciente: pacienteId })
-            .populate('paciente')
-            .populate('psicologo');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         res.json(desafios);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
@@ -126,8 +126,8 @@ router.get('/psicologo/:psicologoId', verifyToken, verifyTokenByRole('psicologo'
         }
 
         const desafios = await Desafio.find({ psicologo: psicologoId })
-            .populate('paciente')
-            .populate('psicologo');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         res.json(desafios);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
@@ -189,8 +189,8 @@ router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admi
         }
 
         const desafio = await Desafio.findById(id)
-            .populate('paciente')
-            .populate('psicologo');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         if (!desafio) {
             return res.status(404).json({ error: 'Desafio não encontrado' });
         }
@@ -242,8 +242,8 @@ router.put('/:id', verifyToken, verifyTokenByRole('psicologo'), async (req: Requ
         void _p; void _ps;
 
         const desafio = await Desafio.findByIdAndUpdate(id, safeBody, { new: true, runValidators: true })
-            .populate('paciente')
-            .populate('psicologo');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         res.json(desafio);
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });

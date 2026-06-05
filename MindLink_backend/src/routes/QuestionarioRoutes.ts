@@ -52,7 +52,7 @@ router.get('/', verifyToken, verifyTokenByRole('psicologo', 'paciente'), async (
             const pacientes = await Paciente.find({ psicologo: psicologoProfile._id }, '_id');
             const pacienteIds = pacientes.map((p: any) => p._id);
             const questionarios = await Questionario.find({ paciente: { $in: pacienteIds } })
-                .populate('paciente');
+                .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } });
             return res.json(questionarios);
         }
 
@@ -62,7 +62,7 @@ router.get('/', verifyToken, verifyTokenByRole('psicologo', 'paciente'), async (
                 return res.status(404).json({ error: 'Perfil de paciente não encontrado' });
             }
             const questionarios = await Questionario.find({ paciente: pacienteProfile._id })
-                .populate('paciente');
+                .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } });
             return res.json(questionarios);
         }
     } catch (error) {
@@ -95,7 +95,7 @@ router.get('/paciente/:pacienteId', verifyToken, verifyTokenByRole('psicologo', 
             }
         }
 
-        const questionarios = await Questionario.find({ paciente: pacienteId }).populate('paciente');
+        const questionarios = await Questionario.find({ paciente: pacienteId }).populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } });
         res.json(questionarios);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
@@ -111,7 +111,7 @@ router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente'), asyn
             return res.status(400).json({ error: 'ID de questionário inválido' });
         }
 
-        const questionario = await Questionario.findById(id).populate('paciente');
+        const questionario = await Questionario.findById(id).populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } });
         if (!questionario) {
             return res.status(404).json({ error: 'Questionário não encontrado' });
         }
@@ -163,7 +163,7 @@ router.put('/:id', verifyToken, verifyTokenByRole('paciente'), async (req: Reque
         void _p;
 
         const questionario = await Questionario.findByIdAndUpdate(id, safeBody, { new: true, runValidators: true })
-            .populate('paciente');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } });
         res.json(questionario);
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });

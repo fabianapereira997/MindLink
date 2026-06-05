@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -29,21 +29,24 @@ import { DesafioService, Desafio } from '../../../core/services/desafio.service'
   styleUrl: './home.css',
 })
 export class PacienteHomeComponent implements OnInit {
-  auth        = inject(AuthService);
+  auth             = inject(AuthService);
   private fb         = inject(FormBuilder);
   private pacSvc     = inject(PacienteService);
   private qSvc       = inject(QuestionarioService);
   private consultaSvc = inject(ConsultaService);
   private desafioSvc  = inject(DesafioService);
 
-  profile     = signal<PacienteProfile | null>(null);
-  consultas   = signal<Consulta[]>([]);
-  desafios    = signal<Desafio[]>([]);
-  loading     = signal(true);
-  showForm    = signal(false);
-  submitError = signal<string | null>(null);
-  submitDone  = signal(false);
-  todayDone   = signal(false);
+  profile        = signal<PacienteProfile | null>(null);
+  consultas      = signal<Consulta[]>([]);
+  allDesafios    = signal<Desafio[]>([]);
+  loading        = signal(true);
+  profileError   = signal<string | null>(null);
+  consultaError  = signal<string | null>(null);
+  desafioError   = signal<string | null>(null);
+  showForm       = signal(false);
+  submitError    = signal<string | null>(null);
+  submitDone     = signal(false);
+  todayDone      = signal(false);
 
   checkInForm = this.fb.group({
     humor:    [null as number | null, [Validators.required, Validators.min(1), Validators.max(5)]],
@@ -59,58 +62,86 @@ export class PacienteHomeComponent implements OnInit {
     5: '5 — Muito bom',
   };
 
+  // Only challenges whose period hasn't ended yet (data_fim >= today)
+  private withinPeriod(d: Desafio): boolean {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return new Date(d.data_fim) >= today;
+  }
+
+  // Pending challenges (within period)
+  pendentes    = computed(() => this.allDesafios().filter(d => d.estado === 'pendente'  && this.withinPeriod(d)));
+  // Completed challenges (still within their period — not yet expired)
+  concluidos   = computed(() => this.allDesafios().filter(d => d.estado === 'concluido' && this.withinPeriod(d)));
+
+  pendentes_diario   = computed(() => this.pendentes().filter(d => d.tipo === 'diario'));
+  pendentes_semanal  = computed(() => this.pendentes().filter(d => d.tipo === 'semanal'));
+  concluidos_diario  = computed(() => this.concluidos().filter(d => d.tipo === 'diario'));
+  concluidos_semanal = computed(() => this.concluidos().filter(d => d.tipo === 'semanal'));
+
+  hasAny = computed(() =>
+    this.pendentes().length > 0 || this.concluidos().length > 0
+  );
+
   ngOnInit(): void {
     this.pacSvc.getMyProfile().subscribe({
       next: profiles => {
-        if (profiles.length) {
-          const p = profiles[0];
-          this.profile.set(p);
-          this.loadData(p._id);
-        }
         this.loading.set(false);
+        if (!profiles.length) {
+          this.profileError.set('Perfil de paciente não encontrado. Contacte o seu psicólogo.');
+          return;
+        }
+        const p = profiles[0];
+        this.profile.set(p);
+        this.loadSubData(p._id);
       },
-      error: () => this.loading.set(false),
+      error: err => {
+        this.loading.set(false);
+        this.profileError.set(err.error?.error ?? `Erro ${err.status ?? ''}: não foi possível carregar o perfil.`);
+      },
     });
 
-    // Check if today already has a check-in
-    this.qSvc.getMyQuestionarios().subscribe(qs => {
-      const today = new Date(); today.setHours(0,0,0,0);
-      this.todayDone.set(qs.some(q => {
-        const d = new Date(q.data); d.setHours(0,0,0,0);
-        return d.getTime() === today.getTime();
-      }));
-    });
-  }
-
-  private loadData(pacienteId: string): void {
-    this.consultaSvc.getConsultasForPaciente(pacienteId).subscribe(cs => {
-      const upcoming = cs
-        .filter(c => c.estado === 'agendada' && new Date(c.data) >= new Date())
-        .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
-        .slice(0, 3);
-      this.consultas.set(upcoming);
-    });
-
-    this.desafioSvc.getDesafiosForPaciente(pacienteId).subscribe(ds => {
-      const active = ds.filter(d =>
-        d.estado === 'pendente' &&
-        new Date(d.data_fim) >= new Date()
-      );
-      this.desafios.set(active);
+    this.qSvc.getMyQuestionarios().subscribe({
+      next: qs => {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        this.todayDone.set(qs.some(q => {
+          const d = new Date(q.data); d.setHours(0, 0, 0, 0);
+          return d.getTime() === today.getTime();
+        }));
+      },
+      error: () => {},
     });
   }
 
-  desafiosDiarios(): Desafio[] {
-    return this.desafios().filter(d => d.tipo === 'diario');
-  }
+  private loadSubData(pacienteId: string): void {
+    this.consultaSvc.getConsultasForPaciente(pacienteId).subscribe({
+      next: cs => {
+        const agendadas = cs
+          .filter(c => c.estado === 'agendada')
+          .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+          .slice(0, 3);
+        this.consultas.set(agendadas);
+      },
+      error: err => {
+        this.consultaError.set(err.error?.error ?? `Erro ${err.status ?? ''} ao carregar consultas.`);
+      },
+    });
 
-  desafiosSemanais(): Desafio[] {
-    return this.desafios().filter(d => d.tipo === 'semanal');
+    this.desafioSvc.getDesafiosForPaciente(pacienteId).subscribe({
+      next: ds => this.allDesafios.set(ds),
+      error: err => {
+        this.desafioError.set(err.error?.error ?? `Erro ${err.status ?? ''} ao carregar desafios.`);
+      },
+    });
   }
 
   marcarConcluido(d: Desafio): void {
-    this.desafioSvc.marcarConcluido(d._id).subscribe(() => {
-      this.desafios.set(this.desafios().filter(x => x._id !== d._id));
+    this.desafioSvc.marcarConcluido(d._id).subscribe({
+      next: updated => {
+        this.allDesafios.update(list =>
+          list.map(x => x._id === updated._id ? updated : x)
+        );
+      },
+      error: err => console.error('marcarConcluido error:', err),
     });
   }
 

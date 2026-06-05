@@ -44,8 +44,8 @@ router.get('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req
         }
 
         const consultas = await Consulta.find(filter)
-            .populate('paciente')
-            .populate('psicologo');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         res.json(consultas);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
@@ -70,8 +70,8 @@ router.get('/psicologo/:psicologoId', verifyToken, verifyTokenByRole('psicologo'
         }
 
         const consultas = await Consulta.find({ psicologo: psicologoId })
-            .populate('paciente')
-            .populate('psicologo');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         res.json(consultas);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
@@ -106,8 +106,8 @@ router.get('/paciente/:pacienteId', verifyToken, verifyTokenByRole('psicologo', 
         }
 
         const consultas = await Consulta.find(filter)
-            .populate('paciente')
-            .populate('psicologo');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         res.json(consultas);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
@@ -124,8 +124,8 @@ router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admi
         }
 
         const consulta = await Consulta.findById(id)
-            .populate('paciente')
-            .populate('psicologo');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         if (!consulta) {
             return res.status(404).json({ error: 'Consulta não encontrada' });
         }
@@ -173,8 +173,8 @@ router.put('/:id', verifyToken, verifyTokenByRole('psicologo'), async (req: Requ
         }
 
         const consulta = await Consulta.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
-            .populate('paciente')
-            .populate('psicologo');
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         res.json(consulta);
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });

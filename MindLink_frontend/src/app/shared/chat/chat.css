@@ -1,0 +1,333 @@
+/* ── FAB ── */
+.chat-fab {
+  position: fixed;
+  right: 2rem;
+  overflow: visible;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(38,135,78,0.4);
+  z-index: 400;
+  transition: background var(--transition-fast), transform var(--transition-fast), bottom 0.2s ease;
+}
+
+.chat-fab:hover {
+  background: var(--color-primary-dark);
+  transform: scale(1.06);
+}
+
+.chat-fab__dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid white;
+  animation: dotPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.25); }
+}
+
+.patient-item__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ── Shared window styles ── */
+.chat-window,
+.chat-panel {
+  position: fixed;
+  right: 2rem;
+  z-index: 399;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: bottom 0.2s ease;
+  animation: chatSlideUp 0.22s ease;
+}
+
+@keyframes chatSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Patient chat window ── */
+.chat-window {
+  width: 360px;
+  height: 480px;
+}
+
+/* ── Psychologist panel ── */
+.chat-panel {
+  width: 680px;
+  height: 520px;
+  flex-direction: row;
+}
+
+/* ── Header ── */
+.chat-window__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.chat-window__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-green-300), var(--color-green-500));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.chat-window__name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.chat-window__sub {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Messages area ── */
+.chat-window__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  scroll-behavior: smooth;
+}
+
+.chat-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  margin: auto;
+}
+
+.chat-empty--sm {
+  font-size: 0.8rem;
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* ── Bubbles ── */
+.bubble-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.bubble-row--mine {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: 75%;
+  padding: 0.5rem 0.8rem;
+  border-radius: 16px 16px 16px 4px;
+  background: rgba(0,0,0,0.05);
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  position: relative;
+  word-break: break-word;
+}
+
+.bubble--mine {
+  background: var(--color-primary);
+  color: white;
+  border-radius: 16px 16px 4px 16px;
+}
+
+.bubble__time {
+  display: block;
+  font-size: 0.68rem;
+  opacity: 0.6;
+  margin-top: 3px;
+  text-align: right;
+}
+
+/* ── Input ── */
+.chat-window__input {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid rgba(0,0,0,0.06);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.chat-input {
+  flex: 1;
+  border: 1.5px solid rgba(0,0,0,0.1);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: none;
+  outline: none;
+  background: var(--color-white);
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-fast);
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.chat-input:focus {
+  border-color: var(--color-primary);
+}
+
+.chat-send {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.chat-send:hover { background: var(--color-primary-dark); transform: scale(1.05); }
+.chat-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.chat-error {
+  padding: var(--space-xs) var(--space-md);
+  font-size: 0.8rem;
+  color: #dc2626;
+  background: rgba(220,38,38,0.06);
+  border-top: 1px solid rgba(220,38,38,0.1);
+}
+
+/* ── Psychologist sidebar ── */
+.chat-panel__sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--color-surface);
+}
+
+.chat-panel__sidebar-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-muted);
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+  flex-shrink: 0;
+}
+
+.patient-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.6rem var(--space-md);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-left: 3px solid transparent;
+}
+
+.patient-item:hover { background: rgba(0,0,0,0.04); }
+
+.patient-item--active {
+  background: rgba(38,135,78,0.08);
+  border-left-color: var(--color-primary);
+}
+
+.patient-item__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-green-200), var(--color-green-400));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.patient-item__name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Psychologist main area ── */
+.chat-panel__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-panel__placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .chat-window { width: calc(100vw - 2rem); right: 1rem; }
+  .chat-panel  { width: calc(100vw - 2rem); right: 1rem; flex-direction: column; height: 85vh; }
+  .chat-panel__sidebar { width: 100%; height: 140px; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.06); flex-direction: row; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; }
+  .chat-panel__sidebar-header { display: none; }
+  .patient-item { flex-direction: column; min-width: 80px; padding: var(--space-sm); border-left: none; border-bottom: 3px solid transparent; }
+  .patient-item--active { border-bottom-color: var(--color-primary); }
+  .chat-fab { right: 1rem; }
+}

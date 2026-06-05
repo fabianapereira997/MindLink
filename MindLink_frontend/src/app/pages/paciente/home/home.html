@@ -3,6 +3,12 @@
 
     @if (loading()) {
       <div class="loading">A carregar...</div>
+
+    } @else if (profileError()) {
+      <div class="banner banner--error">
+        <strong>Erro ao carregar perfil:</strong> {{ profileError() }}
+      </div>
+
     } @else {
 
       <!-- Greeting -->
@@ -14,12 +20,11 @@
         <a routerLink="/paciente/dashboard" class="btn-secondary btn--sm">Ver evolução</a>
       </div>
 
-      <!-- Success -->
       @if (submitDone()) {
         <div class="banner banner--success">Registo de humor submetido com sucesso!</div>
       }
 
-      <!-- Daily check-in card -->
+      <!-- Daily check-in -->
       <div class="card checkin-card">
         <div class="checkin-card__top">
           <div>
@@ -29,7 +34,6 @@
               @else { Ainda não fez o registo de hoje. }
             </p>
           </div>
-
           @if (!todayDone()) {
             <button class="btn-primary" (click)="showForm.set(!showForm())">
               {{ showForm() ? 'Cancelar' : 'Registar agora' }}
@@ -52,17 +56,14 @@
                 }
               </mat-select>
             </mat-form-field>
-
             <mat-form-field appearance="fill" class="form-field">
               <mat-label>Sintomas (opcional)</mat-label>
               <input matInput formControlName="sintomas" placeholder="Ex: ansiedade, cansaço..." />
             </mat-form-field>
-
             <mat-form-field appearance="fill" class="form-field form-field--full">
               <mat-label>Notas (opcional)</mat-label>
               <textarea matInput formControlName="notas" rows="3" placeholder="Como foi o seu dia?"></textarea>
             </mat-form-field>
-
             <div class="checkin-form__actions">
               <button type="submit" class="btn-primary" [disabled]="checkInForm.invalid">Guardar</button>
             </div>
@@ -74,16 +75,19 @@
       <div class="home-section">
         <h2>Desafios do psicólogo</h2>
 
-        @if (desafiosDiarios().length === 0 && desafiosSemanais().length === 0) {
-          <div class="card empty-card">
-            <p>Não há desafios ativos de momento.</p>
-          </div>
+        @if (desafioError()) {
+          <div class="banner banner--error">{{ desafioError() }}</div>
+
+        } @else if (!hasAny()) {
+          <div class="card empty-card"><p>Não há desafios para este período.</p></div>
+
         } @else {
 
-          @if (desafiosDiarios().length > 0) {
+          <!-- Daily -->
+          @if (pendentes_diario().length > 0 || concluidos_diario().length > 0) {
             <h3 class="section-sub">Diário</h3>
             <div class="desafio-list">
-              @for (d of desafiosDiarios(); track d._id) {
+              @for (d of pendentes_diario(); track d._id) {
                 <div class="desafio-card card">
                   <div class="desafio-card__body">
                     <div class="desafio-card__title">{{ d.titulo }}</div>
@@ -97,13 +101,28 @@
                   </button>
                 </div>
               }
+              @for (d of concluidos_diario(); track d._id) {
+                <div class="desafio-card desafio-card--done card">
+                  <div class="desafio-card__check">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <div class="desafio-card__body">
+                    <div class="desafio-card__title">{{ d.titulo }}</div>
+                    <p class="desafio-card__desc">{{ d.descricao }}</p>
+                  </div>
+                  <span class="badge badge--done">Concluído</span>
+                </div>
+              }
             </div>
           }
 
-          @if (desafiosSemanais().length > 0) {
+          <!-- Weekly -->
+          @if (pendentes_semanal().length > 0 || concluidos_semanal().length > 0) {
             <h3 class="section-sub">Semanal</h3>
             <div class="desafio-list">
-              @for (d of desafiosSemanais(); track d._id) {
+              @for (d of pendentes_semanal(); track d._id) {
                 <div class="desafio-card card">
                   <div class="desafio-card__body">
                     <div class="desafio-card__title">{{ d.titulo }}</div>
@@ -118,20 +137,35 @@
                   </button>
                 </div>
               }
+              @for (d of concluidos_semanal(); track d._id) {
+                <div class="desafio-card desafio-card--done card">
+                  <div class="desafio-card__check">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <div class="desafio-card__body">
+                    <div class="desafio-card__title">{{ d.titulo }}</div>
+                    <p class="desafio-card__desc">{{ d.descricao }}</p>
+                    <p class="desafio-card__date">Até {{ d.data_fim | date:'dd/MM/yyyy' }}</p>
+                  </div>
+                  <span class="badge badge--done">Concluído</span>
+                </div>
+              }
             </div>
           }
 
         }
       </div>
 
-      <!-- Upcoming consultas -->
+      <!-- Consultas -->
       <div class="home-section">
-        <h2>Próximas consultas</h2>
+        <h2>Consultas agendadas</h2>
 
-        @if (consultas().length === 0) {
-          <div class="card empty-card">
-            <p>Não há consultas agendadas.</p>
-          </div>
+        @if (consultaError()) {
+          <div class="banner banner--error">{{ consultaError() }}</div>
+        } @else if (consultas().length === 0) {
+          <div class="card empty-card"><p>Não há consultas agendadas.</p></div>
         } @else {
           <div class="consulta-list">
             @for (c of consultas(); track c._id) {

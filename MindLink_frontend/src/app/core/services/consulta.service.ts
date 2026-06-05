@@ -10,7 +10,7 @@ export interface Consulta {
   psicologo: { _id: string; especialidade: string; user: { nome: string } };
   data: string;
   duracao: number;
-  estado: 'agendada' | 'concluida' | 'cancelada';
+  estado: 'agendada' | 'realizada' | 'cancelada';
   notas?: string;
 }
 

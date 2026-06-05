@@ -43,7 +43,7 @@ router.get('/', verifyToken, verifyTokenByRole('psicologo', 'paciente'), async (
             }
             const pacientes = await Paciente.find({ psicologo: psicologoProfile._id })
                 .populate('user', '-password')
-                .populate('psicologo');
+                .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
             return res.json(pacientes);
         }
 
@@ -54,7 +54,7 @@ router.get('/', verifyToken, verifyTokenByRole('psicologo', 'paciente'), async (
             }
             const paciente = await Paciente.findById(pacienteProfile._id)
                 .populate('user', '-password')
-                .populate('psicologo');
+                .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
             return res.json([paciente]);
         }
     } catch (error) {
@@ -79,7 +79,7 @@ router.get('/psicologo/:psicologoId', verifyToken, verifyTokenByRole('psicologo'
 
         const pacientes = await Paciente.find({ psicologo: psicologoId })
             .populate('user', '-password')
-            .populate('psicologo');
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         res.json(pacientes);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
@@ -112,7 +112,7 @@ router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente'), asyn
 
         const paciente = await Paciente.findById(id)
             .populate('user', '-password')
-            .populate('psicologo');
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         if (!paciente) {
             return res.status(404).json({ error: 'Paciente não encontrado' });
         }
@@ -143,7 +143,7 @@ router.put('/:id', verifyToken, verifyTokenByRole('psicologo'), async (req: Requ
 
         const paciente = await Paciente.findByIdAndUpdate(id, safeBody, { new: true, runValidators: true })
             .populate('user', '-password')
-            .populate('psicologo');
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
         if (!paciente) {
             return res.status(404).json({ error: 'Paciente não encontrado' });
         }
