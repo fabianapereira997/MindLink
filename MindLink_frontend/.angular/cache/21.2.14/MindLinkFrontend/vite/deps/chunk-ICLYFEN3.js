@@ -1,18 +1,18 @@
 import {
+  _VisuallyHiddenLoader,
+  _setInnerHtml
+} from "./chunk-EINZNKRU.js";
+import {
+  DomSanitizer
+} from "./chunk-BG2DKGA4.js";
+import {
+  _CdkPrivateStyleLoader
+} from "./chunk-ELKKSBES.js";
+import {
   Platform,
   coerceElement,
   coerceNumberProperty
-} from "./chunk-26GELOFZ.js";
-import {
-  _VisuallyHiddenLoader,
-  _setInnerHtml
-} from "./chunk-E7SWXZIE.js";
-import {
-  DomSanitizer
-} from "./chunk-WBZCO5MF.js";
-import {
-  _CdkPrivateStyleLoader
-} from "./chunk-UJRDWSZC.js";
+} from "./chunk-UHSAULA6.js";
 import {
   ANIMATION_MODULE_TYPE,
   APP_ID,
@@ -34,7 +34,6 @@ import {
   booleanAttribute,
   effect,
   inject,
-  isObservable,
   isSignal,
   setClassMetadata,
   signal,
@@ -43,7 +42,10 @@ import {
   ɵɵdefineInjectable,
   ɵɵdefineInjector,
   ɵɵdefineNgModule
-} from "./chunk-5YG6WRRO.js";
+} from "./chunk-BLBE6O4X.js";
+import {
+  isObservable
+} from "./chunk-HWYXSU2G.js";
 import {
   BehaviorSubject,
   Observable,
@@ -61,7 +63,7 @@ import {
   take,
   takeUntil,
   tap
-} from "./chunk-4PAWV54Y.js";
+} from "./chunk-MARUHEWW.js";
 import {
   __spreadProps,
   __spreadValues
@@ -2638,19 +2640,6 @@ function getSupportedInputTypes() {
   return supportedInputTypes;
 }
 
-// node_modules/@angular/cdk/fesm2022/_css-pixel-value-chunk.mjs
-function coerceCssPixelValue(value) {
-  if (value == null) {
-    return "";
-  }
-  return typeof value === "string" ? value : `${value}px`;
-}
-
-// node_modules/@angular/cdk/fesm2022/coercion.mjs
-function coerceBooleanProperty(value) {
-  return value != null && `${value}` !== "false";
-}
-
 // node_modules/@angular/cdk/fesm2022/layout.mjs
 var LayoutModule = class _LayoutModule {
   static ɵfac = function LayoutModule_Factory(__ngFactoryType__) {
@@ -2686,6 +2675,19 @@ function _animationsDisabled() {
   return _getAnimationsState() !== "enabled";
 }
 
+// node_modules/@angular/cdk/fesm2022/_css-pixel-value-chunk.mjs
+function coerceCssPixelValue(value) {
+  if (value == null) {
+    return "";
+  }
+  return typeof value === "string" ? value : `${value}px`;
+}
+
+// node_modules/@angular/cdk/fesm2022/coercion.mjs
+function coerceBooleanProperty(value) {
+  return value != null && `${value}` !== "false";
+}
+
 export {
   isFakeMousedownFromScreenReader,
   isFakeTouchstartFromScreenReader,
@@ -2709,9 +2711,9 @@ export {
   addAriaReferencedId,
   removeAriaReferencedId,
   _isTestEnvironment,
-  coerceCssPixelValue,
   getSupportedInputTypes,
-  coerceBooleanProperty,
-  _animationsDisabled
+  _animationsDisabled,
+  coerceCssPixelValue,
+  coerceBooleanProperty
 };
-//# sourceMappingURL=chunk-LFBNQCCF.js.map
+//# sourceMappingURL=chunk-ICLYFEN3.js.map

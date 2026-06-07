@@ -16,14 +16,8 @@ import { DesafioService, Desafio } from '../../../core/services/desafio.service'
   selector: 'app-paciente-home',
   standalone: true,
   imports: [
-    CommonModule,
-    RouterLink,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    DatePipe,
+    CommonModule, RouterLink, ReactiveFormsModule,
+    MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, DatePipe,
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',
@@ -55,32 +49,67 @@ export class PacienteHomeComponent implements OnInit {
   });
 
   humorLabels: Record<number, string> = {
-    1: '1 — Muito mau',
-    2: '2 — Mau',
-    3: '3 — Razoável',
-    4: '4 — Bom',
-    5: '5 — Muito bom',
+    1: '1 — Muito mau', 2: '2 — Mau', 3: '3 — Razoável', 4: '4 — Bom', 5: '5 — Muito bom',
   };
 
-  // Only challenges whose period hasn't ended yet (data_fim >= today)
-  private withinPeriod(d: Desafio): boolean {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    return new Date(d.data_fim) >= today;
+  // ── Date helpers ────────────────────────────────────────────────────────────
+
+  private isToday(dateStr: string): boolean {
+    const d = new Date(dateStr), t = new Date();
+    return d.getFullYear() === t.getFullYear()
+        && d.getMonth()    === t.getMonth()
+        && d.getDate()     === t.getDate();
   }
 
-  // Pending challenges (within period)
-  pendentes    = computed(() => this.allDesafios().filter(d => d.estado === 'pendente'  && this.withinPeriod(d)));
-  // Completed challenges (still within their period — not yet expired)
-  concluidos   = computed(() => this.allDesafios().filter(d => d.estado === 'concluido' && this.withinPeriod(d)));
+  private getMondayOfWeek(ref: Date): Date {
+    const d = new Date(ref);
+    const day = d.getDay();            // 0 = Sun
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
 
-  pendentes_diario   = computed(() => this.pendentes().filter(d => d.tipo === 'diario'));
-  pendentes_semanal  = computed(() => this.pendentes().filter(d => d.tipo === 'semanal'));
-  concluidos_diario  = computed(() => this.concluidos().filter(d => d.tipo === 'diario'));
-  concluidos_semanal = computed(() => this.concluidos().filter(d => d.tipo === 'semanal'));
+  private isThisWeek(dateStr: string): boolean {
+    const d = new Date(dateStr);
+    const monday = this.getMondayOfWeek(new Date());
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    return d >= monday && d <= sunday;
+  }
+
+  // ── Computed slices ─────────────────────────────────────────────────────────
+
+  /** Daily challenges created today — pending or done */
+  daily_today_pending  = computed(() =>
+    this.allDesafios().filter(d => d.tipo === 'diario' && this.isToday(d.createdAt) && d.estado === 'pendente')
+  );
+  daily_today_done     = computed(() =>
+    this.allDesafios().filter(d => d.tipo === 'diario' && this.isToday(d.createdAt) && d.estado === 'concluido')
+  );
+  /** Daily challenges from a past day that were NOT completed — show as overdue/red */
+  daily_overdue        = computed(() =>
+    this.allDesafios().filter(d => d.tipo === 'diario' && !this.isToday(d.createdAt) && d.estado === 'pendente')
+  );
+
+  /** Weekly challenges created this week — pending or done */
+  weekly_pending       = computed(() =>
+    this.allDesafios().filter(d => d.tipo === 'semanal' && this.isThisWeek(d.createdAt) && d.estado === 'pendente')
+  );
+  weekly_done          = computed(() =>
+    this.allDesafios().filter(d => d.tipo === 'semanal' && this.isThisWeek(d.createdAt) && d.estado === 'concluido')
+  );
 
   hasAny = computed(() =>
-    this.pendentes().length > 0 || this.concluidos().length > 0
+    this.daily_today_pending().length  > 0 ||
+    this.daily_today_done().length     > 0 ||
+    this.daily_overdue().length        > 0 ||
+    this.weekly_pending().length       > 0 ||
+    this.weekly_done().length          > 0
   );
+
+  // ── Lifecycle ───────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     this.pacSvc.getMyProfile().subscribe({
@@ -115,32 +144,25 @@ export class PacienteHomeComponent implements OnInit {
   private loadSubData(pacienteId: string): void {
     this.consultaSvc.getConsultasForPaciente(pacienteId).subscribe({
       next: cs => {
-        const agendadas = cs
-          .filter(c => c.estado === 'agendada')
-          .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
-          .slice(0, 3);
-        this.consultas.set(agendadas);
+        const now = new Date();
+        this.consultas.set(
+          cs.filter(c => c.estado === 'agendada' && new Date(c.data) >= now)
+            .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+            .slice(0, 3)
+        );
       },
-      error: err => {
-        this.consultaError.set(err.error?.error ?? `Erro ${err.status ?? ''} ao carregar consultas.`);
-      },
+      error: err => this.consultaError.set(err.error?.error ?? `Erro ${err.status ?? ''} ao carregar consultas.`),
     });
 
     this.desafioSvc.getDesafiosForPaciente(pacienteId).subscribe({
       next: ds => this.allDesafios.set(ds),
-      error: err => {
-        this.desafioError.set(err.error?.error ?? `Erro ${err.status ?? ''} ao carregar desafios.`);
-      },
+      error: err => this.desafioError.set(err.error?.error ?? `Erro ${err.status ?? ''} ao carregar desafios.`),
     });
   }
 
   marcarConcluido(d: Desafio): void {
     this.desafioSvc.marcarConcluido(d._id).subscribe({
-      next: updated => {
-        this.allDesafios.update(list =>
-          list.map(x => x._id === updated._id ? updated : x)
-        );
-      },
+      next: updated => this.allDesafios.update(list => list.map(x => x._id === updated._id ? updated : x)),
       error: err => console.error('marcarConcluido error:', err),
     });
   }
@@ -150,10 +172,8 @@ export class PacienteHomeComponent implements OnInit {
     this.submitError.set(null);
     const { humor, sintomas, notas } = this.checkInForm.value;
     this.qSvc.create({
-      data: new Date().toISOString(),
-      humor: humor!,
-      sintomas: sintomas ?? undefined,
-      notas: notas ?? undefined,
+      data: new Date().toISOString(), humor: humor!,
+      sintomas: sintomas ?? undefined, notas: notas ?? undefined,
     }).subscribe({
       next: () => {
         this.checkInForm.reset();

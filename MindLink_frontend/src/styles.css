@@ -171,3 +171,28 @@ a:hover { color: var(--color-primary-dark); }
 .mat-mdc-form-field-focus-overlay {
   background-color: rgba(38, 135, 78, 0.06) !important;
 }
+
+/* ── Angular Material overlay / select panel fixes ── */
+.mat-mdc-select-panel,
+.mdc-menu-surface,
+.mat-mdc-autocomplete-panel {
+  background-color: var(--color-white) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.mat-mdc-option {
+  background-color: var(--color-white) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.95rem !important;
+}
+
+.mat-mdc-option:hover:not(.mdc-list-item--disabled),
+.mat-mdc-option.mat-mdc-option-active {
+  background-color: rgba(38, 135, 78, 0.07) !important;
+}
+
+.mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  background-color: rgba(38, 135, 78, 0.1) !important;
+  color: var(--color-primary-dark) !important;
+}

@@ -1,8 +1,9 @@
 import { Component, inject, OnInit, signal, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { QuestionarioService, Questionario } from '../../../core/services/questionario.service';
+import { ConsultaService, Consulta } from '../../../core/services/consulta.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -12,20 +13,22 @@ type Period = 'semanal' | 'mensal' | 'global';
 @Component({
   selector: 'app-paciente-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class PacienteDashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('moodChart') chartRef!: ElementRef<HTMLCanvasElement>;
 
-  auth      = inject(AuthService);
+  auth           = inject(AuthService);
   private pacSvc = inject(PacienteService);
   private qSvc   = inject(QuestionarioService);
+  private cSvc   = inject(ConsultaService);
 
-  allQuestionarios = signal<Questionario[]>([]);
-  loading  = signal(true);
-  period   = signal<Period>('semanal');
+  allQuestionarios  = signal<Questionario[]>([]);
+  pastConsultas     = signal<Consulta[]>([]);
+  loading           = signal(true);
+  period            = signal<Period>('semanal');
   private chart: Chart | null = null;
   private viewReady = false;
 
@@ -41,20 +44,36 @@ export class PacienteDashboardComponent implements OnInit, AfterViewInit {
         const sorted = [...qs].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
         this.allQuestionarios.set(sorted);
         this.loading.set(false);
-        if (this.viewReady) this.renderChart();
+        if (this.viewReady) setTimeout(() => this.renderChart(), 0);
       },
       error: () => this.loading.set(false),
+    });
+
+    // Load past consultas via the patient profile
+    this.pacSvc.getMyProfile().subscribe({
+      next: profiles => {
+        if (!profiles.length) return;
+        this.cSvc.getConsultasForPaciente(profiles[0]._id).subscribe({
+          next: cs => {
+            const now = new Date();
+            const past = cs
+              .filter(c => new Date(c.data) < now)
+              .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()); // most recent first
+            this.pastConsultas.set(past);
+          },
+        });
+      },
     });
   }
 
   ngAfterViewInit(): void {
     this.viewReady = true;
-    if (!this.loading()) this.renderChart();
+    if (!this.loading()) setTimeout(() => this.renderChart(), 0);
   }
 
   setPeriod(p: Period): void {
     this.period.set(p);
-    this.renderChart();
+    setTimeout(() => this.renderChart(), 0);
   }
 
   filtered(): Questionario[] {
@@ -80,14 +99,26 @@ export class PacienteDashboardComponent implements OnInit, AfterViewInit {
   streak(): number {
     const qs = [...this.allQuestionarios()].reverse();
     let count = 0;
-    let day = new Date(); day.setHours(0,0,0,0);
+    let day = new Date(); day.setHours(0, 0, 0, 0);
     for (const q of qs) {
-      const qDay = new Date(q.data); qDay.setHours(0,0,0,0);
+      const qDay = new Date(q.data); qDay.setHours(0, 0, 0, 0);
       if ((day.getTime() - qDay.getTime()) / 86400000 > 1) break;
       count++;
       day = qDay;
     }
     return count;
+  }
+
+  estadoLabel(estado: string): string {
+    if (estado === 'realizada')  return 'Realizada';
+    if (estado === 'cancelada')  return 'Cancelada';
+    return 'Agendada';
+  }
+
+  estadoClass(estado: string): string {
+    if (estado === 'realizada')  return 'badge--realizada';
+    if (estado === 'cancelada')  return 'badge--cancelada';
+    return 'badge--agendada';
   }
 
   private renderChart(): void {

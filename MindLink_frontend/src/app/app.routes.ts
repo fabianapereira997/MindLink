@@ -1,15 +1,18 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { guestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
   // ── Public (only when NOT logged in) ────────────────────────────────────────
   {
     path: '',
+    canActivate: [guestGuard],
     loadComponent: () => import('./pages/landing/landing').then(m => m.LandingComponent),
   },
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () => import('./pages/auth/login/login').then(m => m.LoginComponent),
   },
 

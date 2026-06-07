@@ -1,8 +1,9 @@
 <div class="dashboard">
   <div class="container">
 
+    <!-- Header -->
     <div class="dashboard__header">
-      <h1>Evolução do humor</h1>
+      <h1>Histórico</h1>
       <div class="period-tabs">
         @for (p of periods; track p.key) {
           <button
@@ -38,7 +39,7 @@
         </div>
       </div>
 
-      <!-- Chart -->
+      <!-- Mood chart -->
       @if (filtered().length > 0) {
         <div class="card chart-card">
           <div class="chart-wrap">
@@ -47,9 +48,45 @@
         </div>
       } @else {
         <div class="card empty-card">
-          <p>Sem registos para o período selecionado.</p>
+          <p>Sem registos de humor para o período selecionado.</p>
         </div>
       }
+
+      <!-- Past consultas -->
+      <div class="hist-section">
+        <h2>Consultas realizadas</h2>
+
+        @if (pastConsultas().length === 0) {
+          <div class="card empty-card">
+            <p>Não há consultas passadas registadas.</p>
+          </div>
+        } @else {
+          <div class="consulta-list">
+            @for (c of pastConsultas(); track c._id) {
+              <div class="consulta-card card">
+                <div class="consulta-card__date">
+                  <span class="consulta-card__day">{{ c.data | date:'d' }}</span>
+                  <span class="consulta-card__month">{{ c.data | date:'MMM' }}</span>
+                  <span class="consulta-card__year">{{ c.data | date:'yyyy' }}</span>
+                </div>
+                <div class="consulta-card__info">
+                  <div class="consulta-card__title">
+                    Dr(a). {{ c.psicologo?.user?.nome ?? 'Psicólogo' }}
+                  </div>
+                  <div class="consulta-card__meta">
+                    {{ c.data | date:'HH:mm' }} &middot; {{ c.duracao }} min
+                    @if (c.psicologo?.especialidade) { &middot; {{ c.psicologo.especialidade }} }
+                  </div>
+                  @if (c.notas) {
+                    <div class="consulta-card__notas">{{ c.notas }}</div>
+                  }
+                </div>
+                <span class="badge" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
 
     }
   </div>

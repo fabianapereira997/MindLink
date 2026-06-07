@@ -15,6 +15,7 @@ export interface Desafio {
   data_fim: string;
   estado: 'pendente' | 'concluido' | 'cancelado';
   sugestao?: string;
+  createdAt: string;
 }
 
 @Injectable({ providedIn: 'root' })

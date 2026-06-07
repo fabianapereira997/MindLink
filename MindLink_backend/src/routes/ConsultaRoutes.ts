@@ -21,6 +21,37 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
             return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
         }
         const { paciente, data, duracao, estado, notas } = req.body;
+
+        // ── Overlap check ──────────────────────────────────────────────────────
+        // A psychologist cannot have two non-cancelled consultations whose
+        // time windows [data, data + duracao min) overlap.
+        const newStart = new Date(data);
+        const newEnd   = new Date(newStart.getTime() + Number(duracao) * 60_000);
+
+        // Fetch candidates: non-cancelled consultas for this psicologo in a
+        // generous window (±1 day) to avoid scanning the whole collection.
+        const candidates = await Consulta.find({
+            psicologo: psicologoProfile._id,
+            estado:    { $ne: 'cancelada' },
+            data:      {
+                $gte: new Date(newStart.getTime() - 24 * 60 * 60_000),
+                $lte: new Date(newStart.getTime() + 24 * 60 * 60_000),
+            },
+        });
+
+        const hasOverlap = candidates.some((c: any) => {
+            const cStart = new Date(c.data);
+            const cEnd   = new Date(cStart.getTime() + Number(c.duracao) * 60_000);
+            return newStart < cEnd && newEnd > cStart;
+        });
+
+        if (hasOverlap) {
+            return res.status(409).json({
+                error: 'Já existe uma consulta agendada neste horário. Escolha um horário diferente.',
+            });
+        }
+        // ── End overlap check ──────────────────────────────────────────────────
+
         const consulta = new Consulta({ paciente, psicologo: psicologoProfile._id, data, duracao, estado, notas });
         await consulta.save();
         res.status(201).json(consulta);

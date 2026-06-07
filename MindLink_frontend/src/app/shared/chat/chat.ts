@@ -142,13 +142,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         if (msgs.length > prev) this.shouldScrollBottom = true;
 
         if (!fromForeground) {
-          // Background: check for new messages
-          if (msgs.length > this.lastSeenCount) {
-            this.hasUnread.set(true);
-          }
+          if (msgs.length > this.lastSeenCount) this.hasUnread.set(true);
         } else {
-          // Foreground (panel open): mark all as seen
           this.lastSeenCount = msgs.length;
+          this.sendError.set(null);
+        }
+      },
+      error: err => {
+        if (fromForeground) {
+          this.sendError.set(
+            err.status === 401 ? 'Sessão expirada. A redirecionar...'
+            : `Erro ao carregar mensagens (${err.status ?? 'sem ligação'}).`
+          );
         }
       },
     });

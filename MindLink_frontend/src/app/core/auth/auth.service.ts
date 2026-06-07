@@ -24,7 +24,7 @@ const API       = 'http://localhost:8080/api';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private _user = signal<AuthUser | null>(this.loadUser());
+  private _user  = signal<AuthUser | null>(this.loadUser());
   private _token = signal<string | null>(this.loadToken());
 
   readonly user       = this._user.asReadonly();
@@ -73,11 +73,30 @@ export class AuthService {
   }
 
   private loadToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return null;
+    // Discard expired tokens immediately on load
+    if (this.isTokenExpired(token)) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      return null;
+    }
+    return token;
   }
 
   private loadUser(): AuthUser | null {
     const raw = localStorage.getItem(USER_KEY);
     return raw ? JSON.parse(raw) : null;
+  }
+
+  /** Decode JWT payload and check expiry without a library. */
+  private isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // exp is in seconds; add 10s buffer
+      return payload.exp * 1000 < Date.now() - 10_000;
+    } catch {
+      return true;
+    }
   }
 }

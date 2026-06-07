@@ -83,9 +83,111 @@
 /* Chart */
 .chart-card {
   padding: var(--space-xl);
+  margin-bottom: var(--space-2xl);
 }
 
 .chart-wrap {
   height: 320px;
   position: relative;
+}
+
+/* Past consultas section */
+.hist-section {
+  margin-top: var(--space-xl);
+}
+
+.hist-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: var(--space-lg);
+}
+
+.consulta-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.consulta-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+}
+
+.consulta-card__date {
+  width: 52px;
+  flex-shrink: 0;
+  text-align: center;
+  background: rgba(0,0,0,0.04);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+}
+
+.consulta-card__day {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+
+.consulta-card__month {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.consulta-card__year {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.consulta-card__info { flex: 1; }
+
+.consulta-card__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.consulta-card__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 3px;
+}
+
+.consulta-card__notas {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Estado badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge--realizada {
+  background: rgba(38,135,78,0.1);
+  color: var(--color-primary-dark);
+}
+
+.badge--cancelada {
+  background: rgba(220,38,38,0.08);
+  color: #dc2626;
+}
+
+.badge--agendada {
+  background: rgba(234,179,8,0.1);
+  color: #854d0e;
 }

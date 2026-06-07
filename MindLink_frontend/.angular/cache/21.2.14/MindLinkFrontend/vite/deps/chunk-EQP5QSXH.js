@@ -4,14 +4,14 @@ import {
   supportsScrollBehavior
 } from "./chunk-GUGIMSVJ.js";
 import {
+  BidiModule,
+  Directionality
+} from "./chunk-WXZTCNN5.js";
+import {
   Platform,
   coerceElement,
   coerceNumberProperty
-} from "./chunk-26GELOFZ.js";
-import {
-  BidiModule,
-  Directionality
-} from "./chunk-AW5RRJEJ.js";
+} from "./chunk-UHSAULA6.js";
 import {
   ApplicationRef,
   ChangeDetectionStrategy,
@@ -36,13 +36,10 @@ import {
   ViewContainerRef,
   ViewEncapsulation,
   afterNextRender,
-  animationFrameScheduler,
-  asapScheduler,
   booleanAttribute,
   effect,
   forwardRef,
   inject,
-  isObservable,
   setClassMetadata,
   signal,
   untracked,
@@ -65,7 +62,12 @@ import {
   ɵɵqueryRefresh,
   ɵɵstyleProp,
   ɵɵviewQuery
-} from "./chunk-5YG6WRRO.js";
+} from "./chunk-BLBE6O4X.js";
+import {
+  animationFrameScheduler,
+  asapScheduler,
+  isObservable
+} from "./chunk-HWYXSU2G.js";
 import {
   ConnectableObservable,
   Observable,
@@ -80,7 +82,7 @@ import {
   startWith,
   switchMap,
   takeUntil
-} from "./chunk-4PAWV54Y.js";
+} from "./chunk-MARUHEWW.js";
 import {
   __spreadProps,
   __spreadValues
@@ -1439,4 +1441,4 @@ export {
   CdkScrollableModule,
   ScrollingModule
 };
-//# sourceMappingURL=chunk-XCDXZTN5.js.map
+//# sourceMappingURL=chunk-EQP5QSXH.js.map
