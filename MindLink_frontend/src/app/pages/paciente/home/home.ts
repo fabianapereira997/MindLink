@@ -4,7 +4,6 @@ import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PacienteService, PacienteProfile } from '../../../core/services/paciente.service';
@@ -17,7 +16,7 @@ import { DesafioService, Desafio } from '../../../core/services/desafio.service'
   standalone: true,
   imports: [
     CommonModule, RouterLink, ReactiveFormsModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, DatePipe,
+    MatFormFieldModule, MatInputModule, MatButtonModule, DatePipe,
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',
@@ -42,15 +41,28 @@ export class PacienteHomeComponent implements OnInit {
   submitDone     = signal(false);
   todayDone      = signal(false);
 
+  // Mood slider (1–5)
+  humorValue     = signal<number>(3);
+  // Symptom chips
+  selectedSintomas = signal<string[]>([]);
+  customSintoma    = signal('');
+
   checkInForm = this.fb.group({
-    humor:    [null as number | null, [Validators.required, Validators.min(1), Validators.max(5)]],
-    sintomas: [''],
-    notas:    [''],
+    notas: [''],
   });
 
-  humorLabels: Record<number, string> = {
-    1: '1 — Muito mau', 2: '2 — Mau', 3: '3 — Razoável', 4: '4 — Bom', 5: '5 — Muito bom',
-  };
+  readonly SINTOMAS_OPCOES = [
+    'Ansiedade', 'Stress', 'Fadiga', 'Insónia',
+    'Tristeza', 'Irritabilidade', 'Dores de cabeça',
+    'Falta de apetite', 'Pensamentos negativos', 'Isolamento',
+  ];
+
+  // Color ramp: 1=red, 2=orange, 3=amber, 4=light-green, 5=dark-green
+  private readonly HUMOR_COLORS = ['', '#dc2626', '#f97316', '#eab308', '#73C883', '#26874E'];
+  private readonly HUMOR_LABELS = ['', 'Muito mau', 'Mau', 'Razoável', 'Bom', 'Muito bom'];
+
+  humorColor  = computed(() => this.HUMOR_COLORS[this.humorValue()]);
+  humorLabel  = computed(() => this.HUMOR_LABELS[this.humorValue()]);
 
   // ── Date helpers ────────────────────────────────────────────────────────────
 
@@ -160,6 +172,30 @@ export class PacienteHomeComponent implements OnInit {
     });
   }
 
+  onHumorInput(event: Event): void {
+    this.humorValue.set(Number((event.target as HTMLInputElement).value));
+  }
+
+  toggleSintoma(s: string): void {
+    this.selectedSintomas.update(list =>
+      list.includes(s) ? list.filter(x => x !== s) : [...list, s]
+    );
+  }
+
+  addCustomSintoma(): void {
+    const v = this.customSintoma().trim();
+    if (v && !this.selectedSintomas().includes(v)) {
+      this.selectedSintomas.update(l => [...l, v]);
+    }
+    this.customSintoma.set('');
+  }
+
+  removeCustomSintoma(s: string): void {
+    if (!this.SINTOMAS_OPCOES.includes(s)) {
+      this.selectedSintomas.update(l => l.filter(x => x !== s));
+    }
+  }
+
   marcarConcluido(d: Desafio): void {
     this.desafioSvc.marcarConcluido(d._id).subscribe({
       next: updated => this.allDesafios.update(list => list.map(x => x._id === updated._id ? updated : x)),
@@ -168,15 +204,19 @@ export class PacienteHomeComponent implements OnInit {
   }
 
   submitCheckIn(): void {
-    if (this.checkInForm.invalid) return;
     this.submitError.set(null);
-    const { humor, sintomas, notas } = this.checkInForm.value;
+    const notas = this.checkInForm.get('notas')?.value ?? '';
+    const sintomasStr = this.selectedSintomas().join(', ') || undefined;
     this.qSvc.create({
-      data: new Date().toISOString(), humor: humor!,
-      sintomas: sintomas ?? undefined, notas: notas ?? undefined,
+      data: new Date().toISOString(),
+      humor: this.humorValue(),
+      sintomas: sintomasStr,
+      notas: notas || undefined,
     }).subscribe({
       next: () => {
         this.checkInForm.reset();
+        this.selectedSintomas.set([]);
+        this.humorValue.set(3);
         this.showForm.set(false);
         this.submitDone.set(true);
         this.todayDone.set(true);

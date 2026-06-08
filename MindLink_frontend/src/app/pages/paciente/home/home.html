@@ -41,24 +41,73 @@
         @if (showForm()) {
           @if (submitError()) { <div class="banner banner--error">{{ submitError() }}</div> }
           <form [formGroup]="checkInForm" (ngSubmit)="submitCheckIn()" class="checkin-form">
-            <mat-form-field appearance="fill" class="form-field">
-              <mat-label>Humor (1–5)</mat-label>
-              <mat-select formControlName="humor">
-                @for (n of [1,2,3,4,5]; track n) {
-                  <mat-option [value]="n">{{ humorLabels[n] }}</mat-option>
+
+            <!-- Mood slider -->
+            <div class="mood-slider-block">
+              <label class="mood-slider-label">Como se sente hoje?</label>
+              <div class="mood-slider-wrap">
+                <span class="mood-face mood-face--sad">☹</span>
+                <div class="mood-slider-track">
+                  <input
+                    type="range" min="1" max="5" step="1"
+                    [value]="humorValue()"
+                    (input)="onHumorInput($event)"
+                    class="mood-range"
+                    [style.--thumb-color]="humorColor()"
+                    [style.--fill-pct]="((humorValue() - 1) / 4 * 100) + '%'"
+                  />
+                </div>
+                <span class="mood-face mood-face--happy">☺</span>
+              </div>
+              <div class="mood-value" [style.color]="humorColor()">
+                <span class="mood-value__num">{{ humorValue() }}/5</span>
+                <span class="mood-value__label">{{ humorLabel() }}</span>
+              </div>
+            </div>
+
+            <!-- Symptom chips -->
+            <div class="sintomas-block">
+              <label class="sintomas-label">Sintomas (opcional)</label>
+              <div class="sintomas-chips">
+                @for (s of SINTOMAS_OPCOES; track s) {
+                  <button type="button"
+                    class="sintoma-chip"
+                    [class.sintoma-chip--selected]="selectedSintomas().includes(s)"
+                    (click)="toggleSintoma(s)">
+                    {{ s }}
+                  </button>
                 }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="fill" class="form-field">
-              <mat-label>Sintomas (opcional)</mat-label>
-              <input matInput formControlName="sintomas" placeholder="Ex: ansiedade, cansaço..." />
-            </mat-form-field>
+                <!-- Custom chips added by user -->
+                @for (s of selectedSintomas(); track s) {
+                  @if (!SINTOMAS_OPCOES.includes(s)) {
+                    <button type="button"
+                      class="sintoma-chip sintoma-chip--selected sintoma-chip--custom"
+                      (click)="removeCustomSintoma(s)">
+                      {{ s }} ✕
+                    </button>
+                  }
+                }
+              </div>
+              <div class="sintoma-custom-row">
+                <input
+                  class="sintoma-custom-input"
+                  placeholder="Outro sintoma..."
+                  [value]="customSintoma()"
+                  (input)="customSintoma.set($any($event.target).value)"
+                  (keydown.enter)="$event.preventDefault(); addCustomSintoma()"
+                />
+                <button type="button" class="sintoma-add-btn" (click)="addCustomSintoma()">Adicionar</button>
+              </div>
+            </div>
+
+            <!-- Notes -->
             <mat-form-field appearance="fill" class="form-field form-field--full">
               <mat-label>Notas (opcional)</mat-label>
               <textarea matInput formControlName="notas" rows="3"></textarea>
             </mat-form-field>
+
             <div class="checkin-form__actions">
-              <button type="submit" class="btn-primary" [disabled]="checkInForm.invalid">Guardar</button>
+              <button type="submit" class="btn-primary">Guardar</button>
             </div>
           </form>
         }

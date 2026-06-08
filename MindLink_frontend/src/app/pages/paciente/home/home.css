@@ -59,22 +59,205 @@
 .checkin-card__top p { color: var(--color-text-secondary); font-size: 0.9rem; }
 
 .checkin-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
   margin-top: var(--space-lg);
   padding-top: var(--space-lg);
   border-top: 1px solid rgba(0,0,0,0.05);
 }
 
 .form-field { width: 100%; }
-.form-field--full { grid-column: 1 / -1; }
+.form-field--full { width: 100%; }
 
 .checkin-form__actions {
-  grid-column: 1 / -1;
   display: flex;
   justify-content: flex-end;
 }
+
+/* ── Mood Slider ── */
+.mood-slider-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.mood-slider-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.mood-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.mood-face {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.mood-face--sad  { color: #dc2626; }
+.mood-face--happy { color: #26874E; }
+
+.mood-slider-track {
+  flex: 1;
+  position: relative;
+}
+
+.mood-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    to right,
+    var(--thumb-color, #26874E) 0%,
+    var(--thumb-color, #26874E) var(--fill-pct, 50%),
+    rgba(0,0,0,0.08) var(--fill-pct, 50%)
+  );
+  outline: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mood-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--thumb-color, #26874E);
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.mood-range::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+}
+
+.mood-range::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--thumb-color, #26874E);
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  cursor: pointer;
+}
+
+.mood-value {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  transition: color 0.2s;
+}
+
+.mood-value__num {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mood-value__label {
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* ── Symptom Chips ── */
+.sintomas-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.sintomas-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.sintomas-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sintoma-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  background: white;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.sintoma-chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+  background: rgba(38,135,78,0.04);
+}
+
+.sintoma-chip--selected {
+  background: rgba(38,135,78,0.1);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.sintoma-chip--custom {
+  background: rgba(38,135,78,0.15);
+}
+
+.sintoma-custom-row {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
+.sintoma-custom-input {
+  flex: 1;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid rgba(0,0,0,0.12);
+  font-family: inherit;
+  font-size: 0.875rem;
+  background: white;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.sintoma-custom-input:focus {
+  border-color: var(--color-primary);
+}
+
+.sintoma-add-btn {
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.sintoma-add-btn:hover { background: var(--color-primary-dark); }
 
 /* Badges */
 .badge {
