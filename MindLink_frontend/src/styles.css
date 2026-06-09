@@ -154,6 +154,11 @@ a:hover { color: var(--color-primary-dark); }
   color: white;
 }
 
+.btn--sm {
+  padding: 0.35rem 0.9rem !important;
+  font-size: 0.825rem !important;
+}
+
 /* Card */
 .card {
   background: var(--color-white);

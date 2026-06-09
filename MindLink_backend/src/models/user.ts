@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     tipo: { type: String, required: true, enum: ['psicologo', 'paciente', 'admin'] },
+    mustChangePassword: { type: Boolean, default: false },
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

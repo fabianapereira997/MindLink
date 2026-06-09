@@ -1,57 +1,97 @@
 <div class="auth-page">
   <div class="auth-card card">
     <div class="auth-card__header">
-      <a routerLink="/" class="auth-card__logo">MindLink</a>
-      <h1>Create your account</h1>
-      <p>Start your mental health monitoring journey today.</p>
+      <a routerLink="/" class="auth-card__logo">
+        <img src="/logo1.png" alt="MindLink" class="auth-card__logo-img"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline'" />
+        <span style="display:none">MindLink</span>
+      </a>
+      <h1>Criar conta de administrador</h1>
+      <p>Acesso restrito. Necessita de token de validação.</p>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
-      <mat-form-field appearance="fill" class="auth-field">
-        <mat-label>Full name</mat-label>
-        <input matInput type="text" formControlName="name" autocomplete="name" />
-        <mat-icon matSuffix>person_outline</mat-icon>
-        @if (form.get('name')?.invalid && form.get('name')?.touched) {
-          <mat-error>Enter your name (at least 2 characters).</mat-error>
-        }
-      </mat-form-field>
+    @if (success()) {
+      <div class="auth-success">
+        Conta criada com sucesso! A redirecionar para o login...
+      </div>
+    } @else {
 
-      <mat-form-field appearance="fill" class="auth-field">
-        <mat-label>Email</mat-label>
-        <input matInput type="email" formControlName="email" autocomplete="email" />
-        <mat-icon matSuffix>mail_outline</mat-icon>
-        @if (form.get('email')?.invalid && form.get('email')?.touched) {
-          <mat-error>Enter a valid email address.</mat-error>
-        }
-      </mat-form-field>
+      @if (error()) {
+        <div class="auth-error">{{ error() }}</div>
+      }
 
-      <mat-form-field appearance="fill" class="auth-field">
-        <mat-label>Password</mat-label>
-        <input
-          matInput
-          [type]="hidePassword ? 'password' : 'text'"
-          formControlName="password"
-          autocomplete="new-password"
-        />
-        <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
-          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
+
+        <mat-form-field appearance="fill" class="auth-field">
+          <mat-label>Nome completo</mat-label>
+          <input matInput type="text" formControlName="nome" autocomplete="name" />
+          <mat-icon matSuffix>person_outline</mat-icon>
+          @if (form.get('nome')?.invalid && form.get('nome')?.touched) {
+            <mat-error>Introduza o seu nome (mínimo 2 caracteres).</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="auth-field">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" autocomplete="email" />
+          <mat-icon matSuffix>mail_outline</mat-icon>
+          @if (form.get('email')?.invalid && form.get('email')?.touched) {
+            <mat-error>Introduza um email válido.</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="auth-row">
+          <mat-form-field appearance="fill" class="auth-field">
+            <mat-label>Género</mat-label>
+            <mat-select formControlName="genero">
+              <mat-option value="masculino">Masculino</mat-option>
+              <mat-option value="feminino">Feminino</mat-option>
+              <mat-option value="outro">Outro</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="auth-field">
+            <mat-label>Data de nascimento</mat-label>
+            <input matInput type="date" formControlName="data_nascimento" />
+            @if (form.get('data_nascimento')?.invalid && form.get('data_nascimento')?.touched) {
+              <mat-error>Campo obrigatório.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="fill" class="auth-field">
+          <mat-label>Password</mat-label>
+          <input matInput [type]="hidePassword ? 'password' : 'text'"
+                 formControlName="password" autocomplete="new-password" />
+          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.get('password')?.invalid && form.get('password')?.touched) {
+            <mat-error>Mínimo 6 caracteres.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="auth-field">
+          <mat-label>Token de validação</mat-label>
+          <input matInput [type]="hideToken ? 'password' : 'text'"
+                 formControlName="adminToken" placeholder="Token secreto de administrador" />
+          <button mat-icon-button matSuffix type="button" (click)="hideToken = !hideToken">
+            <mat-icon>{{ hideToken ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.get('adminToken')?.invalid && form.get('adminToken')?.touched) {
+            <mat-error>Token obrigatório.</mat-error>
+          }
+        </mat-form-field>
+
+        <button type="submit" class="btn-primary auth-submit"
+                [disabled]="form.invalid || loading()">
+          {{ loading() ? 'A criar conta...' : 'Criar conta de administrador' }}
         </button>
-        @if (form.get('password')?.invalid && form.get('password')?.touched) {
-          <mat-error>Password must be at least 6 characters.</mat-error>
-        }
-      </mat-form-field>
+      </form>
 
-      <button
-        type="submit"
-        class="btn-primary auth-submit"
-        [disabled]="form.invalid"
-      >
-        Create account
-      </button>
-    </form>
-
-    <p class="auth-card__switch">
-      Already have an account? <a routerLink="/auth/login">Log in</a>
-    </p>
+      <p class="auth-card__switch">
+        Já tem conta? <a routerLink="/login">Iniciar sessão</a>
+      </p>
+    }
   </div>
 </div>

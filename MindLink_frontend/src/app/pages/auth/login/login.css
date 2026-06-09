@@ -71,3 +71,10 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.auth-card__switch {
+  text-align: center;
+  margin-top: var(--space-lg);
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}

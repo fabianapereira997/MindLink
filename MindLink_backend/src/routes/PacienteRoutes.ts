@@ -34,8 +34,16 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
 // ─── GET /api/pacientes — scoped list ─────────────────────────────────────────
 // Psicologo: only their assigned pacientes.
 // Paciente: only their own profile (returned as an array for consistency).
-router.get('/', verifyToken, verifyTokenByRole('psicologo', 'paciente'), async (req: Request, res: Response) => {
+// Admin: all pacientes.
+router.get('/', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admin'), async (req: Request, res: Response) => {
     try {
+        if (req.user!.tipo === 'admin') {
+            const pacientes = await Paciente.find()
+                .populate('user', '-password')
+                .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
+            return res.json(pacientes);
+        }
+
         if (req.user!.tipo === 'psicologo') {
             const psicologoProfile = await getPsicologoByUserId(req.user!.id);
             if (!psicologoProfile) {
@@ -87,9 +95,8 @@ router.get('/psicologo/:psicologoId', verifyToken, verifyTokenByRole('psicologo'
 });
 
 // ─── GET /api/pacientes/:id — get paciente by id ──────────────────────────────
-// Paciente: only their own profile.
-// Psicologo: only if that paciente is assigned to them.
-router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente'), async (req: Request, res: Response) => {
+// Paciente: only their own profile. Psicologo: only if assigned. Admin: any.
+router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admin'), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidObjectId(id)) {

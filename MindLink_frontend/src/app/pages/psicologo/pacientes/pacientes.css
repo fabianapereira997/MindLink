@@ -1,0 +1,296 @@
+.psi-page {
+  padding: var(--space-2xl) 0 var(--space-4xl);
+}
+
+.loading {
+  text-align: center;
+  padding: var(--space-4xl);
+  color: var(--color-text-muted);
+}
+
+.back-link { margin-bottom: var(--space-lg); }
+
+/* Page header */
+.psi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.psi-header h1 { font-size: clamp(1.4rem, 3vw, 2rem); }
+
+/* Search */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-lg);
+  color: var(--color-text-muted);
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+/* List */
+.paciente-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.paciente-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.paciente-row:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.paciente-row__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-green-300), var(--color-green-500));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.paciente-row__info { flex: 1; }
+
+.paciente-row__name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.paciente-row__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.paciente-row__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.chevron { color: var(--color-text-muted); }
+
+/* Humor pills */
+.humor-pill {
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.humor-pill--low { background: rgba(220,38,38,0.1); color: #dc2626; }
+.humor-pill--mid { background: rgba(234,179,8,0.12); color: #854d0e; }
+.humor-pill--ok  { background: rgba(38,135,78,0.1);  color: var(--color-primary-dark); }
+
+/* Perfil header */
+.perfil-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.perfil-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-green-300), var(--color-green-500));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.perfil-header h1 { font-size: 1.75rem; margin-bottom: 4px; }
+.perfil-header p  { color: var(--color-text-muted); }
+
+/* Perfil grid */
+.perfil-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-2xl);
+}
+
+.perfil-section { padding: var(--space-xl); }
+
+.perfil-section h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-lg);
+}
+
+/* Info list */
+.info-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.info-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+.info-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.info-value { font-size: 0.95rem; color: var(--color-text-primary); }
+
+/* Stats mini */
+.stats-mini {
+  display: flex;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.stat-mini { display: flex; flex-direction: column; gap: 4px; }
+
+.stat-mini__value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-primary);
+}
+
+.stat-mini__label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* Chart */
+.chart-wrap {
+  height: 200px;
+  position: relative;
+  margin-top: var(--space-lg);
+}
+
+/* Hist section */
+.hist-section { margin-top: var(--space-2xl); }
+
+.hist-section h2 {
+  font-size: 1.15rem;
+  margin-bottom: var(--space-lg);
+}
+
+.qlist { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.qcard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+}
+
+.qcard__date {
+  width: 52px;
+  flex-shrink: 0;
+  text-align: center;
+  background: rgba(0,0,0,0.04);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+}
+
+.qcard__day {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+
+.qcard__month {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.qcard__year {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.qcard__info { flex: 1; }
+
+.qcard__humor-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.qcard__label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+}
+
+.qcard__sintomas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-sm);
+}
+
+.sintoma-tag {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: rgba(0,0,0,0.05);
+  color: var(--color-text-secondary);
+}
+
+.qcard__notas {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  margin-top: var(--space-sm);
+}
+
+/* Empty */
+.empty-card { text-align: center; padding: var(--space-xl); }
+.empty-card p { color: var(--color-text-muted); }

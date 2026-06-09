@@ -8,6 +8,7 @@ import {
 const express    = require('express');
 const router     = express.Router();
 const Psicologo  = require('../models/psicologo');
+const Paciente   = require('../models/paciente');
 const { verifyToken }       = require('../middleware/VerifyToken');
 const { verifyTokenByRole } = require('../middleware/VerifyTokenByRole');
 
@@ -23,6 +24,25 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
         res.status(201).json(psicologo);
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });
+    }
+});
+
+// ─── GET /api/psicologos/me — psicologo retrieves their own profile + pacientes ─
+// Psicologo only. Returns the profile with pacientes array populated with user data.
+// Must come before /:id to avoid route conflict.
+router.get('/me', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
+    try {
+        const psicologoProfile = await getPsicologoByUserId(req.user!.id);
+        if (!psicologoProfile) {
+            return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
+        }
+        const pacientes = await Paciente.find({ psicologo: psicologoProfile._id })
+            .populate('user', '-password');
+        const result = psicologoProfile.toObject();
+        result.pacientes = pacientes;
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -46,8 +66,8 @@ router.get('/associado', verifyToken, verifyTokenByRole('paciente'), async (req:
 });
 
 // ─── GET /api/psicologos — list all psicologos ────────────────────────────────
-// Psicologo only. Pacientes must not access this list.
-router.get('/', verifyToken, verifyTokenByRole('psicologo'), async (_req: Request, res: Response) => {
+// Psicologo or admin.
+router.get('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (_req: Request, res: Response) => {
     try {
         const psicologos = await Psicologo.find().populate('user', '-password');
         res.json(psicologos);
@@ -57,9 +77,8 @@ router.get('/', verifyToken, verifyTokenByRole('psicologo'), async (_req: Reques
 });
 
 // ─── GET /api/psicologos/:id — get psicologo by id ────────────────────────────
-// Psicologo: only their own profile.
-// Paciente: only their assigned psicologo.
-router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente'), async (req: Request, res: Response) => {
+// Psicologo: only their own profile. Paciente: only their assigned psicologo. Admin: any.
+router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admin'), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidObjectId(id)) {
@@ -79,6 +98,7 @@ router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente'), asyn
                 return res.status(403).json({ error: 'Acesso negado: psicólogo não associado ao seu perfil' });
             }
         }
+        // admin: no ownership check — may view any profile
 
         const psicologo = await Psicologo.findById(id).populate('user', '-password');
         if (!psicologo) {

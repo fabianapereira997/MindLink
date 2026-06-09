@@ -1,0 +1,104 @@
+<div class="psi-page">
+  <div class="container">
+
+    <div class="psi-header">
+      <h1>Estatísticas</h1>
+    </div>
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else {
+
+      <!-- Overview cards -->
+      <div class="stats-grid">
+        <div class="stat-card card">
+          <div class="stat-card__icon stat-card__icon--green">📈</div>
+          <div class="stat-card__value" style="color: var(--color-primary)">{{ pctMelhorando() }}%</div>
+          <div class="stat-card__label">A melhorar</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__icon stat-card__icon--red">📉</div>
+          <div class="stat-card__value" style="color: #dc2626">{{ pctRegredir() }}%</div>
+          <div class="stat-card__label">A regredir</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__icon">😟</div>
+          <div class="stat-card__value" style="color: #ca8a04">{{ pacientesAtencao().length }}</div>
+          <div class="stat-card__label">Atenção especial</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__icon">🏅</div>
+          <div class="stat-card__value" style="color: var(--color-primary)">{{ pacientesAssiduos().length }}</div>
+          <div class="stat-card__label">Pacientes assíduos</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__value">{{ totalRegistos() }}</div>
+          <div class="stat-card__label">Registos de humor totais</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__value">{{ avgGeral() }}<span class="unit">/5</span></div>
+          <div class="stat-card__label">Humor médio geral</div>
+        </div>
+      </div>
+
+      <!-- Evolução geral - chart -->
+      @if (allData().length > 0) {
+        <div class="card chart-card">
+          <h2>Evolução do humor geral (últimos 30 dias)</h2>
+          <div class="chart-wrap">
+            <canvas #geralChart></canvas>
+          </div>
+        </div>
+      }
+
+      <!-- Atenção especial -->
+      <div class="stats-section">
+        <h2>Atenção especial</h2>
+        <p class="stats-section__sub">Humor médio baixo (&le;2.5) e desafios por cumprir</p>
+        @if (pacientesAtencao().length === 0) {
+          <div class="card empty-card"><p>Nenhum paciente em atenção especial.</p></div>
+        } @else {
+          <div class="paciente-list">
+            @for (p of pacientesAtencao(); track p._id) {
+              <a [routerLink]="['/psicologo/pacientes', p._id]" class="card paciente-row paciente-row--alert">
+                <div class="paciente-row__avatar">{{ p.user?.nome?.charAt(0) ?? 'P' }}</div>
+                <div class="paciente-row__info">
+                  <div class="paciente-row__name">{{ p.user?.nome }}</div>
+                  <div class="paciente-row__meta">
+                    Humor: {{ p.avgHumor }}/5 &middot; {{ p.desafiosPendentes }} desafio(s) pendente(s)
+                  </div>
+                </div>
+                <div class="humor-pill humor-pill--low">{{ p.avgHumor }}/5</div>
+              </a>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Assíduos -->
+      <div class="stats-section">
+        <h2>Pacientes assíduos</h2>
+        <p class="stats-section__sub">Cumprem desafios e registam humor regularmente</p>
+        @if (pacientesAssiduos().length === 0) {
+          <div class="card empty-card"><p>Ainda sem pacientes assíduos identificados.</p></div>
+        } @else {
+          <div class="paciente-list">
+            @for (p of pacientesAssiduos(); track p._id) {
+              <a [routerLink]="['/psicologo/pacientes', p._id]" class="card paciente-row paciente-row--ok">
+                <div class="paciente-row__avatar">{{ p.user?.nome?.charAt(0) ?? 'P' }}</div>
+                <div class="paciente-row__info">
+                  <div class="paciente-row__name">{{ p.user?.nome }}</div>
+                  <div class="paciente-row__meta">
+                    Humor: {{ p.avgHumor }}/5 &middot; Streak: {{ p.streak }} dias
+                  </div>
+                </div>
+                <div class="humor-pill humor-pill--ok">{{ p.avgHumor }}/5</div>
+              </a>
+            }
+          </div>
+        }
+      </div>
+
+    }
+  </div>
+</div>

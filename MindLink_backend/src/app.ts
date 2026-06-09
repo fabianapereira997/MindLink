@@ -10,6 +10,7 @@ const { desafioRoutes }      = require('./routes/DesafioRoutes');
 const { mensagemRoutes }     = require('./routes/MensagemRoutes');
 const { alertaRoutes }       = require('./routes/AlertaRoutes');
 const { analiseRoutes }      = require('./routes/AnaliseRoutes');
+const { adminRoutes }        = require('./routes/AdminRoutes');
 
 import { errorHandler } from './middleware/errorHandler';
 
@@ -36,6 +37,7 @@ export function createApp(): Express {
     app.use('/api/mensagens',     mensagemRoutes);
     app.use('/api/alertas',       alertaRoutes);
     app.use('/api/analise',       analiseRoutes);
+    app.use('/api/admin',         adminRoutes);
 
     // 404 catch-all
     app.use((_req: Request, res: Response) => {

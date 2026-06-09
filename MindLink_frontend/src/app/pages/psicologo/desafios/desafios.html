@@ -1,0 +1,137 @@
+<div class="psi-page">
+  <div class="container">
+
+    <div class="psi-header">
+      <h1>Desafios</h1>
+      <button class="btn-primary" (click)="showForm.set(!showForm())">
+        {{ showForm() ? 'Cancelar' : '+ Novo desafio' }}
+      </button>
+    </div>
+
+    <!-- Criar novo desafio -->
+    @if (showForm()) {
+      <div class="card novo-desafio-form">
+        <h2>Novo desafio</h2>
+
+        @if (formError()) {
+          <div class="banner banner--error">{{ formError() }}</div>
+        }
+        @if (formSuccess()) {
+          <div class="banner banner--success">Desafio criado com sucesso!</div>
+        }
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Título</label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="Ex: Meditação diária de 5 minutos"
+              [value]="novoTitulo()"
+              (input)="novoTitulo.set($any($event.target).value)"
+            />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Duração</label>
+            <select class="form-input" [value]="novaDuracao()" (change)="novaDuracao.set($any($event.target).value)">
+              <option value="diario">Diário</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensal">Mensal</option>
+            </select>
+          </div>
+
+          <div class="form-field form-field--full">
+            <label class="form-label">Descrição</label>
+            <textarea
+              class="form-input form-textarea"
+              placeholder="Descreva o desafio..."
+              [value]="novaDescricao()"
+              (input)="novaDescricao.set($any($event.target).value)"
+            ></textarea>
+          </div>
+
+          <div class="form-field form-field--full">
+            <label class="form-label">Pacientes</label>
+            <div class="paciente-chips">
+              @for (p of pacientes(); track p._id) {
+                <button
+                  type="button"
+                  class="paciente-chip"
+                  [class.paciente-chip--selected]="selectedPacientes().includes(p._id)"
+                  (click)="togglePaciente(p._id)"
+                >
+                  {{ p.user?.nome }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" (click)="criarDesafio()" [disabled]="saving()">
+            {{ saving() ? 'A guardar...' : 'Criar desafio' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Lista de desafios -->
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else if (desafios().length === 0) {
+      <div class="card empty-card"><p>Ainda não criou nenhum desafio.</p></div>
+    } @else {
+      <div class="desafio-list">
+        @for (d of desafios(); track d._id) {
+          <div class="card desafio-card">
+            <div class="desafio-card__header">
+              <div class="desafio-card__title-row">
+                <span class="desafio-card__title">{{ d.titulo }}</span>
+                <span class="badge badge--duracao">{{ d.duracao }}</span>
+              </div>
+              @if (d.descricao) {
+                <p class="desafio-card__desc">{{ d.descricao }}</p>
+              }
+            </div>
+
+            <div class="desafio-card__pacientes">
+              <!-- Cumpriram -->
+              @if (d.pacientesCumpriram?.length) {
+                <div class="desafio-grupo">
+                  <span class="desafio-grupo__label desafio-grupo__label--ok">
+                    ✓ Cumpriram ({{ d.pacientesCumpriram.length }})
+                  </span>
+                  <div class="chip-row">
+                    @for (p of d.pacientesCumpriram; track p._id) {
+                      <a [routerLink]="['/psicologo/pacientes', p._id]" class="chip chip--ok">
+                        {{ p.user?.nome }}
+                      </a>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Não cumpriram -->
+              @if (d.pacientesNaoCumpriram?.length) {
+                <div class="desafio-grupo">
+                  <span class="desafio-grupo__label desafio-grupo__label--nok">
+                    ✗ Por cumprir ({{ d.pacientesNaoCumpriram.length }})
+                  </span>
+                  <div class="chip-row">
+                    @for (p of d.pacientesNaoCumpriram; track p._id) {
+                      <a [routerLink]="['/psicologo/pacientes', p._id]" class="chip chip--nok">
+                        {{ p.user?.nome }}
+                      </a>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>

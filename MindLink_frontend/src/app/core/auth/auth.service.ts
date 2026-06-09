@@ -11,6 +11,7 @@ export interface AuthUser {
   tipo: 'paciente' | 'psicologo' | 'admin';
   genero: string;
   data_nascimento: string;
+  mustChangePassword?: boolean;
 }
 
 interface LoginResponse {
@@ -27,10 +28,11 @@ export class AuthService {
   private _user  = signal<AuthUser | null>(this.loadUser());
   private _token = signal<string | null>(this.loadToken());
 
-  readonly user       = this._user.asReadonly();
-  readonly isLoggedIn = computed(() => !!this._token());
-  readonly role       = computed(() => this._user()?.tipo ?? null);
-  readonly firstName  = computed(() => this._user()?.nome?.split(' ')[0] ?? '');
+  readonly user              = this._user.asReadonly();
+  readonly isLoggedIn        = computed(() => !!this._token());
+  readonly role              = computed(() => this._user()?.tipo ?? null);
+  readonly firstName         = computed(() => this._user()?.nome?.split(' ')[0] ?? '');
+  readonly mustChangePassword = computed(() => this._user()?.mustChangePassword ?? false);
   readonly homeRoute  = computed(() => {
     const tipo = this._user()?.tipo;
     if (tipo === 'paciente')  return '/paciente/home';
@@ -65,11 +67,24 @@ export class AuthService {
   }
 
   redirectAfterLogin(): void {
+    if (this._user()?.mustChangePassword) {
+      this.router.navigate(['/change-password']);
+      return;
+    }
     const tipo = this._user()?.tipo;
-    if (tipo === 'paciente')    this.router.navigate(['/paciente/home']);
+    if (tipo === 'paciente')       this.router.navigate(['/paciente/home']);
     else if (tipo === 'psicologo') this.router.navigate(['/psicologo/dashboard']);
-    else if (tipo === 'admin')  this.router.navigate(['/admin/dashboard']);
+    else if (tipo === 'admin')     this.router.navigate(['/admin/dashboard']);
     else this.router.navigate(['/']);
+  }
+
+  /** Called after a successful password change to clear the flag in memory. */
+  clearMustChangePassword(): void {
+    const u = this._user();
+    if (!u) return;
+    const updated = { ...u, mustChangePassword: false };
+    localStorage.setItem(USER_KEY, JSON.stringify(updated));
+    this._user.set(updated);
   }
 
   private loadToken(): string | null {

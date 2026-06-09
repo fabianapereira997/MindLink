@@ -1,0 +1,248 @@
+.psi-page {
+  padding: var(--space-2xl) 0 var(--space-4xl);
+}
+
+.loading {
+  text-align: center;
+  padding: var(--space-4xl);
+  color: var(--color-text-muted);
+}
+
+/* Header */
+.psi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-2xl);
+}
+
+.psi-header h1 { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 4px; }
+.psi-header p  { color: var(--color-text-secondary); font-size: 0.95rem; }
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-2xl);
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-lg);
+}
+
+.stat-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.stat-card__label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* Section */
+.dash-section { margin-bottom: var(--space-2xl); }
+
+.dash-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.dash-section__header h2 { font-size: 1.15rem; }
+
+/* Empty */
+.empty-card {
+  text-align: center;
+  padding: var(--space-xl);
+}
+.empty-card p { color: var(--color-text-muted); }
+
+/* Paciente list */
+.paciente-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.paciente-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.paciente-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.paciente-card--critico {
+  border-left: 4px solid #dc2626;
+}
+
+.paciente-card__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-green-300), var(--color-green-500));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.paciente-card__info { flex: 1; }
+
+.paciente-card__name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.paciente-card__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 3px;
+}
+
+/* Humor pill */
+.humor-pill {
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.humor-pill--low {
+  background: rgba(220,38,38,0.1);
+  color: #dc2626;
+}
+
+.humor-pill--mid {
+  background: rgba(234,179,8,0.12);
+  color: #854d0e;
+}
+
+.humor-pill--ok {
+  background: rgba(38,135,78,0.1);
+  color: var(--color-primary-dark);
+}
+
+/* Desafio */
+.desafio-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.desafio-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.desafio-card__body { flex: 1; }
+
+.desafio-card__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.desafio-card__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* Consulta */
+.consulta-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.consulta-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+}
+
+.consulta-card__date {
+  width: 52px;
+  flex-shrink: 0;
+  text-align: center;
+  background: rgba(38,135,78,0.08);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+}
+
+.consulta-card__day {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.consulta-card__month {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.consulta-card__info { flex: 1; }
+
+.consulta-card__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.consulta-card__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 3px;
+}
+
+.link-hover {
+  text-decoration: none;
+  color: inherit;
+  transition: color var(--transition-fast);
+}
+.link-hover:hover { color: var(--color-primary); }
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge--agendada {
+  background: rgba(38,135,78,0.1);
+  color: var(--color-primary-dark);
+}
+
+.badge--pendente {
+  background: rgba(234,179,8,0.12);
+  color: #854d0e;
+}
+
+.badge--cumprido {
+  background: rgba(38,135,78,0.1);
+  color: var(--color-primary-dark);
+}

@@ -1,0 +1,88 @@
+<div class="admin-page">
+  <div class="container">
+
+    <a routerLink="/admin/psicologos" class="detail-back">← Psicólogos</a>
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else if (error()) {
+      <div class="banner banner--error">{{ error() }}</div>
+    } @else if (data(); as d) {
+
+      <!-- Hero -->
+      <div class="card detail-hero">
+        <div class="detail-hero__avatar">{{ d.psicologo.user?.nome?.charAt(0) }}</div>
+        <div>
+          <div class="detail-hero__name">{{ d.psicologo.user?.nome }}</div>
+          <div class="detail-hero__meta">{{ d.psicologo.especialidade || 'Sem especialidade' }}</div>
+          <div class="detail-hero__email">{{ d.psicologo.user?.email }}</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="info-grid">
+        <div class="card info-box">
+          <div class="info-box__val">{{ d.pacientes.length }}</div>
+          <div class="info-box__label">Pacientes</div>
+        </div>
+        <div class="card info-box">
+          <div class="info-box__val">{{ d.consultas.length }}</div>
+          <div class="info-box__label">Total consultas</div>
+        </div>
+        <div class="card info-box">
+          <div class="info-box__val">{{ countEstado(d.consultas, 'realizada') }}</div>
+          <div class="info-box__label">Realizadas</div>
+        </div>
+        <div class="card info-box">
+          <div class="info-box__val">{{ countEstado(d.consultas, 'agendada') }}</div>
+          <div class="info-box__label">Agendadas</div>
+        </div>
+      </div>
+
+      <!-- Patients -->
+      <div class="card detail-section">
+        <h3>Pacientes ({{ d.pacientes.length }})</h3>
+        @if (d.pacientes.length === 0) {
+          <p class="empty-text">Sem pacientes associados.</p>
+        } @else {
+          <div class="compact-list">
+            @for (p of d.pacientes; track p._id) {
+              <a [routerLink]="['/admin/pacientes', p._id]" class="compact-item">
+                <div class="compact-item__avatar">{{ p.user?.nome?.charAt(0) }}</div>
+                <div class="compact-item__info">
+                  <span class="compact-item__name">{{ p.user?.nome }}</span>
+                  <span class="compact-item__sub">{{ p.user?.email }} · {{ p.doenca || 'Sem diagnóstico' }}</span>
+                </div>
+                <span class="compact-item__arrow">→</span>
+              </a>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Consultations -->
+      <div class="card detail-section">
+        <h3>Consultas ({{ d.consultas.length }})</h3>
+        @if (d.consultas.length === 0) {
+          <p class="empty-text">Sem consultas registadas.</p>
+        } @else {
+          <div class="compact-list">
+            @for (c of d.consultas.slice(0, 20); track c._id) {
+              <div class="compact-item">
+                <div class="compact-item__info">
+                  <span class="compact-item__name">{{ c.paciente?.user?.nome ?? '—' }}</span>
+                  <span class="compact-item__sub">{{ c.data | date:'dd/MM/yyyy HH:mm' }} · {{ c.duracao }} min</span>
+                </div>
+                <span class="badge" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
+              </div>
+            }
+            @if (d.consultas.length > 20) {
+              <p class="more-note">+ {{ d.consultas.length - 20 }} consultas mais antigas não mostradas.</p>
+            }
+          </div>
+        }
+      </div>
+
+    }
+  </div>
+</div>

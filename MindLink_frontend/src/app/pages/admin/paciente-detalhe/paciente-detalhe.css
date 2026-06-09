@@ -1,0 +1,79 @@
+@import '../admin-shared.css';
+
+.detail-hero__diag {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.psi-link {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.empty-text {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-lg) 0;
+}
+
+/* Humor list */
+.humor-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.humor-item {
+  display: grid;
+  grid-template-columns: 70px 1fr 50px auto;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.humor-item__date {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.humor-item__bar-wrap {
+  height: 8px;
+  background: rgba(0,0,0,0.06);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.humor-item__bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  min-width: 4px;
+  transition: width 0.3s;
+}
+
+.humor-item__val {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.humor-item__sintomas {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.badge--amber {
+  background: rgba(234,179,8,0.1);
+  color: #92400e;
+}
+
+@media (max-width: 600px) {
+  .humor-item {
+    grid-template-columns: 60px 1fr 44px;
+  }
+  .humor-item__sintomas { display: none; }
+}

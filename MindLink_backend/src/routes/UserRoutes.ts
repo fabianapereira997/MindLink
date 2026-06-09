@@ -8,10 +8,22 @@ const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { verifyToken } = require('../middleware/VerifyToken');
 
-// ─── POST /api/users/register — public ────────────────────────────────────────
+// ─── POST /api/users/register — admin self-registration only ──────────────────
+// Only users with tipo='admin' may register here. Requires a secret adminToken
+// that must match the ADMIN_REGISTER_TOKEN environment variable.
 router.post('/register', async (req: Request, res: Response) => {
     try {
-        const { nome, genero, data_nascimento, email, password, tipo } = req.body;
+        const { nome, genero, data_nascimento, email, password, tipo, adminToken } = req.body;
+
+        // Only admin may self-register via the public site
+        if (tipo !== 'admin') {
+            return res.status(403).json({ error: 'Auto-registo apenas disponível para administradores' });
+        }
+
+        // Validate the secret admin token
+        if (!adminToken || adminToken !== process.env.ADMIN_REGISTER_TOKEN) {
+            return res.status(403).json({ error: 'Token de validação inválido' });
+        }
 
         const exists = await User.findOne({ email });
         if (exists) {
@@ -19,7 +31,7 @@ router.post('/register', async (req: Request, res: Response) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
-        const user = new User({ nome, genero, data_nascimento, email, password: hashedPassword, tipo });
+        const user = new User({ nome, genero, data_nascimento, email, password: hashedPassword, tipo: 'admin' });
         await user.save();
 
         const safeUser = user.toObject();
@@ -121,6 +133,27 @@ router.put('/:id', verifyToken, async (req: Request, res: Response) => {
         res.json(user);
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });
+    }
+});
+
+// ─── POST /api/users/change-password — authenticated; change own password ─────
+// Clears mustChangePassword flag after a successful update.
+router.post('/change-password', verifyToken, async (req: Request, res: Response) => {
+    try {
+        const { newPassword } = req.body;
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ error: 'A nova password deve ter pelo menos 6 caracteres' });
+        }
+        const hashed = await bcrypt.hash(newPassword, 12);
+        const user = await User.findByIdAndUpdate(
+            req.user!.id,
+            { password: hashed, mustChangePassword: false },
+            { new: true }
+        ).select('-password');
+        if (!user) return res.status(404).json({ error: 'Utilizador não encontrado' });
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 

@@ -9,14 +9,14 @@ export interface Questionario {
   paciente: string;
   data: string;
   humor: number;   // 1–5
-  sintomas?: string;
+  sintomas?: string[];
   notas?: string;
 }
 
 export interface QuestionarioCreate {
   data: string;
   humor: number;
-  sintomas?: string;
+  sintomas?: string[];
   notas?: string;
 }
 
@@ -30,5 +30,9 @@ export class QuestionarioService {
 
   create(data: QuestionarioCreate): Observable<Questionario> {
     return this.http.post<Questionario>(`${API}/questionarios`, data);
+  }
+
+  getQuestionariosByPaciente(pacienteId: string): Observable<Questionario[]> {
+    return this.http.get<Questionario[]>(`${API}/questionarios/paciente/${pacienteId}`);
   }
 }

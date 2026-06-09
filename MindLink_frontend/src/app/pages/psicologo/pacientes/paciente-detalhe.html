@@ -1,0 +1,142 @@
+<div class="psi-page">
+  <div class="container">
+
+    <div class="back-link">
+      <a routerLink="/psicologo/pacientes" class="btn-secondary btn--sm">
+        ← Todos os pacientes
+      </a>
+    </div>
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else if (!paciente()) {
+      <div class="card empty-card"><p>Paciente não encontrado.</p></div>
+    } @else {
+
+      <!-- Header paciente -->
+      <div class="perfil-header">
+        <div class="perfil-avatar">{{ initials() }}</div>
+        <div>
+          <h1>{{ paciente()?.user?.nome }}</h1>
+          <p>{{ paciente()?.user?.email }}</p>
+        </div>
+      </div>
+
+      <!-- Dados grid -->
+      <div class="perfil-grid">
+
+        <!-- Dados pessoais -->
+        <div class="card perfil-section">
+          <h2>Dados pessoais</h2>
+          <div class="info-list">
+            <div class="info-item">
+              <span class="info-label">Nome</span>
+              <span class="info-value">{{ paciente()?.user?.nome }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Email</span>
+              <span class="info-value">{{ paciente()?.user?.email }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Género</span>
+              <span class="info-value">{{ paciente()?.user?.genero ?? '—' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Data de nascimento</span>
+              <span class="info-value">{{ paciente()?.user?.data_nascimento | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dados clínicos -->
+        <div class="card perfil-section">
+          <h2>Dados clínicos</h2>
+          <div class="info-list">
+            <div class="info-item">
+              <span class="info-label">Diagnóstico</span>
+              <span class="info-value">{{ paciente()?.doenca ?? '—' }}</span>
+            </div>
+            @if (paciente()?.formulario?.historicoMedico?.comorbilidades?.length) {
+              <div class="info-item">
+                <span class="info-label">Comorbilidades</span>
+                <span class="info-value">{{ paciente()?.formulario?.historicoMedico?.comorbilidades?.join(', ') }}</span>
+              </div>
+            }
+            <div class="info-item">
+              <span class="info-label">Exercício regular</span>
+              <span class="info-value">{{ paciente()?.formulario?.estiloDeVida?.exercicioRegular === true ? 'Sim' : 'Não' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Fumador</span>
+              <span class="info-value">{{ paciente()?.formulario?.estiloDeVida?.fumador === true ? 'Sim' : 'Não' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estatísticas resumo -->
+        <div class="card perfil-section">
+          <h2>Estatísticas</h2>
+          <div class="stats-mini">
+            <div class="stat-mini">
+              <div class="stat-mini__value" [style.color]="avgColor()">{{ avg() }}/5</div>
+              <div class="stat-mini__label">Humor médio (7d)</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini__value">{{ questionarios().length }}</div>
+              <div class="stat-mini__label">Total de registos</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini__value">{{ streak() }}</div>
+              <div class="stat-mini__label">Dias consecutivos</div>
+            </div>
+          </div>
+
+          @if (questionarios().length > 0) {
+            <div class="chart-wrap">
+              <canvas #moodChart></canvas>
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- Histórico questionários -->
+      <div class="hist-section">
+        <h2>Histórico de questionários</h2>
+
+        @if (questionarios().length === 0) {
+          <div class="card empty-card"><p>Sem registos de humor.</p></div>
+        } @else {
+          <div class="qlist">
+            @for (q of questionarios(); track q._id) {
+              <div class="card qcard">
+                <div class="qcard__date">
+                  <span class="qcard__day">{{ q.data | date:'d' }}</span>
+                  <span class="qcard__month">{{ q.data | date:'MMM' }}</span>
+                  <span class="qcard__year">{{ q.data | date:'yyyy' }}</span>
+                </div>
+                <div class="qcard__info">
+                  <div class="qcard__humor-row">
+                    <span class="qcard__label">Humor</span>
+                    <span class="humor-pill" [class]="humorPillClass(q.humor)">{{ q.humor }}/5</span>
+                  </div>
+                  @if (q.sintomas?.length) {
+                    <div class="qcard__sintomas">
+                      @for (s of q.sintomas; track s) {
+                        <span class="sintoma-tag">{{ s }}</span>
+                      }
+                    </div>
+                  }
+                  @if (q.notas) {
+                    <div class="qcard__notas">{{ q.notas }}</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    }
+  </div>
+</div>

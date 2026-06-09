@@ -1,0 +1,72 @@
+<div class="psi-page">
+  <div class="container">
+
+    <div class="psi-header">
+      <h1>Agenda</h1>
+      <div class="agenda-nav">
+        <button class="btn-secondary btn--sm" (click)="prevWeek()">&#8249;</button>
+        <span class="agenda-week-label">{{ weekLabel() }}</span>
+        <button class="btn-secondary btn--sm" (click)="nextWeek()">&#8250;</button>
+        <button class="btn-secondary btn--sm" (click)="goToToday()">Hoje</button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else {
+
+      <!-- Week grid -->
+      <div class="week-grid card">
+        @for (day of weekDays(); track day.iso) {
+          <div class="week-day" [class.week-day--today]="day.isToday">
+            <div class="week-day__header">
+              <span class="week-day__weekday">{{ day.weekday }}</span>
+              <span class="week-day__num" [class.week-day__num--today]="day.isToday">{{ day.num }}</span>
+            </div>
+            <div class="week-day__slots">
+              @for (c of consultasForDay(day.iso); track c._id) {
+                <div class="slot" [class.slot--cancelada]="c.estado === 'cancelada'">
+                  <div class="slot__time">{{ c.data | date:'HH:mm' }}</div>
+                  <a [routerLink]="['/psicologo/pacientes', c.paciente?._id]" class="slot__name">
+                    {{ c.paciente?.user?.nome ?? 'Paciente' }}
+                  </a>
+                  <span class="slot__dur">{{ c.duracao }}min</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Full list below grid -->
+      <div class="agenda-list-section">
+        <h2>Consultas desta semana</h2>
+        @if (weekConsultas().length === 0) {
+          <div class="card empty-card"><p>Sem consultas esta semana.</p></div>
+        } @else {
+          <div class="consulta-list">
+            @for (c of weekConsultas(); track c._id) {
+              <div class="card consulta-card">
+                <div class="consulta-card__date">
+                  <span class="consulta-card__day">{{ c.data | date:'d' }}</span>
+                  <span class="consulta-card__month">{{ c.data | date:'MMM' }}</span>
+                </div>
+                <div class="consulta-card__info">
+                  <a [routerLink]="['/psicologo/pacientes', c.paciente?._id]" class="consulta-card__title link-hover">
+                    {{ c.paciente?.user?.nome ?? 'Paciente' }}
+                  </a>
+                  <div class="consulta-card__meta">
+                    {{ c.data | date:'HH:mm' }} &middot; {{ c.duracao }} min
+                    @if (c.notas) { &middot; <em>{{ c.notas }}</em> }
+                  </div>
+                </div>
+                <span class="badge" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    }
+  </div>
+</div>

@@ -1,0 +1,119 @@
+<div class="psi-page">
+  <div class="container">
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else {
+
+      <!-- Header -->
+      <div class="psi-header">
+        <div>
+          <h1>Olá, Dr(a). {{ auth.firstName() }}</h1>
+          <p>Resumo da sua atividade clínica</p>
+        </div>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="stats-grid">
+        <div class="stat-card card">
+          <div class="stat-card__value">{{ pacientes().length }}</div>
+          <div class="stat-card__label">Pacientes ativos</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__value">{{ desafiosPendentes().length }}</div>
+          <div class="stat-card__label">Desafios por cumprir</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__value">{{ proximasConsultas().length }}</div>
+          <div class="stat-card__label">Próximas consultas</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-card__value">{{ pacientesCriticos().length }}</div>
+          <div class="stat-card__label">Pacientes em atenção</div>
+        </div>
+      </div>
+
+      <!-- Pacientes preocupantes -->
+      <div class="dash-section">
+        <div class="dash-section__header">
+          <h2>Pacientes com historial preocupante</h2>
+          <a routerLink="/psicologo/pacientes" class="btn-secondary btn--sm">Ver todos</a>
+        </div>
+
+        @if (pacientesCriticos().length === 0) {
+          <div class="card empty-card"><p>Nenhum paciente em situação crítica de momento.</p></div>
+        } @else {
+          <div class="paciente-list">
+            @for (p of pacientesCriticos(); track p._id) {
+              <a [routerLink]="['/psicologo/pacientes', p._id]" class="card paciente-card paciente-card--critico">
+                <div class="paciente-card__avatar">{{ p.user?.nome?.charAt(0) ?? 'P' }}</div>
+                <div class="paciente-card__info">
+                  <div class="paciente-card__name">{{ p.user?.nome }}</div>
+                  <div class="paciente-card__meta">Humor médio recente: {{ p.avgHumor ?? '—' }}/5</div>
+                </div>
+                <div class="humor-pill humor-pill--low">{{ p.avgHumor ?? '—' }}/5</div>
+              </a>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Desafios pendentes -->
+      <div class="dash-section">
+        <div class="dash-section__header">
+          <h2>Desafios por cumprir</h2>
+          <a routerLink="/psicologo/desafios" class="btn-secondary btn--sm">Ver todos</a>
+        </div>
+
+        @if (desafiosPendentes().length === 0) {
+          <div class="card empty-card"><p>Todos os desafios ativos foram cumpridos.</p></div>
+        } @else {
+          <div class="desafio-list">
+            @for (d of desafiosPendentes().slice(0, 4); track d._id) {
+              <div class="card desafio-card">
+                <div class="desafio-card__body">
+                  <div class="desafio-card__title">{{ d.titulo }}</div>
+                  <div class="desafio-card__meta">
+                    {{ d.pacientesNaoCumpriram?.length ?? 0 }} paciente(s) por cumprir &middot; {{ d.duracao }}
+                  </div>
+                </div>
+                <span class="badge badge--pendente">Pendente</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Próximas consultas -->
+      <div class="dash-section">
+        <div class="dash-section__header">
+          <h2>Próximas consultas</h2>
+          <a routerLink="/psicologo/agenda" class="btn-secondary btn--sm">Ver agenda</a>
+        </div>
+
+        @if (proximasConsultas().length === 0) {
+          <div class="card empty-card"><p>Sem consultas agendadas.</p></div>
+        } @else {
+          <div class="consulta-list">
+            @for (c of proximasConsultas().slice(0, 4); track c._id) {
+              <div class="card consulta-card">
+                <div class="consulta-card__date">
+                  <span class="consulta-card__day">{{ c.data | date:'d' }}</span>
+                  <span class="consulta-card__month">{{ c.data | date:'MMM' }}</span>
+                </div>
+                <div class="consulta-card__info">
+                  <a [routerLink]="['/psicologo/pacientes', c.paciente?._id]" class="consulta-card__title link-hover">
+                    {{ c.paciente?.user?.nome ?? 'Paciente' }}
+                  </a>
+                  <div class="consulta-card__meta">{{ c.data | date:'HH:mm' }} &middot; {{ c.duracao }} min</div>
+                </div>
+                <span class="badge badge--agendada">Agendada</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    }
+  </div>
+</div>

@@ -6,7 +6,7 @@ const API = 'http://localhost:8080/api';
 
 export interface Consulta {
   _id: string;
-  paciente: { _id: string };
+  paciente: { _id: string; user?: { nome?: string } };
   psicologo: { _id: string; especialidade: string; user: { nome: string } };
   data: string;
   duracao: number;
@@ -20,5 +20,9 @@ export class ConsultaService {
 
   getConsultasForPaciente(pacienteId: string): Observable<Consulta[]> {
     return this.http.get<Consulta[]>(`${API}/consultas/paciente/${pacienteId}`);
+  }
+
+  getConsultasForPsicologo(): Observable<Consulta[]> {
+    return this.http.get<Consulta[]>(`${API}/consultas/psicologo`);
   }
 }

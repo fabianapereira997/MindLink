@@ -1,0 +1,223 @@
+.psi-page {
+  padding: var(--space-2xl) 0 var(--space-4xl);
+}
+
+.loading {
+  text-align: center;
+  padding: var(--space-4xl);
+  color: var(--color-text-muted);
+}
+
+.psi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.psi-header h1 { font-size: clamp(1.4rem, 3vw, 2rem); }
+
+.agenda-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.agenda-week-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  min-width: 200px;
+  text-align: center;
+}
+
+/* Week grid */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  min-height: 280px;
+  margin-bottom: var(--space-2xl);
+  overflow: hidden;
+  padding: 0;
+}
+
+.week-day {
+  border-right: 1px solid rgba(0,0,0,0.06);
+  padding: var(--space-md) var(--space-sm);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.week-day:last-child { border-right: none; }
+
+.week-day--today { background: rgba(38,135,78,0.03); }
+
+.week-day__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.week-day__weekday {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.week-day__num {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.week-day__num--today {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+.week-day__slots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+/* Slot */
+.slot {
+  background: rgba(38,135,78,0.09);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 4px 6px;
+  cursor: default;
+}
+
+.slot--cancelada {
+  background: rgba(220,38,38,0.07);
+  border-left-color: #dc2626;
+  opacity: 0.7;
+}
+
+.slot__time {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-bottom: 1px;
+}
+
+.slot--cancelada .slot__time { color: #dc2626; }
+
+.slot__name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slot__name:hover { color: var(--color-primary); }
+
+.slot__dur {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+}
+
+/* List section */
+.agenda-list-section { margin-top: var(--space-xl); }
+
+.agenda-list-section h2 {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-md);
+}
+
+.consulta-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.consulta-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+}
+
+.consulta-card__date {
+  width: 52px;
+  flex-shrink: 0;
+  text-align: center;
+  background: rgba(38,135,78,0.08);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+}
+
+.consulta-card__day {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.consulta-card__month {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.consulta-card__info { flex: 1; }
+
+.consulta-card__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.consulta-card__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 3px;
+}
+
+.link-hover { text-decoration: none; color: inherit; }
+.link-hover:hover { color: var(--color-primary); }
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge--realizada { background: rgba(38,135,78,0.1);   color: var(--color-primary-dark); }
+.badge--cancelada { background: rgba(220,38,38,0.08);  color: #dc2626; }
+.badge--agendada  { background: rgba(234,179,8,0.1);   color: #854d0e; }
+
+.empty-card { text-align: center; padding: var(--space-xl); }
+.empty-card p { color: var(--color-text-muted); }
+
+/* Responsive: collapse week grid on mobile */
+@media (max-width: 640px) {
+  .week-grid { grid-template-columns: repeat(7, minmax(40px, 1fr)); font-size: 0.75rem; }
+  .slot__name { display: none; }
+}

@@ -1,0 +1,108 @@
+<div class="admin-page">
+  <div class="container">
+
+    <a routerLink="/admin/pacientes" class="detail-back">← Pacientes</a>
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else if (error()) {
+      <div class="banner banner--error">{{ error() }}</div>
+    } @else if (data(); as d) {
+
+      <!-- Hero -->
+      <div class="card detail-hero">
+        <div class="detail-hero__avatar">{{ d.paciente.user?.nome?.charAt(0) }}</div>
+        <div>
+          <div class="detail-hero__name">{{ d.paciente.user?.nome }}</div>
+          <div class="detail-hero__meta">
+            Psicólogo: {{ d.paciente.psicologo?.user?.nome ?? 'Não atribuído' }}
+            @if (d.paciente.psicologo?.especialidade) {
+              · {{ d.paciente.psicologo.especialidade }}
+            }
+          </div>
+          <div class="detail-hero__email">{{ d.paciente.user?.email }}</div>
+          @if (d.paciente.doenca) {
+            <div class="detail-hero__diag">Diagnóstico: {{ d.paciente.doenca }}</div>
+          }
+        </div>
+        @if (d.paciente.psicologo) {
+          <a [routerLink]="['/admin/psicologos', d.paciente.psicologo._id]" class="btn-secondary btn--sm psi-link">
+            Ver psicólogo →
+          </a>
+        }
+      </div>
+
+      <!-- Stats -->
+      <div class="info-grid">
+        <div class="card info-box">
+          <div class="info-box__val">{{ d.consultas.length }}</div>
+          <div class="info-box__label">Total consultas</div>
+        </div>
+        <div class="card info-box">
+          <div class="info-box__val">{{ d.questionarios.length }}</div>
+          <div class="info-box__label">Check-ins de humor</div>
+        </div>
+        <div class="card info-box">
+          <div class="info-box__val"
+               [style.color]="d.questionarios.length ? humorColor(+avgMood(d.questionarios)) : 'inherit'">
+            {{ avgMood(d.questionarios) }}
+          </div>
+          <div class="info-box__label">Humor médio</div>
+        </div>
+        <div class="card info-box">
+          <div class="info-box__val">{{ countAgendadas(d.consultas) }}</div>
+          <div class="info-box__label">Consultas agendadas</div>
+        </div>
+      </div>
+
+      <!-- Consultations -->
+      <div class="card detail-section">
+        <h3>Histórico de consultas ({{ d.consultas.length }})</h3>
+        @if (d.consultas.length === 0) {
+          <p class="empty-text">Sem consultas registadas.</p>
+        } @else {
+          <div class="compact-list">
+            @for (c of d.consultas; track c._id) {
+              <div class="compact-item">
+                <div class="compact-item__info">
+                  <span class="compact-item__name">{{ c.psicologo?.user?.nome ?? '—' }}</span>
+                  <span class="compact-item__sub">
+                    {{ c.data | date:'dd/MM/yyyy HH:mm' }} · {{ c.duracao }} min
+                    @if (c.notas) { · {{ c.notas }} }
+                  </span>
+                </div>
+                <span class="badge" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Mood check-ins -->
+      <div class="card detail-section">
+        <h3>Registos de humor ({{ d.questionarios.length }})</h3>
+        @if (d.questionarios.length === 0) {
+          <p class="empty-text">Sem registos de humor.</p>
+        } @else {
+          <div class="humor-list">
+            @for (q of d.questionarios.slice(0, 30); track q._id) {
+              <div class="humor-item">
+                <span class="humor-item__date">{{ q.data | date:'dd/MM/yy' }}</span>
+                <div class="humor-item__bar-wrap">
+                  <div class="humor-item__bar"
+                       [style.width]="(q.humor / 5 * 100) + '%'"
+                       [style.background]="humorColor(q.humor)"></div>
+                </div>
+                <span class="humor-item__val" [style.color]="humorColor(q.humor)">{{ q.humor }}/5</span>
+                @if (q.sintomas) {
+                  <span class="humor-item__sintomas">{{ q.sintomas }}</span>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    }
+  </div>
+</div>

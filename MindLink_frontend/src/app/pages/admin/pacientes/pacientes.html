@@ -1,0 +1,58 @@
+<div class="admin-page">
+  <div class="container">
+
+    <div class="admin-header">
+      <div>
+        <h1>Pacientes</h1>
+        <p>Todos os pacientes registados na plataforma.</p>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <input class="search-input" type="text" placeholder="Pesquisar por nome ou email..."
+             [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)" />
+      <select class="filter-select" [value]="filterPsi()" (change)="filterPsi.set($any($event.target).value)">
+        <option value="">Todos os psicólogos</option>
+        @for (psi of psicologoOptions.slice(1); track psi) {
+          <option [value]="psi">{{ psi }}</option>
+        }
+      </select>
+    </div>
+
+    @if (error()) {
+      <div class="banner banner--error">{{ error() }}</div>
+    }
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else if (filtered.length === 0) {
+      <div class="card empty-card"><p>Nenhum paciente encontrado.</p></div>
+    } @else {
+      <div class="list-table card">
+        <div class="list-table__header">
+          <span>Nome</span>
+          <span>Email</span>
+          <span>Psicólogo</span>
+          <span>Diagnóstico</span>
+          <span></span>
+        </div>
+        @for (p of filtered; track p._id) {
+          <div class="list-table__row">
+            <div class="list-row__name">
+              <div class="list-row__avatar">{{ p.user.nome.charAt(0) }}</div>
+              <span>{{ p.user.nome }}</span>
+            </div>
+            <span class="list-row__email">{{ p.user.email }}</span>
+            <span class="list-row__spec">{{ p.psicologo?.user?.nome ?? 'Não atribuído' }}</span>
+            <span class="list-row__spec">{{ p.doenca || '—' }}</span>
+            <div class="list-row__actions">
+              <a [routerLink]="['/admin/pacientes', p._id]" class="btn-secondary btn--sm">Ver ficha</a>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>

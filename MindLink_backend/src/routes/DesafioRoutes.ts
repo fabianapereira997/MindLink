@@ -73,6 +73,23 @@ router.get('/', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req
     }
 });
 
+// ─── GET /api/desafios/psicologo — alias for logged-in psicologo ──────────────
+// Returns all desafios created by the authenticated psicologo. Must come before /:id.
+router.get('/psicologo', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
+    try {
+        const psicologoProfile = await getPsicologoByUserId(req.user!.id);
+        if (!psicologoProfile) {
+            return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
+        }
+        const desafios = await Desafio.find({ psicologo: psicologoProfile._id })
+            .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
+        res.json(desafios);
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
+    }
+});
+
 // ─── GET /api/desafios/paciente/:pacienteId ────────────────────────────────────
 // Psicologo: only if that paciente belongs to them.
 // Paciente: only if :pacienteId is their own profile.
