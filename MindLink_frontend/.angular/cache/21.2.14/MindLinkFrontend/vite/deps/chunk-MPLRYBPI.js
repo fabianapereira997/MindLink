@@ -1,18 +1,18 @@
 import {
+  Platform,
+  coerceElement,
+  coerceNumberProperty
+} from "./chunk-UHSAULA6.js";
+import {
   _VisuallyHiddenLoader,
   _setInnerHtml
 } from "./chunk-EINZNKRU.js";
 import {
   DomSanitizer
-} from "./chunk-BG2DKGA4.js";
+} from "./chunk-UMD2UDSO.js";
 import {
   _CdkPrivateStyleLoader
 } from "./chunk-ELKKSBES.js";
-import {
-  Platform,
-  coerceElement,
-  coerceNumberProperty
-} from "./chunk-UHSAULA6.js";
 import {
   ANIMATION_MODULE_TYPE,
   APP_ID,
@@ -2601,6 +2601,19 @@ var ConfigurableFocusTrapFactory = class _ConfigurableFocusTrapFactory {
   }], () => [], null);
 })();
 
+// node_modules/@angular/cdk/fesm2022/_css-pixel-value-chunk.mjs
+function coerceCssPixelValue(value) {
+  if (value == null) {
+    return "";
+  }
+  return typeof value === "string" ? value : `${value}px`;
+}
+
+// node_modules/@angular/cdk/fesm2022/coercion.mjs
+function coerceBooleanProperty(value) {
+  return value != null && `${value}` !== "false";
+}
+
 // node_modules/@angular/cdk/fesm2022/_test-environment-chunk.mjs
 function _isTestEnvironment() {
   return typeof __karma__ !== "undefined" && !!__karma__ || typeof jasmine !== "undefined" && !!jasmine || typeof jest !== "undefined" && !!jest || typeof Mocha !== "undefined" && !!Mocha;
@@ -2675,19 +2688,6 @@ function _animationsDisabled() {
   return _getAnimationsState() !== "enabled";
 }
 
-// node_modules/@angular/cdk/fesm2022/_css-pixel-value-chunk.mjs
-function coerceCssPixelValue(value) {
-  if (value == null) {
-    return "";
-  }
-  return typeof value === "string" ? value : `${value}px`;
-}
-
-// node_modules/@angular/cdk/fesm2022/coercion.mjs
-function coerceBooleanProperty(value) {
-  return value != null && `${value}` !== "false";
-}
-
 export {
   isFakeMousedownFromScreenReader,
   isFakeTouchstartFromScreenReader,
@@ -2710,10 +2710,10 @@ export {
   _IdGenerator,
   addAriaReferencedId,
   removeAriaReferencedId,
+  coerceCssPixelValue,
+  coerceBooleanProperty,
   _isTestEnvironment,
   getSupportedInputTypes,
-  _animationsDisabled,
-  coerceCssPixelValue,
-  coerceBooleanProperty
+  _animationsDisabled
 };
-//# sourceMappingURL=chunk-ICLYFEN3.js.map
+//# sourceMappingURL=chunk-MPLRYBPI.js.map

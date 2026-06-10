@@ -39,6 +39,66 @@
   </div>
 </section>
 
+<!-- Psicólogos Parceiros -->
+<section class="section partners-psychologists">
+  <div class="container">
+    <div class="section-header text-center">
+      <h2>Psicólogos Parceiros</h2>
+      <p class="section-header__sub">
+        Profissionais certificados que integram a nossa rede de saúde mental.
+      </p>
+    </div>
+
+    <div class="psychologists__grid">
+      @for (psychologist of psychologists; track psychologist.name) {
+        <div class="psychologist-card card">
+          <div class="psychologist-card__avatar">
+            <img [src]="psychologist.photo" [alt]="'Foto de ' + psychologist.name" />
+          </div>
+          <h3 class="psychologist-card__name">{{ psychologist.name }}</h3>
+          <p class="psychologist-card__specialty">{{ psychologist.specialty }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Clínicas Parceiras -->
+<section class="section partner-clinics">
+  <div class="container">
+    <div class="section-header text-center">
+      <h2>Clínicas Parceiras</h2>
+      <p class="section-header__sub">
+        5 clínicas de psicologia integradas na plataforma MindLink, prontas para o acompanhar.
+      </p>
+    </div>
+
+    <div class="clinics__grid">
+      @for (clinic of clinics; track clinic.name) {
+        <div class="clinic-card card">
+          <div class="clinic-card__icon" aria-hidden="true"></div>
+          <h3 class="clinic-card__name">{{ clinic.name }}</h3>
+          <ul class="clinic-card__info">
+            <li>
+              <span class="clinic-card__info-icon">📍</span>
+              <span>{{ clinic.address }}</span>
+            </li>
+            <li>
+              <span class="clinic-card__info-icon">✉️</span>
+              <span>{{ clinic.email }}</span>
+            </li>
+            <li>
+              <span class="clinic-card__info-icon">📞</span>
+              <span>{{ clinic.phone }}</span>
+            </li>
+          </ul>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+
 <!-- CTA -->
 <section class="cta">
   <div class="container cta__inner">

@@ -3,14 +3,14 @@ import {
   _IdGenerator,
   _animationsDisabled,
   coerceBooleanProperty
-} from "./chunk-ICLYFEN3.js";
+} from "./chunk-MPLRYBPI.js";
+import {
+  Platform
+} from "./chunk-UHSAULA6.js";
 import {
   BidiModule,
   Directionality
 } from "./chunk-WXZTCNN5.js";
-import {
-  Platform
-} from "./chunk-UHSAULA6.js";
 import {
   NgTemplateOutlet
 } from "./chunk-NMF7LRSB.js";
@@ -1533,4 +1533,4 @@ export {
   MatFormField,
   MatFormFieldModule
 };
-//# sourceMappingURL=chunk-X4DY3FJL.js.map
+//# sourceMappingURL=chunk-UPADEIKO.js.map

@@ -124,7 +124,7 @@
 
 /* ── CTA ── */
 .cta {
-  background: linear-gradient(135deg, var(--color-green-400) 0%, var(--color-green-500) 100%);
+  background: rgba(38, 135, 78, 0.7);
   padding: var(--space-4xl) 0;
 }
 
@@ -153,4 +153,113 @@
 
 .cta .btn-primary:hover {
   background: var(--color-off-white);
+}
+
+
+/* ── Psicólogos Parceiros ── */
+.partners-psychologists {
+  background: var(--color-off-white, #f8faf8);
+}
+
+.psychologists__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-lg);
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.psychologist-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-sm);
+  padding: var(--space-xl) var(--space-lg);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.psychologist-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.psychologist-card__avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--color-primary, #26874E);
+  flex-shrink: 0;
+}
+
+.psychologist-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.psychologist-card__name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.psychologist-card__specialty {
+  font-size: 0.88rem;
+  color: var(--color-primary, #26874E);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* ── Clínicas Parceiras ── */
+.clinics__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+}
+
+.clinic-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.clinic-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+
+.clinic-card__name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.clinic-card__info {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-sm) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.clinic-card__info li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.clinic-card__info-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
