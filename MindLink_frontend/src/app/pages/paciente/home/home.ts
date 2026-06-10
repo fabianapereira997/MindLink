@@ -66,7 +66,8 @@ export class PacienteHomeComponent implements OnInit {
 
   // ── Date helpers ────────────────────────────────────────────────────────────
 
-  private isToday(dateStr: string): boolean {
+  private isToday(dateStr?: string): boolean {
+    if (!dateStr) return false;
     const d = new Date(dateStr), t = new Date();
     return d.getFullYear() === t.getFullYear()
         && d.getMonth()    === t.getMonth()
@@ -82,7 +83,8 @@ export class PacienteHomeComponent implements OnInit {
     return d;
   }
 
-  private isThisWeek(dateStr: string): boolean {
+  private isThisWeek(dateStr?: string): boolean {
+    if (!dateStr) return false;
     const d = new Date(dateStr);
     const monday = this.getMondayOfWeek(new Date());
     const sunday = new Date(monday);
@@ -206,11 +208,11 @@ export class PacienteHomeComponent implements OnInit {
   submitCheckIn(): void {
     this.submitError.set(null);
     const notas = this.checkInForm.get('notas')?.value ?? '';
-    const sintomasStr = this.selectedSintomas().join(', ') || undefined;
+    const sintomasArr = this.selectedSintomas().length ? this.selectedSintomas() : undefined;
     this.qSvc.create({
       data: new Date().toISOString(),
       humor: this.humorValue(),
-      sintomas: sintomasStr,
+      sintomas: sintomasArr,
       notas: notas || undefined,
     }).subscribe({
       next: () => {

@@ -9,7 +9,7 @@ export interface Questionario {
   paciente: string;
   data: string;
   humor: number;   // 1–5
-  sintomas?: string[];
+  sintomas?: string[] | string;
   notas?: string;
 }
 

@@ -22,6 +22,15 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
         }
         const { paciente, data, duracao, estado, notas } = req.body;
 
+        if (!isValidObjectId(paciente)) {
+            return res.status(400).json({ error: 'ID de paciente inválido' });
+        }
+
+        const assigned = await isPsicologoAssignedToPaciente(req.user!.id, paciente);
+        if (!assigned) {
+            return res.status(403).json({ error: 'Acesso negado: paciente não associado a este psicólogo' });
+        }
+
         // ── Overlap check ──────────────────────────────────────────────────────
         // A psychologist cannot have two non-cancelled consultations whose
         // time windows [data, data + duracao min) overlap.

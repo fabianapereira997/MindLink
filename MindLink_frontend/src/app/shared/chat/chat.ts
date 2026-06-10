@@ -1,5 +1,5 @@
 import {
-  Component, inject, OnInit, OnDestroy, signal, computed,
+  Component, inject, OnInit, OnDestroy, signal, computed, effect,
   ElementRef, ViewChild, AfterViewChecked, HostListener,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -7,6 +7,7 @@ import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
 import { PacienteService, PacienteProfile } from '../../core/services/paciente.service';
 import { MensagemService, Mensagem } from '../../core/services/mensagem.service';
+import { ChatService } from '../../core/services/chat.service';
 
 @Component({
   selector: 'app-chat',
@@ -19,8 +20,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messagesEl') messagesEl!: ElementRef<HTMLDivElement>;
 
   auth           = inject(AuthService);
-  private pacSvc = inject(PacienteService);
-  private msgSvc = inject(MensagemService);
+  private pacSvc  = inject(PacienteService);
+  private msgSvc  = inject(MensagemService);
+  private chatSvc = inject(ChatService);
 
   isOpen      = signal(false);
   fabBottom   = signal(24);
@@ -47,6 +49,23 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private lastSeenCount = 0;  // messages seen when panel was last opened
 
   role = computed(() => this.auth.role());
+
+  constructor() {
+    // Allow other components (e.g. psicólogo dashboard) to request opening
+    // the chat panel directly on a specific paciente's conversation.
+    effect(() => {
+      const pacienteId = this.chatSvc.requestedPacienteId();
+      if (!pacienteId || this.role() !== 'psicologo') return;
+
+      const found = this.pacientes().find(p => p._id === pacienteId);
+      if (found) {
+        this.isOpen.set(true);
+        this.hasUnread.set(false);
+        this.selectPaciente(found);
+        this.chatSvc.clearRequest();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.setupFooterObserver();

@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { DesafioService, Desafio } from '../../core/services/desafio.service';
-import { PsicologoService } from '../../core/services/psicologo.service';
+import { DesafioService, Desafio } from '../../../core/services/desafio.service';
+import { PsicologoService } from '../../../core/services/psicologo.service';
 
 interface PacienteBasic {
   _id: string;

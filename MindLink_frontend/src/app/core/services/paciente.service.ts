@@ -22,4 +22,23 @@ export class PacienteService {
   getMyProfile(): Observable<PacienteProfile[]> {
     return this.http.get<PacienteProfile[]>(`${API}/pacientes`);
   }
+
+  criarPaciente(payload: {
+    nome: string;
+    email: string;
+    password: string;
+    genero: string;
+    data_nascimento: string;
+    doenca: string;
+    formulario?: {
+      historicoMedico?: { comorbilidades?: string[] };
+      estiloDeVida?: { exercicioRegular?: boolean | null; fumador?: boolean | null };
+    };
+  }): Observable<PacienteProfile> {
+    return this.http.post<PacienteProfile>(`${API}/pacientes`, payload);
+  }
+
+  eliminarPaciente(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${API}/pacientes/${id}`);
+  }
 }

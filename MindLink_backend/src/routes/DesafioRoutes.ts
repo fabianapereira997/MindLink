@@ -7,8 +7,40 @@ import {
 } from '../utils/helpers';
 
 const express = require('express');
+const mongoose = require('mongoose');
 const router  = express.Router();
 const Desafio = require('../models/desafio');
+const Paciente = require('../models/paciente');
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+function getDateRangeForDuracao(duracao: string): { data_inicio: Date; data_fim: Date } {
+    const now = new Date();
+
+    if (duracao === 'semanal') {
+        const day = now.getDay(); // 0 = domingo
+        const diffToMonday = day === 0 ? -6 : 1 - day;
+        const inicio = new Date(now);
+        inicio.setDate(now.getDate() + diffToMonday);
+        inicio.setHours(0, 0, 0, 0);
+        const fim = new Date(inicio);
+        fim.setDate(inicio.getDate() + 6);
+        fim.setHours(23, 59, 59, 999);
+        return { data_inicio: inicio, data_fim: fim };
+    }
+
+    if (duracao === 'mensal') {
+        const inicio = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        const fim = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        return { data_inicio: inicio, data_fim: fim };
+    }
+
+    // diario (default)
+    const inicio = new Date(now);
+    inicio.setHours(0, 0, 0, 0);
+    const fim = new Date(now);
+    fim.setHours(23, 59, 59, 999);
+    return { data_inicio: inicio, data_fim: fim };
+}
 const { verifyToken }       = require('../middleware/VerifyToken');
 const { verifyTokenByRole } = require('../middleware/VerifyTokenByRole');
 
@@ -22,8 +54,59 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
             return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
         }
 
-        const { paciente, titulo, descricao, tipo, data_inicio, data_fim, sugestao } = req.body;
+        const { paciente, pacientes, titulo, descricao, tipo, duracao, data_inicio, data_fim, sugestao } = req.body;
 
+        // ─── New format: one challenge → multiple pacientes ────────────────────
+        if (Array.isArray(pacientes)) {
+            if (!pacientes.length) {
+                return res.status(400).json({ error: 'Selecione pelo menos um paciente' });
+            }
+            for (const pid of pacientes) {
+                if (!isValidObjectId(pid)) {
+                    return res.status(400).json({ error: 'ID de paciente inválido' });
+                }
+                const assigned = await isPsicologoAssignedToPaciente(req.user!.id, pid);
+                if (!assigned) {
+                    return res.status(403).json({ error: 'Acesso negado: paciente não associado a este psicólogo' });
+                }
+            }
+
+            const tipoFinal = duracao || tipo || 'diario';
+            const { data_inicio: inicio, data_fim: fim } = getDateRangeForDuracao(tipoFinal);
+            const grupo = new mongoose.Types.ObjectId();
+
+            const docs = await Desafio.insertMany(pacientes.map((pid: string) => ({
+                paciente: pid,
+                psicologo: psicologoProfile._id,
+                titulo,
+                descricao: descricao || ' ',
+                tipo: tipoFinal,
+                data_inicio: inicio,
+                data_fim: fim,
+                sugestao,
+                grupo,
+            })));
+
+            const pacientesPopulados = await Paciente.find({ _id: { $in: pacientes } })
+                .populate('user', 'nome email');
+
+            return res.status(201).json({
+                _id: grupo,
+                grupo,
+                titulo,
+                descricao,
+                duracao: tipoFinal,
+                tipo: tipoFinal,
+                data_inicio: inicio,
+                data_fim: fim,
+                estado: 'pendente',
+                createdAt: docs[0]?.createdAt,
+                pacientesCumpriram: [],
+                pacientesNaoCumpriram: pacientesPopulados,
+            });
+        }
+
+        // ─── Legacy format: one challenge → one paciente ────────────────────────
         if (!isValidObjectId(paciente)) {
             return res.status(400).json({ error: 'ID de paciente inválido' });
         }
@@ -83,8 +166,45 @@ router.get('/psicologo', verifyToken, verifyTokenByRole('psicologo'), async (req
         }
         const desafios = await Desafio.find({ psicologo: psicologoProfile._id })
             .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
-            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
-        res.json(desafios);
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } })
+            .sort({ createdAt: -1 });
+
+        // Group desafios that were created together (shared "grupo") into a single
+        // entry with pacientesCumpriram / pacientesNaoCumpriram lists. Desafios
+        // without a "grupo" (legacy, single-paciente) form their own group.
+        const grupos = new Map<string, any>();
+
+        for (const d of desafios) {
+            const key = d.grupo ? d.grupo.toString() : d._id.toString();
+
+            if (!grupos.has(key)) {
+                grupos.set(key, {
+                    _id: key,
+                    titulo: d.titulo,
+                    descricao: d.descricao,
+                    duracao: d.tipo,
+                    tipo: d.tipo,
+                    data_inicio: d.data_inicio,
+                    data_fim: d.data_fim,
+                    estado: d.estado,
+                    createdAt: d.createdAt,
+                    psicologo: d.psicologo,
+                    pacientesCumpriram: [] as any[],
+                    pacientesNaoCumpriram: [] as any[],
+                });
+            }
+
+            const grupoEntry = grupos.get(key);
+            if (d.paciente) {
+                if (d.estado === 'concluido') {
+                    grupoEntry.pacientesCumpriram.push(d.paciente);
+                } else {
+                    grupoEntry.pacientesNaoCumpriram.push(d.paciente);
+                }
+            }
+        }
+
+        res.json(Array.from(grupos.values()));
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
     }

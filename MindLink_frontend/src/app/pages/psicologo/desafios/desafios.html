@@ -100,7 +100,7 @@
               @if (d.pacientesCumpriram?.length) {
                 <div class="desafio-grupo">
                   <span class="desafio-grupo__label desafio-grupo__label--ok">
-                    ✓ Cumpriram ({{ d.pacientesCumpriram.length }})
+                    ✓ Cumpriram ({{ d.pacientesCumpriram?.length }})
                   </span>
                   <div class="chip-row">
                     @for (p of d.pacientesCumpriram; track p._id) {
@@ -116,7 +116,7 @@
               @if (d.pacientesNaoCumpriram?.length) {
                 <div class="desafio-grupo">
                   <span class="desafio-grupo__label desafio-grupo__label--nok">
-                    ✗ Por cumprir ({{ d.pacientesNaoCumpriram.length }})
+                    ✗ Por cumprir ({{ d.pacientesNaoCumpriram?.length }})
                   </span>
                   <div class="chip-row">
                     @for (p of d.pacientesNaoCumpriram; track p._id) {

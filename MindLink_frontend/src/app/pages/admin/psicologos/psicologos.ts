@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,7 +13,7 @@ import { AdminService, AdminPsicologo } from '../../../core/services/admin.servi
   selector: 'app-admin-psicologos',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, DatePipe, ReactiveFormsModule,
+    CommonModule, RouterLink, ReactiveFormsModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
   ],
   templateUrl: './psicologos.html',

@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-import { PsicologoService } from '../../core/services/psicologo.service';
-import { QuestionarioService, Questionario } from '../../core/services/questionario.service';
+import { PsicologoService } from '../../../core/services/psicologo.service';
+import { QuestionarioService, Questionario } from '../../../core/services/questionario.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -83,6 +83,16 @@ export class PsicologoPacienteDetalheComponent implements OnInit, AfterViewInit 
       day = qDay;
     }
     return count;
+  }
+
+  sintomasText(sintomas: string[] | string | undefined): string {
+    if (!sintomas) return '';
+    return Array.isArray(sintomas) ? sintomas.join(', ') : sintomas;
+  }
+
+  hasSintomas(sintomas: string[] | string | undefined): boolean {
+    if (!sintomas) return false;
+    return Array.isArray(sintomas) ? sintomas.length > 0 : sintomas.trim().length > 0;
   }
 
   humorPillClass(humor: number): string {

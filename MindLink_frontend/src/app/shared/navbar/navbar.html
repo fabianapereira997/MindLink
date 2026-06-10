@@ -17,7 +17,11 @@
           <a routerLink="/paciente/dashboard" routerLinkActive="active">Histórico</a>
         }
         @if (auth.role() === 'psicologo') {
-          <a routerLink="/psicologo/dashboard" routerLinkActive="active">Dashboard</a>
+          <a routerLink="/psicologo/dashboard" routerLinkActive="active">Início</a>
+          <a routerLink="/psicologo/pacientes" routerLinkActive="active">Pacientes</a>
+          <a routerLink="/psicologo/agenda" routerLinkActive="active">Agenda</a>
+          <a routerLink="/psicologo/desafios" routerLinkActive="active">Desafios</a>
+          <a routerLink="/psicologo/estatisticas" routerLinkActive="active">Estatísticas</a>
         }
         @if (auth.role() === 'admin') {
           <a routerLink="/admin/dashboard" routerLinkActive="active">Dashboard</a>

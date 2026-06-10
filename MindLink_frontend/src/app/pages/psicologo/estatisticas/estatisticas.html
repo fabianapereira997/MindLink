@@ -12,22 +12,18 @@
       <!-- Overview cards -->
       <div class="stats-grid">
         <div class="stat-card card">
-          <div class="stat-card__icon stat-card__icon--green">📈</div>
           <div class="stat-card__value" style="color: var(--color-primary)">{{ pctMelhorando() }}%</div>
           <div class="stat-card__label">A melhorar</div>
         </div>
         <div class="stat-card card">
-          <div class="stat-card__icon stat-card__icon--red">📉</div>
           <div class="stat-card__value" style="color: #dc2626">{{ pctRegredir() }}%</div>
           <div class="stat-card__label">A regredir</div>
         </div>
         <div class="stat-card card">
-          <div class="stat-card__icon">😟</div>
           <div class="stat-card__value" style="color: #ca8a04">{{ pacientesAtencao().length }}</div>
           <div class="stat-card__label">Atenção especial</div>
         </div>
         <div class="stat-card card">
-          <div class="stat-card__icon">🏅</div>
           <div class="stat-card__value" style="color: var(--color-primary)">{{ pacientesAssiduos().length }}</div>
           <div class="stat-card__label">Pacientes assíduos</div>
         </div>
@@ -41,15 +37,30 @@
         </div>
       </div>
 
-      <!-- Evolução geral - chart -->
-      @if (allData().length > 0) {
-        <div class="card chart-card">
-          <h2>Evolução do humor geral (últimos 30 dias)</h2>
+      <!-- Evolução do humor - chart -->
+      <div class="card chart-card">
+        <div class="chart-card__header">
+          <h2>{{ chartTitle() }}</h2>
+          <select
+            class="filter-select"
+            [value]="selectedPacienteId()"
+            (change)="onPacienteChange($any($event.target).value)"
+          >
+            <option value="geral">Todos os pacientes</option>
+            @for (p of pacientesStats(); track p._id) {
+              <option [value]="p._id">{{ p.user?.nome ?? 'Paciente' }}</option>
+            }
+          </select>
+        </div>
+
+        @if (allData().length > 0) {
           <div class="chart-wrap">
             <canvas #geralChart></canvas>
           </div>
-        </div>
-      }
+        } @else {
+          <div class="empty-card"><p>Sem registos de humor nos últimos 30 dias.</p></div>
+        }
+      </div>
 
       <!-- Atenção especial -->
       <div class="stats-section">

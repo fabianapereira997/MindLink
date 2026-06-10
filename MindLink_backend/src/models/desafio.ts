@@ -10,6 +10,7 @@ const desafioSchema = new mongoose.Schema({
     data_fim:    { type: Date, required: true },
     estado:      { type: String, required: true, enum: ['pendente', 'concluido', 'cancelado'], default: 'pendente' },
     sugestao:    { type: String },
+    grupo:       { type: mongoose.Schema.Types.ObjectId, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Desafio', desafioSchema);

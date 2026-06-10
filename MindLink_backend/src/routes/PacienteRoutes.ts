@@ -9,23 +9,57 @@ import {
 const express  = require('express');
 const router   = express.Router();
 const Paciente = require('../models/paciente');
+const User     = require('../models/user');
+const bcrypt   = require('bcryptjs');
 const { verifyToken }       = require('../middleware/VerifyToken');
 const { verifyTokenByRole } = require('../middleware/VerifyTokenByRole');
 
 // ─── POST /api/pacientes — create paciente profile ────────────────────────────
 // Psicologo only. The psicologo field is auto-filled from the logged-in psicologo.
-// The body must supply `user` (the paciente's User._id).
+// Either supply `user` (an existing User._id), or supply the new patient's
+// account details (nome, email, password, genero, data_nascimento) so that a
+// new User account is created together with the Paciente profile.
 router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
     try {
         const psicologoProfile = await getPsicologoByUserId(req.user!.id);
         if (!psicologoProfile) {
             return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
         }
-        const { user, doenca, formulario } = req.body;
+
+        const { user, nome, email, password, genero, data_nascimento, doenca, formulario } = req.body;
+
+        let userId = user;
+        if (!userId) {
+            if (!nome || !email || !password) {
+                return res.status(400).json({ error: 'nome, email e password são obrigatórios' });
+            }
+
+            const exists = await User.findOne({ email });
+            if (exists) {
+                return res.status(409).json({ error: 'Email já registado' });
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 12);
+            const newUser = await new User({
+                nome,
+                email,
+                password: hashedPassword,
+                genero: genero ?? 'outro',
+                data_nascimento: data_nascimento ?? new Date('1990-01-01'),
+                tipo: 'paciente',
+                mustChangePassword: true,
+            }).save();
+            userId = newUser._id;
+        }
+
         // psicologo is always the logged-in psicologo — never trusted from body
-        const paciente = new Paciente({ user, psicologo: psicologoProfile._id, doenca, formulario });
+        const paciente = new Paciente({ user: userId, psicologo: psicologoProfile._id, doenca, formulario });
         await paciente.save();
-        res.status(201).json(paciente);
+
+        const populated = await Paciente.findById(paciente._id)
+            .populate('user', '-password')
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
+        res.status(201).json(populated);
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });
     }
@@ -160,10 +194,32 @@ router.put('/:id', verifyToken, verifyTokenByRole('psicologo'), async (req: Requ
     }
 });
 
-// ─── DELETE /api/pacientes/:id — disabled ─────────────────────────────────────
-// No admin role implemented. Operation not permitted.
-router.delete('/:id', verifyToken, (_req: Request, res: Response) => {
-    res.status(403).json({ error: 'Operação não permitida' });
+// ─── DELETE /api/pacientes/:id — remove paciente + user ───────────────────────
+// Psicologo only, and only for pacientes assigned to them. Removes both the
+// Paciente profile and the underlying User account.
+router.delete('/:id', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ error: 'ID de paciente inválido' });
+        }
+
+        const assigned = await isPsicologoAssignedToPaciente(req.user!.id, id);
+        if (!assigned) {
+            return res.status(403).json({ error: 'Acesso negado: paciente não associado a este psicólogo' });
+        }
+
+        const paciente = await Paciente.findById(id);
+        if (!paciente) {
+            return res.status(404).json({ error: 'Paciente não encontrado' });
+        }
+
+        await Paciente.findByIdAndDelete(id);
+        await User.findByIdAndDelete(paciente.user);
+        res.json({ message: 'Paciente removido com sucesso' });
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
+    }
 });
 
 module.exports = { pacienteRoutes: router };

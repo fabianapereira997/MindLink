@@ -8,8 +8,85 @@
         <span class="agenda-week-label">{{ weekLabel() }}</span>
         <button class="btn-secondary btn--sm" (click)="nextWeek()">&#8250;</button>
         <button class="btn-secondary btn--sm" (click)="goToToday()">Hoje</button>
+        <button class="btn-primary btn--sm" (click)="toggleForm()">
+          {{ showForm() ? 'Cancelar' : '+ Nova consulta' }}
+        </button>
       </div>
     </div>
+
+    <!-- Agendar nova consulta -->
+    @if (showForm()) {
+      <div class="card nova-consulta-form">
+        <h2>Nova consulta</h2>
+
+        @if (formError()) {
+          <div class="banner banner--error">{{ formError() }}</div>
+        }
+        @if (formSuccess()) {
+          <div class="banner banner--success">Consulta agendada com sucesso!</div>
+        }
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Paciente</label>
+            <select class="form-input" [value]="novaPaciente()" (change)="novaPaciente.set($any($event.target).value)">
+              <option value="" disabled>Selecione um paciente</option>
+              @for (p of pacientes(); track p._id) {
+                <option [value]="p._id">{{ p.user?.nome ?? 'Paciente' }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Duração (minutos)</label>
+            <input
+              type="number"
+              class="form-input"
+              min="0"
+              step="5"
+              [value]="novaDuracao()"
+              (input)="novaDuracao.set(+$any($event.target).value)"
+            />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Data</label>
+            <input
+              type="date"
+              class="form-input"
+              [value]="novaData()"
+              (input)="novaData.set($any($event.target).value)"
+            />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Hora</label>
+            <input
+              type="time"
+              class="form-input"
+              [value]="novaHora()"
+              (input)="novaHora.set($any($event.target).value)"
+            />
+          </div>
+
+          <div class="form-field form-field--full">
+            <label class="form-label">Notas (opcional)</label>
+            <textarea
+              class="form-input form-textarea"
+              placeholder="Notas sobre a consulta..."
+              [value]="novaNotas()"
+              (input)="novaNotas.set($any($event.target).value)"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" (click)="criarConsulta()" [disabled]="saving()">
+            {{ saving() ? 'A agendar...' : 'Agendar consulta' }}
+          </button>
+        </div>
+      </div>
+    }
 
     @if (loading()) {
       <div class="loading">A carregar...</div>
@@ -46,27 +123,96 @@
         } @else {
           <div class="consulta-list">
             @for (c of weekConsultas(); track c._id) {
-              <div class="card consulta-card">
-                <div class="consulta-card__date">
-                  <span class="consulta-card__day">{{ c.data | date:'d' }}</span>
-                  <span class="consulta-card__month">{{ c.data | date:'MMM' }}</span>
-                </div>
-                <div class="consulta-card__info">
-                  <a [routerLink]="['/psicologo/pacientes', c.paciente?._id]" class="consulta-card__title link-hover">
-                    {{ c.paciente?.user?.nome ?? 'Paciente' }}
-                  </a>
-                  <div class="consulta-card__meta">
-                    {{ c.data | date:'HH:mm' }} &middot; {{ c.duracao }} min
-                    @if (c.notas) { &middot; <em>{{ c.notas }}</em> }
+              <div class="card consulta-card-wrap">
+                <div class="consulta-card">
+                  <div class="consulta-card__date">
+                    <span class="consulta-card__day">{{ c.data | date:'d' }}</span>
+                    <span class="consulta-card__month">{{ c.data | date:'MMM' }}</span>
+                  </div>
+                  <div class="consulta-card__info">
+                    <a [routerLink]="['/psicologo/pacientes', c.paciente?._id]" class="consulta-card__title link-hover">
+                      {{ c.paciente?.user?.nome ?? 'Paciente' }}
+                    </a>
+                    <div class="consulta-card__meta">
+                      {{ c.data | date:'HH:mm' }} &middot; {{ c.duracao }} min
+                      @if (c.notas) { &middot; <em>{{ c.notas }}</em> }
+                    </div>
+                  </div>
+                  <div class="consulta-card__right">
+                    <span class="badge" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
+                    @if (c.estado === 'agendada') {
+                      <div class="consulta-card__actions">
+                        @if (isHoje(c)) {
+                          <button type="button" class="btn-primary btn--sm" (click)="marcarRealizada(c)">Marcar como realizada</button>
+                        }
+                        <button type="button" class="btn-secondary btn--sm" (click)="toggleReagendar(c)">Reagendar</button>
+                        <button type="button" class="btn-danger btn--sm" (click)="cancelarConsulta(c)">Cancelar</button>
+                      </div>
+                    }
                   </div>
                 </div>
-                <span class="badge" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
+
+                @if (reagendandoId() === c._id) {
+                  <div class="reagendar-form">
+                    @if (reagendarError()) {
+                      <div class="banner banner--error">{{ reagendarError() }}</div>
+                    }
+                    <div class="reagendar-form__fields">
+                      <div class="form-field">
+                        <label class="form-label">Nova data</label>
+                        <input
+                          type="date"
+                          class="form-input"
+                          [value]="reagendarData()"
+                          (input)="reagendarData.set($any($event.target).value)"
+                        />
+                      </div>
+                      <div class="form-field">
+                        <label class="form-label">Nova hora</label>
+                        <input
+                          type="time"
+                          class="form-input"
+                          [value]="reagendarHora()"
+                          (input)="reagendarHora.set($any($event.target).value)"
+                        />
+                      </div>
+                      <div class="form-field reagendar-form__actions">
+                        <button type="button" class="btn-primary btn--sm" (click)="confirmarReagendamento(c)" [disabled]="reagendarSaving()">
+                          {{ reagendarSaving() ? 'A guardar...' : 'Confirmar' }}
+                        </button>
+                        <button type="button" class="btn-secondary btn--sm" (click)="toggleReagendar(c)">Fechar</button>
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
             }
           </div>
         }
       </div>
 
+    }
+
+    <!-- Modal: confirmar cancelamento -->
+    @if (cancelandoConsulta(); as c) {
+      <div class="modal-overlay" (click)="fecharCancelarModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+          <h2>Cancelar consulta</h2>
+          <p>
+            Tem a certeza que pretende cancelar a consulta com
+            <strong>{{ c.paciente?.user?.nome ?? 'este paciente' }}</strong>
+            no dia {{ c.data | date:'dd/MM/yyyy' }} às {{ c.data | date:'HH:mm' }}?
+          </p>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary btn--sm" (click)="fecharCancelarModal()" [disabled]="cancelarSaving()">
+              Voltar
+            </button>
+            <button type="button" class="btn-danger btn--sm" (click)="confirmarCancelamento()" [disabled]="cancelarSaving()">
+              {{ cancelarSaving() ? 'A cancelar...' : 'Sim, cancelar' }}
+            </button>
+          </div>
+        </div>
+      </div>
     }
   </div>
 </div>

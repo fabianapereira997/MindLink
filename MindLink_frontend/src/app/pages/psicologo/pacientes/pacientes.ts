@@ -1,8 +1,13 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { PsicologoService } from '../../core/services/psicologo.service';
-import { QuestionarioService } from '../../core/services/questionario.service';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { PsicologoService } from '../../../core/services/psicologo.service';
+import { QuestionarioService } from '../../../core/services/questionario.service';
+import { PacienteService } from '../../../core/services/paciente.service';
 
 export interface PacienteRow {
   _id: string;
@@ -13,17 +18,46 @@ export interface PacienteRow {
 @Component({
   selector: 'app-psicologo-pacientes',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [
+    CommonModule, RouterLink, ReactiveFormsModule,
+    MatFormFieldModule, MatInputModule, MatSelectModule,
+  ],
   templateUrl: './pacientes.html',
   styleUrl: './pacientes.css',
 })
 export class PsicologoPacientesComponent implements OnInit {
-  private psiSvc = inject(PsicologoService);
-  private qSvc   = inject(QuestionarioService);
+  private psiSvc      = inject(PsicologoService);
+  private qSvc        = inject(QuestionarioService);
+  private pacienteSvc = inject(PacienteService);
+  private fb          = inject(FormBuilder);
 
   pacientes = signal<PacienteRow[]>([]);
   loading   = signal(true);
   search    = signal('');
+
+  // ── Criar paciente ───────────────────────────────────────────────────────────
+  showModal   = signal(false);
+  creating    = signal(false);
+  createError = signal<string | null>(null);
+  createDone  = signal(false);
+  hidePassword = true;
+
+  form = this.fb.group({
+    nome:             ['', [Validators.required, Validators.minLength(2)]],
+    email:            ['', [Validators.required, Validators.email]],
+    password:         ['', [Validators.required, Validators.minLength(6)]],
+    genero:           ['outro', Validators.required],
+    data_nascimento:  ['', Validators.required],
+    doenca:           ['', Validators.required],
+    comorbilidades:   [''],
+    exercicioRegular: [''],
+    fumador:          [''],
+  });
+
+  // ── Eliminar paciente ────────────────────────────────────────────────────────
+  deletingPaciente = signal<PacienteRow | null>(null);
+  deleteSaving     = signal(false);
+  deleteError      = signal<string | null>(null);
 
   filtered = computed(() => {
     const s = this.search().toLowerCase();
@@ -35,6 +69,11 @@ export class PsicologoPacientesComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  private load(): void {
+    this.loading.set(true);
     this.psiSvc.getMyProfile().subscribe({
       next: profile => {
         const raw = (profile?.pacientes ?? []) as PacienteRow[];
@@ -66,5 +105,93 @@ export class PsicologoPacientesComponent implements OnInit {
     if (v <= 2) return 'humor-pill--low';
     if (v <= 3.5) return 'humor-pill--mid';
     return 'humor-pill--ok';
+  }
+
+  // ── Criar paciente ───────────────────────────────────────────────────────────
+  openModal(): void {
+    this.form.reset({ genero: 'outro', exercicioRegular: '', fumador: '' });
+    this.createError.set(null);
+    this.createDone.set(false);
+    this.showModal.set(true);
+  }
+
+  closeModal(): void {
+    if (this.creating()) return;
+    this.showModal.set(false);
+  }
+
+  private toBool(v: string | null | undefined): boolean | null {
+    if (v === 'sim') return true;
+    if (v === 'nao') return false;
+    return null;
+  }
+
+  submit(): void {
+    if (this.form.invalid) return;
+
+    this.creating.set(true);
+    this.createError.set(null);
+
+    const v = this.form.value;
+    const comorbilidades = (v.comorbilidades ?? '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    this.pacienteSvc.criarPaciente({
+      nome: v.nome!,
+      email: v.email!,
+      password: v.password!,
+      genero: v.genero!,
+      data_nascimento: v.data_nascimento!,
+      doenca: v.doenca!,
+      formulario: {
+        historicoMedico: { comorbilidades },
+        estiloDeVida: {
+          exercicioRegular: this.toBool(v.exercicioRegular),
+          fumador: this.toBool(v.fumador),
+        },
+      },
+    }).subscribe({
+      next: () => {
+        this.creating.set(false);
+        this.createDone.set(true);
+        this.showModal.set(false);
+        this.load();
+      },
+      error: err => {
+        this.creating.set(false);
+        this.createError.set(err.error?.error ?? 'Erro ao criar paciente.');
+      },
+    });
+  }
+
+  // ── Eliminar paciente ────────────────────────────────────────────────────────
+  confirmDelete(p: PacienteRow): void {
+    this.deleteError.set(null);
+    this.deletingPaciente.set(p);
+  }
+
+  cancelDelete(): void {
+    if (this.deleteSaving()) return;
+    this.deletingPaciente.set(null);
+  }
+
+  deleteConfirmed(): void {
+    const p = this.deletingPaciente();
+    if (!p) return;
+
+    this.deleteSaving.set(true);
+    this.pacienteSvc.eliminarPaciente(p._id).subscribe({
+      next: () => {
+        this.deleteSaving.set(false);
+        this.deletingPaciente.set(null);
+        this.load();
+      },
+      error: err => {
+        this.deleteSaving.set(false);
+        this.deleteError.set(err.error?.error ?? 'Erro ao eliminar paciente.');
+      },
+    });
   }
 }

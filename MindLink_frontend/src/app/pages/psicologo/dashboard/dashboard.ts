@@ -1,16 +1,26 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AuthService } from '../../core/auth/auth.service';
-import { PsicologoService, PsicologoProfile } from '../../core/services/psicologo.service';
-import { ConsultaService, Consulta } from '../../core/services/consulta.service';
-import { DesafioService, Desafio } from '../../core/services/desafio.service';
-import { QuestionarioService } from '../../core/services/questionario.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { PsicologoService, PsicologoProfile } from '../../../core/services/psicologo.service';
+import { ConsultaService, Consulta } from '../../../core/services/consulta.service';
+import { DesafioService, Desafio } from '../../../core/services/desafio.service';
+import { QuestionarioService } from '../../../core/services/questionario.service';
+import { ChatService } from '../../../core/services/chat.service';
 
 export interface PacienteComStats {
   _id: string;
   user?: { nome?: string };
   avgHumor?: string;
+}
+
+export interface DesafioPendenteItem {
+  desafioId: string;
+  titulo: string;
+  duracao?: string;
+  paciente: { _id: string; user?: { nome?: string } };
+  data_fim?: string;
+  diasAtraso: number;
 }
 
 @Component({
@@ -26,12 +36,32 @@ export class PsicologoDashboardComponent implements OnInit {
   private consultaSvc = inject(ConsultaService);
   private desafioSvc  = inject(DesafioService);
   private qSvc        = inject(QuestionarioService);
+  private chatSvc     = inject(ChatService);
 
   pacientes         = signal<PacienteComStats[]>([]);
   pacientesCriticos = signal<PacienteComStats[]>([]);
   proximasConsultas = signal<Consulta[]>([]);
   desafiosPendentes = signal<Desafio[]>([]);
   loading           = signal(true);
+
+  /** Flattened list of (desafio, paciente) pairs that are still pending,
+   *  sorted with the most overdue first. */
+  desafiosPendentesDetalhe = computed<DesafioPendenteItem[]>(() => {
+    const items: DesafioPendenteItem[] = [];
+    for (const d of this.desafiosPendentes()) {
+      for (const p of d.pacientesNaoCumpriram ?? []) {
+        items.push({
+          desafioId: d._id,
+          titulo: d.titulo,
+          duracao: d.duracao ?? d.tipo,
+          paciente: p as { _id: string; user?: { nome?: string } },
+          data_fim: d.data_inicio ?? d.createdAt,
+          diasAtraso: this.calcDiasAtraso(d.data_inicio ?? d.createdAt),
+        });
+      }
+    }
+    return items.sort((a, b) => b.diasAtraso - a.diasAtraso);
+  });
 
   ngOnInit(): void {
     this.psiSvc.getMyProfile().subscribe({
@@ -90,6 +120,19 @@ export class PsicologoDashboardComponent implements OnInit {
         this.desafiosPendentes.set(pending);
       },
     });
+  }
+
+  private calcDiasAtraso(dataFim?: string): number {
+    if (!dataFim) return 0;
+    const fim = new Date(dataFim);
+    fim.setHours(23, 59, 59, 999);
+    const now = new Date();
+    if (now <= fim) return 0;
+    return Math.floor((now.getTime() - fim.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  abrirChat(pacienteId: string): void {
+    this.chatSvc.openChatWithPaciente(pacienteId);
   }
 
   private finalize(enriched: PacienteComStats[]): void {

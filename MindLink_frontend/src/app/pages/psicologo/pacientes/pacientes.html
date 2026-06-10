@@ -3,7 +3,15 @@
 
     <div class="psi-header">
       <h1>Pacientes</h1>
+      <button class="btn-primary" (click)="openModal()">+ Novo paciente</button>
     </div>
+
+    @if (createDone()) {
+      <div class="banner banner--success">Paciente criado com sucesso!</div>
+    }
+    @if (deleteError()) {
+      <div class="banner banner--error">{{ deleteError() }}</div>
+    }
 
     @if (loading()) {
       <div class="loading">A carregar...</div>
@@ -37,6 +45,13 @@
               @if (p.avgHumor) {
                 <div class="humor-pill" [class]="humorClass(p.avgHumor)">{{ p.avgHumor }}/5</div>
               }
+              <button
+                type="button"
+                class="btn-danger btn--sm"
+                (click)="$event.preventDefault(); $event.stopPropagation(); confirmDelete(p)"
+              >
+                Eliminar
+              </button>
               <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="m9 18 6-6-6-6"/>
               </svg>
@@ -52,3 +67,112 @@
     }
   </div>
 </div>
+
+<!-- Modal: criar paciente -->
+@if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal card" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2>Novo paciente</h2>
+        <button class="modal__close" (click)="closeModal()">✕</button>
+      </div>
+
+      @if (createError()) {
+        <div class="banner banner--error">{{ createError() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
+        <mat-form-field appearance="fill" class="form-field">
+          <mat-label>Nome completo</mat-label>
+          <input matInput formControlName="nome" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="form-field">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" />
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="fill" class="form-field">
+            <mat-label>Género</mat-label>
+            <mat-select formControlName="genero">
+              <mat-option value="masculino">Masculino</mat-option>
+              <mat-option value="feminino">Feminino</mat-option>
+              <mat-option value="outro">Outro</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="form-field">
+            <mat-label>Data de nascimento</mat-label>
+            <input matInput type="date" formControlName="data_nascimento" />
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="fill" class="form-field">
+          <mat-label>Password provisória</mat-label>
+          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="form-field">
+          <mat-label>Diagnóstico / condição</mat-label>
+          <input matInput formControlName="doenca" placeholder="Ex: Ansiedade generalizada" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="form-field">
+          <mat-label>Comorbilidades (separadas por vírgula)</mat-label>
+          <input matInput formControlName="comorbilidades" placeholder="Ex: Insónia, Hipertensão" />
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="fill" class="form-field">
+            <mat-label>Pratica exercício regular?</mat-label>
+            <mat-select formControlName="exercicioRegular">
+              <mat-option value="">Não especificado</mat-option>
+              <mat-option value="sim">Sim</mat-option>
+              <mat-option value="nao">Não</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="form-field">
+            <mat-label>É fumador?</mat-label>
+            <mat-select formControlName="fumador">
+              <mat-option value="">Não especificado</mat-option>
+              <mat-option value="sim">Sim</mat-option>
+              <mat-option value="nao">Não</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="modal__actions">
+          <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid || creating()">
+            {{ creating() ? 'A criar...' : 'Criar paciente' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal: confirmar eliminação -->
+@if (deletingPaciente(); as p) {
+  <div class="modal-backdrop" (click)="cancelDelete()">
+    <div class="modal card modal--sm" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2>Eliminar paciente</h2>
+        <button class="modal__close" (click)="cancelDelete()">✕</button>
+      </div>
+      <p>
+        Tem a certeza que pretende eliminar o paciente
+        <strong>{{ p.user?.nome ?? 'este paciente' }}</strong>?
+        Esta ação é irreversível e remove todos os dados associados à conta.
+      </p>
+      <div class="modal__actions">
+        <button type="button" class="btn-secondary" (click)="cancelDelete()" [disabled]="deleteSaving()">Voltar</button>
+        <button type="button" class="btn-danger" (click)="deleteConfirmed()" [disabled]="deleteSaving()">
+          {{ deleteSaving() ? 'A eliminar...' : 'Sim, eliminar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

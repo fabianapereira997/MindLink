@@ -120,11 +120,9 @@
                     <span class="qcard__label">Humor</span>
                     <span class="humor-pill" [class]="humorPillClass(q.humor)">{{ q.humor }}/5</span>
                   </div>
-                  @if (q.sintomas?.length) {
+                  @if (hasSintomas(q.sintomas)) {
                     <div class="qcard__sintomas">
-                      @for (s of q.sintomas; track s) {
-                        <span class="sintoma-tag">{{ s }}</span>
-                      }
+                      Sintomas: {{ sintomasText(q.sintomas) }}
                     </div>
                   }
                   @if (q.notas) {

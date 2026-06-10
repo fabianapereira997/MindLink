@@ -22,7 +22,82 @@
 .agenda-nav {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-sm);
+}
+
+/* Banners */
+.banner {
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  font-weight: 500;
+  font-size: 0.95rem;
+  margin-bottom: var(--space-lg);
+}
+
+.banner--success {
+  background: rgba(38,135,78,0.1);
+  color: var(--color-primary-dark);
+  border: 1px solid rgba(38,135,78,0.25);
+}
+
+.banner--error {
+  background: rgba(220,38,38,0.08);
+  color: #dc2626;
+  border: 1px solid rgba(220,38,38,0.2);
+}
+
+/* Nova consulta form */
+.nova-consulta-form {
+  padding: var(--space-xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.nova-consulta-form h2 {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-lg);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.form-field { display: flex; flex-direction: column; gap: var(--space-xs); }
+.form-field--full { grid-column: 1 / -1; }
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.form-input {
+  padding: 0.6rem 0.9rem;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: white;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.form-input:focus { border-color: var(--color-primary); }
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-actions { display: flex; justify-content: flex-end; }
+
+@media (max-width: 540px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-field--full { grid-column: 1; }
 }
 
 .agenda-week-label {
@@ -149,11 +224,113 @@
 
 .consulta-list { display: flex; flex-direction: column; gap: var(--space-md); }
 
+.consulta-card-wrap {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
 .consulta-card {
   display: flex;
   align-items: center;
   gap: var(--space-lg);
-  padding: var(--space-lg);
+}
+
+.consulta-card__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.consulta-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid rgba(220,38,38,0.3);
+  background: white;
+  color: #dc2626;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-danger:hover {
+  background: rgba(220,38,38,0.08);
+  border-color: #dc2626;
+}
+
+.reagendar-form {
+  border-top: 1px solid rgba(0,0,0,0.06);
+  padding-top: var(--space-md);
+}
+
+.reagendar-form__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-md);
+}
+
+.reagendar-form__actions {
+  flex-direction: row;
+  gap: var(--space-sm);
+}
+
+@media (max-width: 640px) {
+  .consulta-card { flex-wrap: wrap; }
+  .consulta-card__right { align-items: flex-start; width: 100%; }
+  .consulta-card__actions { justify-content: flex-start; }
+}
+
+/* Modal: confirmar cancelamento */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-md);
+}
+
+.modal-card {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.modal-card h2 {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-md);
+}
+
+.modal-card p {
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: var(--space-lg);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
 }
 
 .consulta-card__date {

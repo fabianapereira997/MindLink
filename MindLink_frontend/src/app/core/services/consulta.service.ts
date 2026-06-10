@@ -25,4 +25,22 @@ export class ConsultaService {
   getConsultasForPsicologo(): Observable<Consulta[]> {
     return this.http.get<Consulta[]>(`${API}/consultas/psicologo`);
   }
+
+  criarConsulta(payload: {
+    paciente: string;
+    data: string;
+    duracao: number;
+    notas?: string;
+  }): Observable<Consulta> {
+    return this.http.post<Consulta>(`${API}/consultas`, payload);
+  }
+
+  updateConsulta(id: string, payload: Partial<{
+    data: string;
+    duracao: number;
+    estado: 'agendada' | 'realizada' | 'cancelada';
+    notas: string;
+  }>): Observable<Consulta> {
+    return this.http.put<Consulta>(`${API}/consultas/${id}`, payload);
+  }
 }

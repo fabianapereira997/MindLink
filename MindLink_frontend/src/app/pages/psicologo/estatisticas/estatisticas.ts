@@ -1,9 +1,9 @@
 import { Component, inject, OnInit, signal, computed, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { PsicologoService } from '../../core/services/psicologo.service';
-import { QuestionarioService, Questionario } from '../../core/services/questionario.service';
-import { DesafioService } from '../../core/services/desafio.service';
+import { PsicologoService } from '../../../core/services/psicologo.service';
+import { QuestionarioService, Questionario } from '../../../core/services/questionario.service';
+import { DesafioService } from '../../../core/services/desafio.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -36,9 +36,19 @@ export class PsicologoEstatisticasComponent implements OnInit, AfterViewInit {
   pacientesStats   = signal<PacienteStats[]>([]);
   allData          = signal<{ date: string; avg: number }[]>([]);
   loading          = signal(true);
+  selectedPacienteId = signal<string>('geral');
   private chart: Chart | null = null;
   private viewReady = false;
   private desafiosPendentesMap = signal<Record<string, number>>({});
+  private allQs: Questionario[] = [];
+  private qsByPaciente: Record<string, Questionario[]> = {};
+
+  chartTitle = computed(() => {
+    const sel = this.selectedPacienteId();
+    if (sel === 'geral') return 'Evolução do humor geral (últimos 30 dias)';
+    const p = this.pacientesStats().find(p => p._id === sel);
+    return `Evolução do humor — ${p?.user?.nome ?? 'Paciente'} (últimos 30 dias)`;
+  });
 
   pctMelhorando = computed(() => {
     const ps = this.pacientesStats();
@@ -108,6 +118,7 @@ export class PsicologoEstatisticasComponent implements OnInit, AfterViewInit {
           this.qSvc.getQuestionariosByPaciente(ps._id).subscribe({
             next: qs => {
               allQs.push(...qs);
+              this.qsByPaciente[ps._id] = qs;
               const sorted = [...qs].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
               const recent = sorted.slice(0, 7);
               const older  = sorted.slice(7, 14);
@@ -129,6 +140,7 @@ export class PsicologoEstatisticasComponent implements OnInit, AfterViewInit {
               remaining--;
               if (remaining === 0) {
                 this.pacientesStats.set(statsArr);
+                this.allQs = allQs;
                 this.buildChartData(allQs);
                 this.loading.set(false);
                 if (this.viewReady) setTimeout(() => this.renderChart(), 0);
@@ -146,6 +158,13 @@ export class PsicologoEstatisticasComponent implements OnInit, AfterViewInit {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  onPacienteChange(value: string): void {
+    this.selectedPacienteId.set(value);
+    const qs = value === 'geral' ? this.allQs : (this.qsByPaciente[value] ?? []);
+    this.buildChartData(qs);
+    if (this.viewReady) setTimeout(() => this.renderChart(), 0);
   }
 
   ngAfterViewInit(): void {
