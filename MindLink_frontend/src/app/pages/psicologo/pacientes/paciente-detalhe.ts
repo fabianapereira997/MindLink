@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { PsicologoService } from '../../../core/services/psicologo.service';
 import { QuestionarioService, Questionario } from '../../../core/services/questionario.service';
+import { PacienteService } from '../../../core/services/paciente.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -17,13 +18,16 @@ Chart.register(...registerables);
 export class PsicologoPacienteDetalheComponent implements OnInit, AfterViewInit {
   @ViewChild('moodChart') chartRef!: ElementRef<HTMLCanvasElement>;
 
-  private route  = inject(ActivatedRoute);
-  private psiSvc = inject(PsicologoService);
-  private qSvc   = inject(QuestionarioService);
+  private route   = inject(ActivatedRoute);
+  private psiSvc  = inject(PsicologoService);
+  private qSvc    = inject(QuestionarioService);
+  private pacSvc  = inject(PacienteService);
 
   paciente      = signal<any>(null);
   questionarios = signal<Questionario[]>([]);
   loading       = signal(true);
+  exporting     = signal(false);
+  exportError   = signal<string | null>(null);
   private chart: Chart | null = null;
   private viewReady = false;
 
@@ -99,6 +103,30 @@ export class PsicologoPacienteDetalheComponent implements OnInit, AfterViewInit 
     if (humor <= 2) return 'humor-pill--low';
     if (humor <= 3) return 'humor-pill--mid';
     return 'humor-pill--ok';
+  }
+
+  // ── Exportar dados (XML) ─────────────────────────────────────────────────────
+  exportarPaciente(): void {
+    const p = this.paciente();
+    if (!p) return;
+
+    this.exportError.set(null);
+    this.exporting.set(true);
+    this.pacSvc.exportarPaciente(p._id).subscribe({
+      next: blob => {
+        this.exporting.set(false);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `paciente-${p._id}.xml`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: err => {
+        this.exporting.set(false);
+        this.exportError.set(err.error?.error ?? 'Erro ao exportar os dados do paciente.');
+      },
+    });
   }
 
   private renderChart(): void {

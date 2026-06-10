@@ -1,0 +1,121 @@
+<div class="admin-page">
+  <div class="container">
+
+    <div class="admin-header">
+      <div>
+        <h1>Consultas</h1>
+        <p>Todas as consultas agendadas na plataforma.</p>
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="banner banner--error">{{ error() }}</div>
+    }
+    @if (success()) {
+      <div class="banner banner--success">{{ success() }}</div>
+    }
+
+    <!-- Estado tabs -->
+    <div class="estado-tabs">
+      <button type="button" class="estado-tab" [class.estado-tab--active]="estadoFiltro() === 'todas'"
+              (click)="estadoFiltro.set('todas')">
+        Todas <span class="estado-tab__count">{{ consultas().length }}</span>
+      </button>
+      <button type="button" class="estado-tab" [class.estado-tab--active]="estadoFiltro() === 'agendada'"
+              (click)="estadoFiltro.set('agendada')">
+        Agendadas <span class="estado-tab__count">{{ countAgendadas }}</span>
+      </button>
+      <button type="button" class="estado-tab" [class.estado-tab--active]="estadoFiltro() === 'realizada'"
+              (click)="estadoFiltro.set('realizada')">
+        Realizadas <span class="estado-tab__count">{{ countRealizadas }}</span>
+      </button>
+      <button type="button" class="estado-tab" [class.estado-tab--active]="estadoFiltro() === 'cancelada'"
+              (click)="estadoFiltro.set('cancelada')">
+        Canceladas <span class="estado-tab__count">{{ countCanceladas }}</span>
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <select class="filter-select" [value]="filterPsi()" (change)="filterPsi.set($any($event.target).value)">
+        <option value="">Todos os psicólogos</option>
+        @for (psi of psicologoOptions; track psi) {
+          <option [value]="psi">{{ psi }}</option>
+        }
+      </select>
+
+      <select class="filter-select" [value]="filterPac()" (change)="filterPac.set($any($event.target).value)">
+        <option value="">Todos os pacientes</option>
+        @for (pac of pacienteOptions; track pac) {
+          <option [value]="pac">{{ pac }}</option>
+        }
+      </select>
+
+      <input class="filter-date" type="date" [value]="filterData()" [max]="maxFilterDate"
+             (change)="filterData.set($any($event.target).value)" />
+
+      @if (filterPsi() || filterPac() || filterData() || estadoFiltro() !== 'todas') {
+        <button type="button" class="btn-secondary btn--sm" (click)="clearFilters()">Limpar filtros</button>
+      }
+    </div>
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else if (filtered.length === 0) {
+      <div class="card empty-card"><p>Nenhuma consulta encontrada.</p></div>
+    } @else {
+      <div class="list-table card consultas-table">
+        <div class="list-table__header">
+          <span>Paciente</span>
+          <span>Psicólogo</span>
+          <span>Data / Hora</span>
+          <span>Duração</span>
+          <span>Estado</span>
+          <span></span>
+        </div>
+        @for (c of filtered; track c._id) {
+          <div class="list-table__row">
+            <span class="list-row__spec">{{ c.paciente?.user?.nome ?? '—' }}</span>
+            <span class="list-row__spec">{{ c.psicologo?.user?.nome ?? '—' }}</span>
+            <span class="list-row__spec">{{ c.data | date:'dd/MM/yyyy HH:mm' }}</span>
+            <span class="list-row__spec">{{ c.duracao }} min</span>
+            <span>
+              <select class="estado-select"
+                      [class.estado-select--agendada]="c.estado === 'agendada'"
+                      [class.estado-select--realizada]="c.estado === 'realizada'"
+                      [class.estado-select--cancelada]="c.estado === 'cancelada'"
+                      [value]="c.estado"
+                      [disabled]="savingId() === c._id"
+                      (change)="changeEstado(c, $any($event.target).value)">
+                <option value="agendada">Agendada</option>
+                <option value="realizada">Realizada</option>
+                <option value="cancelada">Cancelada</option>
+              </select>
+            </span>
+            <div class="list-row__actions">
+              <button type="button" class="btn-danger btn--sm" (click)="askDelete(c._id)">Eliminar</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+
+  <!-- Confirm delete modal -->
+  @if (confirmDeleteId()) {
+    <div class="modal-backdrop" (click)="cancelDelete()">
+      <div class="modal card" (click)="$event.stopPropagation()">
+        <div class="modal__header">
+          <h2>Eliminar consulta</h2>
+          <button type="button" class="modal__close" (click)="cancelDelete()">✕</button>
+        </div>
+        <p>Tem a certeza que pretende eliminar esta consulta? Esta ação não pode ser revertida.</p>
+        <div class="modal__actions">
+          <button type="button" class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
+          <button type="button" class="btn-danger" (click)="confirmDelete()">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

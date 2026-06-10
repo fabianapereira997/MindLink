@@ -4,54 +4,12 @@
   padding: var(--space-2xl) 0 var(--space-4xl);
 }
 
-.perfil-edit-btn {
-  margin-left: auto;
-}
-
-/* Edit form */
-.perfil-edit {
-  max-width: 720px;
-}
-
-.perfil-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.form-divider {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding-top: var(--space-sm);
-  border-top: 1px solid rgba(0,0,0,0.06);
-}
-
-.perfil-form__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-md);
-  padding-top: var(--space-md);
-}
-
-@media (max-width: 700px) {
-  .perfil-edit-btn { margin-left: 0; }
-}
-
-.loading {
-  text-align: center;
-  padding: var(--space-4xl);
-  color: var(--color-text-muted);
-}
-
 .perfil-header {
   display: flex;
   align-items: center;
   gap: var(--space-xl);
-  flex-wrap: wrap;
   margin-bottom: var(--space-2xl);
+  flex-wrap: wrap;
 }
 
 .perfil-avatar {
@@ -70,6 +28,10 @@
 
 .perfil-header h1 { font-size: 1.75rem; margin-bottom: 4px; }
 .perfil-header p { color: var(--color-text-muted); }
+
+.perfil-edit-btn {
+  margin-left: auto;
+}
 
 .perfil-grid {
   display: grid;
@@ -118,34 +80,34 @@
   color: var(--color-text-primary);
 }
 
-/* Psicologo card */
-.psicologo-card {
+/* Edit form */
+.perfil-edit {
+  max-width: 720px;
+}
+
+.perfil-form {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-md);
 }
 
-.psicologo-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-green-200), var(--color-green-400));
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-
-.psicologo-name {
+.form-divider {
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-top: var(--space-sm);
+  border-top: 1px solid rgba(0,0,0,0.06);
 }
 
-.psicologo-esp {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  margin-top: 2px;
+.perfil-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding-top: var(--space-md);
+}
+
+@media (max-width: 700px) {
+  .perfil-edit-btn { margin-left: 0; }
 }

@@ -86,6 +86,7 @@
             <button
               class="patient-item"
               [class.patient-item--active]="selectedPaciente()?._id === p._id"
+              [class.patient-item--unread]="hasUnreadForPaciente(p)"
               (click)="selectPaciente(p)"
             >
               <div class="patient-item__avatar">{{ patientName(p).charAt(0) }}</div>

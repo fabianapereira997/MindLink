@@ -41,4 +41,19 @@ export class PacienteService {
   eliminarPaciente(id: string): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${API}/pacientes/${id}`);
   }
+
+  /** Paciente: update own estilo de vida (exercício regular / fumador). */
+  updateEstiloVida(id: string, estiloDeVida: { exercicioRegular: boolean | null; fumador: boolean | null }): Observable<PacienteProfile> {
+    return this.http.put<PacienteProfile>(`${API}/pacientes/${id}`, { formulario: { estiloDeVida } });
+  }
+
+  /** Exporta os dados completos de um paciente (perfil, formulário, registos, desafios, consultas) em XML. */
+  exportarPaciente(id: string): Observable<Blob> {
+    return this.http.get(`${API}/pacientes/${id}/export`, { responseType: 'blob' });
+  }
+
+  /** Psicólogo: exporta a lista resumida dos seus pacientes em XML. */
+  exportarListaPacientes(): Observable<Blob> {
+    return this.http.get(`${API}/pacientes/export/lista`, { responseType: 'blob' });
+  }
 }

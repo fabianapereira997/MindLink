@@ -43,12 +43,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   input        = new FormControl('', [Validators.required, Validators.minLength(1)]);
 
   private pollTimer: ReturnType<typeof setInterval> | null = null;
-  private bgPollTimer: ReturnType<typeof setInterval> | null = null;
+  private unreadPollTimer: ReturnType<typeof setInterval> | null = null;
   private footerObserver: IntersectionObserver | null = null;
   private shouldScrollBottom = false;
-  private lastSeenCount = 0;  // messages seen when panel was last opened
 
   role = computed(() => this.auth.role());
+  private initializedForRole: string | null = null;
 
   constructor() {
     // Allow other components (e.g. psicólogo dashboard) to request opening
@@ -65,31 +65,65 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.chatSvc.clearRequest();
       }
     });
+
+    // Re-initialize whenever the logged-in role changes (e.g. login without a
+    // full page refresh), and reset state on logout.
+    effect(() => {
+      const r = this.role();
+
+      if (r === 'paciente' || r === 'psicologo') {
+        if (this.initializedForRole !== r) {
+          this.initializedForRole = r;
+          this.initForRole(r);
+        }
+      } else if (this.initializedForRole !== null) {
+        this.initializedForRole = null;
+        this.resetState();
+      }
+    });
   }
 
   ngOnInit(): void {
     this.setupFooterObserver();
+  }
 
-    if (this.role() === 'paciente') {
+  private initForRole(role: 'paciente' | 'psicologo'): void {
+    if (role === 'paciente') {
       this.pacSvc.getMyProfile().subscribe({
         next: profiles => {
           if (!profiles.length) return;
           const p = profiles[0];
           this.pacienteProfile.set(p);
-          // Background poll to detect new messages even when panel is closed
-          this.startBgPoll(p._id, p.psicologo._id);
+          this.startUnreadPoll();
         },
+        error: err => console.error('Erro ao carregar perfil do paciente (chat)', err),
       });
-    } else if (this.role() === 'psicologo') {
+    } else {
       this.pacSvc.getMyProfile().subscribe({
-        next: pacientes => this.pacientes.set(pacientes),
+        next: pacientes => {
+          this.pacientes.set(pacientes);
+          this.startUnreadPoll();
+        },
+        error: err => console.error('Erro ao carregar pacientes (chat)', err),
       });
     }
   }
 
+  private resetState(): void {
+    this.stopPolling();
+    this.stopUnreadPoll();
+    this.isOpen.set(false);
+    this.hasUnread.set(false);
+    this.unreadMap.clear();
+    this.pacienteProfile.set(null);
+    this.pacientes.set([]);
+    this.selectedPaciente.set(null);
+    this.mensagens.set([]);
+  }
+
   ngOnDestroy(): void {
     this.stopPolling();
-    this.stopBgPoll();
+    this.stopUnreadPoll();
     this.footerObserver?.disconnect();
   }
 
@@ -105,12 +139,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   toggleChat(): void {
     this.isOpen.update(v => !v);
     if (this.isOpen()) {
-      this.hasUnread.set(false);
+      if (this.role() === 'paciente') this.hasUnread.set(false);
       this.openConversation();
     } else {
       this.stopPolling();
-      // record last seen count so background poll knows what's "new"
-      this.lastSeenCount = this.mensagens().length;
     }
   }
 
@@ -118,13 +150,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.role() === 'paciente') {
       const p = this.pacienteProfile();
       if (p) {
-        this.lastSeenCount = this.mensagens().length;
         this.loadAndPoll(p._id, p.psicologo._id);
+        this.markConversationRead(p._id, p.psicologo._id);
       }
     } else if (this.role() === 'psicologo' && this.selectedPaciente()) {
       const sel = this.selectedPaciente()!;
-      this.lastSeenCount = this.mensagens().length;
       this.loadAndPoll(sel._id, sel.psicologo._id);
+      this.markConversationRead(sel._id, sel.psicologo._id);
     }
   }
 
@@ -138,6 +170,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.unreadMap.set(p._id, 0);
     this.refreshUnreadDot();
     this.loadAndPoll(p._id, p.psicologo._id);
+    this.markConversationRead(p._id, p.psicologo._id);
   }
 
   hasUnreadForPaciente(p: PacienteProfile): boolean {
@@ -158,12 +191,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: msgs => {
         const prev = this.mensagens().length;
         this.mensagens.set(msgs);
-        if (msgs.length > prev) this.shouldScrollBottom = true;
+        if (msgs.length > prev) {
+          this.shouldScrollBottom = true;
+          // New messages arrived while the conversation is open — mark them read.
+          if (fromForeground) this.markConversationRead(pacienteId, psicologoId);
+        }
 
-        if (!fromForeground) {
-          if (msgs.length > this.lastSeenCount) this.hasUnread.set(true);
-        } else {
-          this.lastSeenCount = msgs.length;
+        if (fromForeground) {
           this.sendError.set(null);
         }
       },
@@ -182,28 +216,57 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null; }
   }
 
-  // ── Background polling (panel closed, patient only) ────────────────────────
+  // ── Unread polling (drives FAB dot + per-patient highlight) ────────────────
 
-  private startBgPoll(pacienteId: string, psicologoId: string): void {
-    // Initial silent load to set baseline
-    this.msgSvc.getConversa(pacienteId, psicologoId).subscribe({
-      next: msgs => { this.lastSeenCount = msgs.length; },
-    });
-    this.bgPollTimer = setInterval(() => {
-      if (!this.isOpen()) {
-        this.loadMessages(pacienteId, psicologoId, false);
-      }
-    }, 10000); // every 10s in background
+  private startUnreadPoll(): void {
+    this.refreshUnread();
+    this.unreadPollTimer = setInterval(() => this.refreshUnread(), 10000);
   }
 
-  private stopBgPoll(): void {
-    if (this.bgPollTimer) { clearInterval(this.bgPollTimer); this.bgPollTimer = null; }
+  private stopUnreadPoll(): void {
+    if (this.unreadPollTimer) { clearInterval(this.unreadPollTimer); this.unreadPollTimer = null; }
+  }
+
+  private refreshUnread(): void {
+    this.msgSvc.getUnread().subscribe({
+      next: res => {
+        if (this.role() === 'paciente') {
+          const count = (res as { count: number }).count ?? 0;
+          if (this.isOpen()) {
+            // Conversation is open — anything new is read immediately.
+            this.hasUnread.set(false);
+            const p = this.pacienteProfile();
+            if (count > 0 && p) this.markConversationRead(p._id, p.psicologo._id);
+          } else {
+            this.hasUnread.set(count > 0);
+          }
+        } else if (this.role() === 'psicologo') {
+          this.unreadMap = new Map(Object.entries(res as Record<string, number>));
+          // The currently open conversation is always considered read.
+          const sel = this.selectedPaciente();
+          if (this.isOpen() && sel) {
+            if ((this.unreadMap.get(sel._id) ?? 0) > 0) {
+              this.markConversationRead(sel._id, sel.psicologo._id);
+            }
+            this.unreadMap.set(sel._id, 0);
+          }
+          this.refreshUnreadDot();
+        }
+      },
+      error: () => { /* silently ignore — non-critical */ },
+    });
   }
 
   // Psychologist: check if any patient has unread
   private refreshUnreadDot(): void {
     const anyUnread = Array.from(this.unreadMap.values()).some(v => v > 0);
     this.hasUnread.set(anyUnread);
+  }
+
+  private markConversationRead(pacienteId: string, psicologoId: string): void {
+    this.msgSvc.markAsRead(pacienteId, psicologoId).subscribe({
+      error: () => { /* silently ignore — non-critical */ },
+    });
   }
 
   // ── Send message ───────────────────────────────────────────────────────────
@@ -217,7 +280,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.msgSvc.sendAsPaciente(text).subscribe({
         next: msg => {
           this.mensagens.update(m => [...m, msg]);
-          this.lastSeenCount = this.mensagens().length;
           this.input.reset();
           this.shouldScrollBottom = true;
         },
@@ -227,7 +289,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.msgSvc.sendAsPsicologo(text, this.selectedPaciente()!._id).subscribe({
         next: msg => {
           this.mensagens.update(m => [...m, msg]);
-          this.lastSeenCount = this.mensagens().length;
           this.input.reset();
           this.shouldScrollBottom = true;
         },

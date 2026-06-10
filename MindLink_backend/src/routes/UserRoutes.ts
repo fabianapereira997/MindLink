@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { isValidObjectId } from '../utils/helpers';
+import { isValidObjectId, isTodayOrPast } from '../utils/helpers';
 
 const express = require('express');
 const router  = express.Router();
@@ -23,6 +23,10 @@ router.post('/register', async (req: Request, res: Response) => {
         // Validate the secret admin token
         if (!adminToken || adminToken !== process.env.ADMIN_REGISTER_TOKEN) {
             return res.status(403).json({ error: 'Token de validação inválido' });
+        }
+
+        if (!isTodayOrPast(data_nascimento)) {
+            return res.status(400).json({ error: 'A data de nascimento não pode ser uma data futura' });
         }
 
         const exists = await User.findOne({ email });
@@ -120,6 +124,10 @@ router.put('/:id', verifyToken, async (req: Request, res: Response) => {
         // Strip sensitive/protected fields from the body
         const { password: _pw, tipo: _tipo, ...safeBody } = req.body;
         void _pw; void _tipo;
+
+        if (safeBody.data_nascimento !== undefined && !isTodayOrPast(safeBody.data_nascimento)) {
+            return res.status(400).json({ error: 'A data de nascimento não pode ser uma data futura' });
+        }
 
         // Hash new password if provided
         if (req.body.password) {

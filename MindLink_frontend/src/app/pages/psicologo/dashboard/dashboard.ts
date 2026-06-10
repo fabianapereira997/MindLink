@@ -43,20 +43,33 @@ export class PsicologoDashboardComponent implements OnInit {
   proximasConsultas = signal<Consulta[]>([]);
   desafiosPendentes = signal<Desafio[]>([]);
   loading           = signal(true);
+  savingConsultaId  = signal<string | null>(null);
 
   /** Flattened list of (desafio, paciente) pairs that are still pending,
    *  sorted with the most overdue first. */
   desafiosPendentesDetalhe = computed<DesafioPendenteItem[]>(() => {
     const items: DesafioPendenteItem[] = [];
     for (const d of this.desafiosPendentes()) {
+      // Ainda dentro do prazo, mas por cumprir
+      for (const p of d.pacientesPendentes ?? []) {
+        items.push({
+          desafioId: d._id,
+          titulo: d.titulo,
+          duracao: d.duracao ?? d.tipo,
+          paciente: p as { _id: string; user?: { nome?: string } },
+          data_fim: d.data_fim ?? d.createdAt,
+          diasAtraso: 0,
+        });
+      }
+      // Prazo expirado e não cumprido
       for (const p of d.pacientesNaoCumpriram ?? []) {
         items.push({
           desafioId: d._id,
           titulo: d.titulo,
           duracao: d.duracao ?? d.tipo,
           paciente: p as { _id: string; user?: { nome?: string } },
-          data_fim: d.data_inicio ?? d.createdAt,
-          diasAtraso: this.calcDiasAtraso(d.data_inicio ?? d.createdAt),
+          data_fim: d.data_fim ?? d.createdAt,
+          diasAtraso: this.calcDiasAtraso(d.data_fim ?? d.createdAt),
         });
       }
     }
@@ -106,7 +119,7 @@ export class PsicologoDashboardComponent implements OnInit {
       next: cs => {
         const now = new Date();
         const upcoming = cs
-          .filter(c => new Date(c.data) >= now && c.estado !== 'cancelada')
+          .filter(c => c.estado !== 'cancelada' && c.estado !== 'realizada' && (new Date(c.data) >= now || this.isHoje(c.data)))
           .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
         this.proximasConsultas.set(upcoming);
       },
@@ -115,7 +128,8 @@ export class PsicologoDashboardComponent implements OnInit {
     this.desafioSvc.getDesafiosByPsicologo().subscribe({
       next: ds => {
         const pending = ds.filter(d =>
-          d.pacientesNaoCumpriram && d.pacientesNaoCumpriram.length > 0
+          (d.pacientesPendentes && d.pacientesPendentes.length > 0) ||
+          (d.pacientesNaoCumpriram && d.pacientesNaoCumpriram.length > 0)
         );
         this.desafiosPendentes.set(pending);
       },
@@ -133,6 +147,32 @@ export class PsicologoDashboardComponent implements OnInit {
 
   abrirChat(pacienteId: string): void {
     this.chatSvc.openChatWithPaciente(pacienteId);
+  }
+
+  /** True if the consulta's date falls on today (local time). */
+  isHoje(data: string): boolean {
+    const d = new Date(data);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear()
+        && d.getMonth() === now.getMonth()
+        && d.getDate() === now.getDate();
+  }
+
+  marcarRealizada(consulta: Consulta): void {
+    if (this.savingConsultaId()) return;
+    this.savingConsultaId.set(consulta._id);
+
+    this.consultaSvc.updateConsulta(consulta._id, { estado: 'realizada' }).subscribe({
+      next: updated => {
+        this.proximasConsultas.update(list =>
+          list.map(c => c._id === updated._id ? updated : c)
+        );
+        this.savingConsultaId.set(null);
+      },
+      error: () => {
+        this.savingConsultaId.set(null);
+      },
+    });
   }
 
   private finalize(enriched: PacienteComStats[]): void {

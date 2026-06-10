@@ -233,8 +233,19 @@
 }
 
 .badge--agendada {
+  background: rgba(37,99,235,0.08);
+  color: #2563eb;
+}
+
+.badge--realizada {
   background: rgba(38,135,78,0.1);
   color: var(--color-primary-dark);
+}
+
+.btn--sm {
+  padding: 0.4rem 1rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .badge--pendente {
@@ -258,7 +269,7 @@
   text-transform: capitalize;
 }
 
-/* Desafio em atraso — bloco vermelho chamativo */
+/* Desafio por cumprir */
 .desafio-alerta {
   display: flex;
   align-items: center;
@@ -266,6 +277,10 @@
   flex-wrap: wrap;
   gap: var(--space-lg);
   padding: var(--space-lg);
+}
+
+/* Em atraso — bloco vermelho chamativo */
+.desafio-alerta--overdue {
   background: rgba(220,38,38,0.06);
   border: 1px solid rgba(220,38,38,0.18);
   border-left: 4px solid #dc2626;

@@ -111,7 +111,7 @@
 
           <mat-form-field appearance="fill" class="form-field">
             <mat-label>Data de nascimento</mat-label>
-            <input matInput type="date" formControlName="data_nascimento" />
+            <input matInput type="date" formControlName="data_nascimento" [max]="maxBirthDate" />
           </mat-form-field>
         </div>
 

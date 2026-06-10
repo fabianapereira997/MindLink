@@ -1,0 +1,459 @@
+.psi-page {
+  padding: var(--space-2xl) 0 var(--space-4xl);
+}
+
+.loading {
+  text-align: center;
+  padding: var(--space-4xl);
+  color: var(--color-text-muted);
+}
+
+.psi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.psi-header h1 { font-size: clamp(1.4rem, 3vw, 2rem); }
+
+.agenda-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.agenda-week-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  min-width: 200px;
+  text-align: center;
+}
+
+/* Banners */
+.banner {
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.95rem;
+  margin-bottom: var(--space-lg);
+}
+
+.banner--success {
+  background: rgba(38,135,78,0.1);
+  color: var(--color-primary-dark);
+  border: 1px solid rgba(38,135,78,0.25);
+}
+
+.banner--error {
+  background: rgba(220,38,38,0.08);
+  color: #dc2626;
+  border: 1px solid rgba(220,38,38,0.2);
+}
+
+/* Week grid */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  min-height: 280px;
+  margin-bottom: var(--space-2xl);
+  overflow: hidden;
+  padding: 0;
+}
+
+.week-day {
+  border-right: 1px solid rgba(0,0,0,0.06);
+  padding: var(--space-md) var(--space-sm);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.week-day:last-child { border-right: none; }
+
+.week-day--today { background: rgba(38,135,78,0.03); }
+
+.week-day__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.week-day__weekday {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.week-day__num {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.week-day__num--today {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+.week-day__slots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+/* Slot */
+.slot {
+  background: rgba(38,135,78,0.09);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 4px 6px;
+  cursor: default;
+}
+
+.slot--cancelada {
+  background: rgba(220,38,38,0.07);
+  border-left-color: #dc2626;
+  opacity: 0.7;
+}
+
+/* Desafio slots */
+.slot--desafio {
+  background: rgba(99,102,241,0.12);
+  border-left-color: #6366f1;
+  transition: background var(--transition-fast);
+}
+
+.slot--desafio .slot__time { color: #4f46e5; }
+
+.slot--desafio.slot--clickable { cursor: pointer; }
+.slot--desafio.slot--clickable:hover { background: rgba(99,102,241,0.2); }
+
+.slot--desafio.slot--overdue {
+  background: rgba(220,38,38,0.09);
+  border-left-color: #dc2626;
+}
+
+.slot--desafio.slot--overdue .slot__time { color: #dc2626; }
+.slot--desafio.slot--overdue:hover { background: rgba(220,38,38,0.16); }
+
+.slot--desafio.slot--done {
+  background: rgba(99,102,241,0.08);
+  border-left-color: #6366f1;
+  opacity: 0.75;
+}
+
+.slot--desafio.slot--done .slot__time { color: #4f46e5; }
+.slot--desafio.slot--done .slot__name { text-decoration: line-through; }
+
+.slot--desafio.slot--cancelada {
+  background: rgba(220,38,38,0.07);
+  border-left-color: #dc2626;
+  opacity: 0.7;
+}
+
+.slot--desafio.slot--cancelada .slot__time { color: #dc2626; }
+.slot--desafio.slot--cancelada .slot__name { text-decoration: line-through; }
+
+.slot__time {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-bottom: 1px;
+}
+
+.slot--cancelada .slot__time { color: #dc2626; }
+
+.slot__name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slot__dur {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+}
+
+/* List section */
+.agenda-list-section { margin-top: var(--space-xl); margin-bottom: var(--space-2xl); }
+
+.agenda-list-section h2 {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-md);
+}
+
+/* Consultas */
+.consulta-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.consulta-card-wrap {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.consulta-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.consulta-card__date {
+  width: 52px;
+  flex-shrink: 0;
+  text-align: center;
+  background: rgba(38,135,78,0.08);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+}
+
+.consulta-card__day {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.consulta-card__month {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.consulta-card__info { flex: 1; }
+
+.consulta-card__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.consulta-card__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.consulta-card__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .consulta-card { flex-wrap: wrap; }
+  .consulta-card__right { align-items: flex-start; width: 100%; }
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge--realizada { background: rgba(38,135,78,0.1);   color: var(--color-primary-dark); }
+.badge--cancelada { background: rgba(220,38,38,0.08);  color: #dc2626; }
+.badge--agendada  { background: rgba(234,179,8,0.1);   color: #854d0e; }
+.badge--done      { background: rgba(38,135,78,0.1);   color: var(--color-primary); }
+
+/* Section */
+.home-section { margin-bottom: var(--space-2xl); }
+.home-section > h2 { font-size: 1.2rem; margin-bottom: var(--space-md); }
+
+.section-sub {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-muted);
+  margin: var(--space-lg) 0 var(--space-sm);
+}
+
+/* Empty */
+.empty-card {
+  text-align: center;
+  padding: var(--space-xl);
+}
+.empty-card p { color: var(--color-text-muted); }
+
+/* Desafio */
+.desafio-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.desafio-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+/* Overdue: prazo terminado, não concluído */
+.desafio-card--overdue {
+  border: 1.5px solid rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.03);
+}
+
+.desafio-card__alert-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.desafio-card__overdue-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 4px 0 0;
+}
+
+.btn-overdue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.5rem 1.25rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background var(--transition-base);
+}
+
+.btn-overdue:hover { background: #b91c1c; }
+
+.desafio-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.desafio-card__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.desafio-card__desc {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.desafio-card__sugestao {
+  font-size: 0.85rem;
+  color: var(--color-primary);
+  margin: var(--space-xs) 0 0;
+  font-style: italic;
+}
+
+.desafio-card__prazo {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin: var(--space-xs) 0 0;
+}
+
+/* Modal: marcar desafio como feito */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-xl);
+}
+
+.modal {
+  width: 100%;
+  max-width: 480px;
+  padding: var(--space-2xl);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal--sm { max-width: 420px; }
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+
+.modal__header h2 { font-size: 1.2rem; }
+
+.modal__close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  line-height: 1;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
+}
+.modal__close:hover { color: var(--color-text-primary); }
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding-top: var(--space-md);
+  margin-top: var(--space-md);
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.form-field { width: 100%; }
+.form-field--full { width: 100%; }
+
+/* Responsive: collapse week grid on mobile */
+@media (max-width: 640px) {
+  .week-grid { grid-template-columns: repeat(7, minmax(40px, 1fr)); font-size: 0.75rem; }
+  .slot__name { display: none; }
+}

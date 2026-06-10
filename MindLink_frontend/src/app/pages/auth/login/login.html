@@ -1,5 +1,10 @@
 <div class="auth-page">
   <div class="auth-card card">
+    <div class="auth-tabs">
+      <span class="auth-tab auth-tab--active">Entrar</span>
+      <a routerLink="/register" class="auth-tab">Criar conta</a>
+    </div>
+
     <div class="auth-card__header">
       <a routerLink="/" class="auth-card__logo">
         <img src="/logo.png" alt="MindLink" class="auth-card__logo-img"
@@ -48,8 +53,5 @@
         {{ loading() ? 'A entrar...' : 'Entrar' }}
       </button>
     </form>
-    <p class="auth-card__switch">
-      Administrador? <a routerLink="/register">Criar conta</a>
-    </p>
   </div>
 </div>

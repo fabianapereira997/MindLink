@@ -26,6 +26,15 @@ export class ConsultaService {
     return this.http.get<Consulta[]>(`${API}/consultas/psicologo`);
   }
 
+  /** Admin: all consultas on the platform. */
+  getAllConsultas(): Observable<Consulta[]> {
+    return this.http.get<Consulta[]>(`${API}/consultas`);
+  }
+
+  deleteConsulta(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${API}/consultas/${id}`);
+  }
+
   criarConsulta(payload: {
     paciente: string;
     data: string;

@@ -108,6 +108,89 @@ router.get('/conversa/:pacienteId/:psicologoId', verifyToken, verifyTokenByRole(
     }
 });
 
+// ─── PATCH /api/mensagens/conversa/:pacienteId/:psicologoId/ler ───────────────
+// Marks all messages sent by the *other* party in this conversation as read.
+// Must come before /:id.
+router.patch('/conversa/:pacienteId/:psicologoId/ler', verifyToken, verifyTokenByRole('paciente', 'psicologo'), async (req: Request, res: Response) => {
+    try {
+        const { pacienteId, psicologoId } = req.params;
+
+        if (!isValidObjectId(pacienteId) || !isValidObjectId(psicologoId)) {
+            return res.status(400).json({ error: 'ID inválido' });
+        }
+
+        if (req.user!.tipo === 'paciente') {
+            const pacienteProfile = await getPacienteByUserId(req.user!.id);
+            if (!pacienteProfile || pacienteProfile._id.toString() !== pacienteId || pacienteProfile.psicologo.toString() !== psicologoId) {
+                return res.status(403).json({ error: 'Acesso negado' });
+            }
+            await Mensagem.updateMany(
+                { paciente: pacienteId, psicologo: psicologoId, remetente: 'psicologo', lida: false },
+                { $set: { lida: true } }
+            );
+        }
+
+        if (req.user!.tipo === 'psicologo') {
+            const psicologoProfile = await getPsicologoByUserId(req.user!.id);
+            if (!psicologoProfile || psicologoProfile._id.toString() !== psicologoId) {
+                return res.status(403).json({ error: 'Acesso negado' });
+            }
+            const assigned = await isPsicologoAssignedToPaciente(req.user!.id, pacienteId);
+            if (!assigned) {
+                return res.status(403).json({ error: 'Acesso negado: paciente não associado a este psicólogo' });
+            }
+            await Mensagem.updateMany(
+                { paciente: pacienteId, psicologo: psicologoId, remetente: 'paciente', lida: false },
+                { $set: { lida: true } }
+            );
+        }
+
+        res.json({ message: 'Conversa marcada como lida' });
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
+    }
+});
+
+// ─── GET /api/mensagens/unread ─────────────────────────────────────────────────
+// Paciente: returns { count } of unread messages from their psicólogo.
+// Psicólogo: returns { [pacienteId]: count } of unread messages per paciente.
+// Must come before /:id.
+router.get('/unread', verifyToken, verifyTokenByRole('paciente', 'psicologo'), async (req: Request, res: Response) => {
+    try {
+        if (req.user!.tipo === 'paciente') {
+            const pacienteProfile = await getPacienteByUserId(req.user!.id);
+            if (!pacienteProfile) {
+                return res.status(404).json({ error: 'Perfil de paciente não encontrado' });
+            }
+            const count = await Mensagem.countDocuments({
+                paciente: pacienteProfile._id,
+                psicologo: pacienteProfile.psicologo,
+                remetente: 'psicologo',
+                lida: false,
+            });
+            return res.json({ count });
+        }
+
+        if (req.user!.tipo === 'psicologo') {
+            const psicologoProfile = await getPsicologoByUserId(req.user!.id);
+            if (!psicologoProfile) {
+                return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
+            }
+            const rows = await Mensagem.aggregate([
+                { $match: { psicologo: psicologoProfile._id, remetente: 'paciente', lida: false } },
+                { $group: { _id: '$paciente', count: { $sum: 1 } } },
+            ]);
+            const result: Record<string, number> = {};
+            for (const row of rows) {
+                result[row._id.toString()] = row.count;
+            }
+            return res.json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
+    }
+});
+
 // ─── GET /api/mensagens/:id ────────────────────────────────────────────────────
 // Accessible to the paciente or psicologo who is part of the conversation.
 router.get('/:id', verifyToken, verifyTokenByRole('paciente', 'psicologo', 'admin'), async (req: Request, res: Response) => {

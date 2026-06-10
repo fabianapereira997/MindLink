@@ -1,0 +1,122 @@
+@import '../admin-shared.css';
+
+.estado-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.estado-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-full);
+  border: 1.5px solid rgba(0,0,0,0.1);
+  background: white;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.estado-tab:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+
+.estado-tab--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.estado-tab__count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  align-items: center;
+}
+
+.filter-select,
+.filter-date {
+  padding: 10px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid rgba(0,0,0,0.12);
+  font-family: inherit;
+  font-size: 0.85rem;
+  background: white;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  color: var(--color-text-primary);
+}
+
+.filter-select:focus,
+.filter-date:focus { border-color: var(--color-primary); }
+
+.btn--sm {
+  padding: 0.4rem 1rem;
+  font-size: 0.82rem;
+}
+
+/* Consultas table layout */
+.consultas-table .list-table__header,
+.consultas-table .list-table__row {
+  grid-template-columns: 1.6fr 1.6fr 1.4fr 0.8fr 1.2fr 110px;
+}
+
+.estado-select {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid rgba(0,0,0,0.1);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  background: rgba(0,0,0,0.04);
+  color: var(--color-text-secondary);
+}
+
+.estado-select--agendada {
+  background: rgba(37,99,235,0.08);
+  color: #2563eb;
+  border-color: rgba(37,99,235,0.2);
+}
+
+.estado-select--realizada {
+  background: rgba(38,135,78,0.1);
+  color: var(--color-primary-dark);
+  border-color: rgba(38,135,78,0.25);
+}
+
+.estado-select--cancelada {
+  background: rgba(220,38,38,0.08);
+  color: #dc2626;
+  border-color: rgba(220,38,38,0.2);
+}
+
+@media (max-width: 900px) {
+  .consultas-table .list-table__header,
+  .consultas-table .list-table__row {
+    grid-template-columns: 1fr 1fr 90px;
+  }
+  .consultas-table .list-table__header span:nth-child(2),
+  .consultas-table .list-table__row span:nth-child(2),
+  .consultas-table .list-table__header span:nth-child(3),
+  .consultas-table .list-table__row span:nth-child(3),
+  .consultas-table .list-table__header span:nth-child(4),
+  .consultas-table .list-table__row span:nth-child(4) {
+    display: none;
+  }
+}

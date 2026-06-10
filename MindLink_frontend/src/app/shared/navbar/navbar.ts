@@ -35,6 +35,9 @@ export class NavbarComponent {
   }
 
   get perfilRoute(): string {
-    return this.auth.role() === 'paciente' ? '/paciente/perfil' : '/';
+    const role = this.auth.role();
+    if (role === 'paciente')  return '/paciente/perfil';
+    if (role === 'psicologo') return '/psicologo/perfil';
+    return '/';
   }
 }

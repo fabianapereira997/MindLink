@@ -4,12 +4,51 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-xl);
+  background: linear-gradient(180deg, var(--color-off-white) 0%, rgba(0, 102, 51, 0.35) 100%);
+  background-attachment: fixed;
 }
 
 .auth-card {
   width: 100%;
   max-width: 440px;
   padding: var(--space-2xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Tab switcher (Entrar / Criar conta) */
+.auth-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-full);
+  padding: 4px;
+  margin-bottom: var(--space-xl);
+}
+
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.auth-tab:hover {
+  color: var(--color-primary-dark);
+}
+
+.auth-tab--active {
+  background: var(--color-primary-dark);
+  color: var(--color-white);
+}
+
+.auth-tab--active:hover {
+  color: var(--color-white);
 }
 
 .auth-card__header {
@@ -19,7 +58,7 @@
 
 .auth-card__logo {
   display: inline-block;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
   text-decoration: none;
   font-size: 1.3rem;
   font-weight: 700;
@@ -27,17 +66,18 @@
 }
 
 .auth-card__logo-img {
-  height: 70px;
+  height: 56px;
   width: auto;
 }
 
 .auth-card__header h1 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   margin-bottom: var(--space-xs);
 }
 
 .auth-card__header p {
   color: var(--color-text-secondary);
+  font-size: 0.95rem;
 }
 
 .auth-error {

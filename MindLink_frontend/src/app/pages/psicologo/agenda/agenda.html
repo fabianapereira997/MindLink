@@ -55,6 +55,7 @@
               type="date"
               class="form-input"
               [value]="novaData()"
+              [min]="minConsultaDate"
               (input)="novaData.set($any($event.target).value)"
             />
           </div>
@@ -164,6 +165,7 @@
                           type="date"
                           class="form-input"
                           [value]="reagendarData()"
+                          [min]="minConsultaDate"
                           (input)="reagendarData.set($any($event.target).value)"
                         />
                       </div>

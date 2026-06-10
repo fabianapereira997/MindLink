@@ -15,6 +15,7 @@
           <a [routerLink]="auth.homeRoute()" routerLinkActive="active"
              [routerLinkActiveOptions]="{exact: true}">Início</a>
           <a routerLink="/paciente/dashboard" routerLinkActive="active">Histórico</a>
+          <a routerLink="/paciente/agenda" routerLinkActive="active">Agenda</a>
         }
         @if (auth.role() === 'psicologo') {
           <a routerLink="/psicologo/dashboard" routerLinkActive="active">Início</a>
@@ -27,6 +28,7 @@
           <a routerLink="/admin/dashboard" routerLinkActive="active">Dashboard</a>
           <a routerLink="/admin/psicologos" routerLinkActive="active">Psicólogos</a>
           <a routerLink="/admin/pacientes" routerLinkActive="active">Pacientes</a>
+          <a routerLink="/admin/consultas" routerLinkActive="active">Consultas</a>
         }
       </div>
 
@@ -43,7 +45,7 @@
 
         @if (dropdownOpen) {
           <div class="navbar__dropdown">
-            @if (auth.role() === 'paciente') {
+            @if (auth.role() === 'paciente' || auth.role() === 'psicologo') {
               <a [routerLink]="perfilRoute" class="navbar__dropdown-item" (click)="dropdownOpen = false">
                 Perfil
               </a>
@@ -58,8 +60,8 @@
 
     } @else {
       <div class="navbar__actions">
-        <a routerLink="/register" class="btn-secondary btn--sm">Registar</a>
         <a routerLink="/login" class="btn-primary btn--sm">Entrar</a>
+        <a routerLink="/register" class="btn-secondary btn--sm">Registar</a>
       </div>
     }
 

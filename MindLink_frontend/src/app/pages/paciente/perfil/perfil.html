@@ -11,7 +11,119 @@
           <h1>{{ auth.user()?.nome }}</h1>
           <p>{{ auth.user()?.email }}</p>
         </div>
+        @if (!editing()) {
+          <div class="perfil-edit-btn" style="display:flex; gap: var(--space-sm);">
+            <button type="button" class="btn-secondary" (click)="exportarDados()" [disabled]="exporting()">
+              {{ exporting() ? 'A exportar...' : 'Exportar os meus dados (XML)' }}
+            </button>
+            <button type="button" class="btn-primary" (click)="startEditing()">Editar perfil</button>
+          </div>
+        }
       </div>
+
+      @if (success()) {
+        <div class="banner banner--success">Perfil atualizado com sucesso!</div>
+      }
+      @if (exportError()) {
+        <div class="banner banner--error">{{ exportError() }}</div>
+      }
+
+      @if (editing()) {
+
+        <!-- Edit form -->
+        <div class="card perfil-section perfil-edit">
+          <h2>Editar perfil</h2>
+
+          @if (error()) {
+            <div class="banner banner--error">{{ error() }}</div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="submit()" class="perfil-form">
+
+            <div class="form-row">
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Nome completo</mat-label>
+                <input matInput formControlName="nome" />
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Email</mat-label>
+                <input matInput type="email" formControlName="email" />
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Género</mat-label>
+                <mat-select formControlName="genero">
+                  <mat-option value="masculino">Masculino</mat-option>
+                  <mat-option value="feminino">Feminino</mat-option>
+                  <mat-option value="outro">Outro</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Data de nascimento</mat-label>
+                <input matInput type="date" formControlName="data_nascimento" [max]="maxBirthDate" />
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Pratica exercício regular?</mat-label>
+                <mat-select formControlName="exercicioRegular">
+                  <mat-option value="">Não especificado</mat-option>
+                  <mat-option value="sim">Sim</mat-option>
+                  <mat-option value="nao">Não</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>É fumador?</mat-label>
+                <mat-select formControlName="fumador">
+                  <mat-option value="">Não especificado</mat-option>
+                  <mat-option value="sim">Sim</mat-option>
+                  <mat-option value="nao">Não</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="form-divider">Alterar password (opcional)</div>
+
+            <div class="form-row">
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Nova password</mat-label>
+                <input matInput [type]="hideNew ? 'password' : 'text'"
+                       formControlName="newPassword" autocomplete="new-password" />
+                <button mat-icon-button matSuffix type="button" (click)="hideNew = !hideNew">
+                  <mat-icon>{{ hideNew ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Confirmar nova password</mat-label>
+                <input matInput [type]="hideConfirm ? 'password' : 'text'"
+                       formControlName="confirmPassword" autocomplete="new-password" />
+                <button mat-icon-button matSuffix type="button" (click)="hideConfirm = !hideConfirm">
+                  <mat-icon>{{ hideConfirm ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                @if (form.errors?.['mismatch'] && form.get('confirmPassword')?.touched) {
+                  <mat-error>As passwords não coincidem.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="perfil-form__actions">
+              <button type="button" class="btn-secondary" (click)="cancelEditing()" [disabled]="saving()">Cancelar</button>
+              <button type="submit" class="btn-primary" [disabled]="form.invalid || saving()">
+                {{ saving() ? 'A guardar...' : 'Guardar alterações' }}
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+      } @else {
 
       <div class="perfil-grid">
 
@@ -88,6 +200,7 @@
         }
 
       </div>
+      }
     }
   </div>
 </div>

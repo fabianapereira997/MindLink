@@ -78,6 +78,18 @@ export class AuthService {
     else this.router.navigate(['/']);
   }
 
+  /** Update the logged-in user's own account data (nome, email, genero, data_nascimento, password). */
+  updateUser(payload: Partial<AuthUser> & { password?: string }): Observable<AuthUser> {
+    const id = this._user()?._id;
+    return this.http.put<AuthUser>(`${API}/users/${id}`, payload).pipe(
+      tap(updated => {
+        const merged = { ...this._user(), ...updated } as AuthUser;
+        localStorage.setItem(USER_KEY, JSON.stringify(merged));
+        this._user.set(merged);
+      })
+    );
+  }
+
   /** Called after a successful password change to clear the flag in memory. */
   clearMustChangePassword(): void {
     const u = this._user();

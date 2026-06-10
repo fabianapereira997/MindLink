@@ -6,6 +6,7 @@ const mensagemSchema = new mongoose.Schema({
     remetente: { type: String, required: true, enum: ['paciente', 'psicologo'] },
     mensagem:  { type: String, required: true },
     data:      { type: Date, default: Date.now },
+    lida:      { type: Boolean, default: false },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Mensagem', mensagemSchema);

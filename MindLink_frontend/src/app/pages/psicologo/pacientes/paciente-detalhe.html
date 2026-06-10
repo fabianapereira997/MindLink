@@ -1,11 +1,19 @@
 <div class="psi-page">
   <div class="container">
 
-    <div class="back-link">
+    <div class="back-link" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: var(--space-sm);">
       <a routerLink="/psicologo/pacientes" class="btn-secondary btn--sm">
         ← Todos os pacientes
       </a>
+      @if (paciente()) {
+        <button class="btn-secondary btn--sm" (click)="exportarPaciente()" [disabled]="exporting()">
+          {{ exporting() ? 'A exportar...' : 'Exportar dados (XML)' }}
+        </button>
+      }
     </div>
+    @if (exportError()) {
+      <div class="banner banner--error">{{ exportError() }}</div>
+    }
 
     @if (loading()) {
       <div class="loading">A carregar...</div>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+  <!-- ─── Root ─────────────────────────────────────────────────────────────── -->
+  <xs:element name="PacientesExport">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="GeradoEm" type="xs:dateTime"/>
+        <xs:element name="Psicologo" type="PsicologoResumoType"/>
+        <xs:element name="Pacientes">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Paciente" type="PacienteResumoType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="PsicologoResumoType">
+    <xs:sequence>
+      <xs:element name="Id" type="xs:string"/>
+      <xs:element name="Nome" type="xs:string"/>
+      <xs:element name="Especialidade" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PacienteResumoType">
+    <xs:sequence>
+      <xs:element name="Id" type="xs:string"/>
+      <xs:element name="Nome" type="xs:string"/>
+      <xs:element name="Email" type="xs:string"/>
+      <xs:element name="Doenca" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { isValidObjectId } from '../utils/helpers';
+import { isValidObjectId, isTodayOrPast } from '../utils/helpers';
 
 const express    = require('express');
 const router     = express.Router();
@@ -119,6 +119,10 @@ router.post('/psicologos', adminOnly, async (req: Request, res: Response) => {
 
         if (!nome || !email || !password) {
             return res.status(400).json({ error: 'nome, email e password são obrigatórios' });
+        }
+
+        if (data_nascimento && !isTodayOrPast(data_nascimento)) {
+            return res.status(400).json({ error: 'A data de nascimento não pode ser uma data futura' });
         }
 
         const exists = await User.findOne({ email });

@@ -55,3 +55,30 @@ export function isValidObjectId(id: string | string[]): boolean {
     if (Array.isArray(id)) return false;
     return Types.ObjectId.isValid(id);
 }
+
+/**
+ * Returns true if `value` is a valid date whose calendar day is today or earlier.
+ * Used to validate birth dates (data_nascimento) — they cannot be in the future.
+ */
+export function isTodayOrPast(value: unknown): boolean {
+    if (!value) return false;
+    const d = new Date(value as string | number | Date);
+    if (isNaN(d.getTime())) return false;
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    return d.getTime() <= endOfToday.getTime();
+}
+
+/**
+ * Returns true if `value` is a valid date whose calendar day is today or later.
+ * Used to validate consulta dates — they cannot be scheduled in the past.
+ */
+export function isTodayOrFuture(value: unknown): boolean {
+    if (!value) return false;
+    const d = new Date(value as string | number | Date);
+    if (isNaN(d.getTime())) return false;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return day.getTime() >= startOfToday.getTime();
+}

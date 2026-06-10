@@ -9,7 +9,8 @@ export interface Desafio {
   titulo: string;
   descricao?: string;
   duracao?: 'diario' | 'semanal' | 'mensal';
-  pacientesCumpriram?: { _id: string; user?: { nome?: string } }[];
+  pacientesCumpriram?: { _id: string; user?: { nome?: string }; comentario?: string | null; resposta?: string | null }[];
+  pacientesPendentes?: { _id: string; user?: { nome?: string } }[];
   pacientesNaoCumpriram?: { _id: string; user?: { nome?: string } }[];
   // campos do paciente
   paciente?: { _id: string };
@@ -19,6 +20,9 @@ export interface Desafio {
   data_fim?: string;
   estado?: 'pendente' | 'concluido' | 'cancelado';
   sugestao?: string;
+  comentario?: string | null;
+  respostaObrigatoria?: boolean;
+  resposta?: string | null;
   createdAt?: string;
 }
 
@@ -30,8 +34,8 @@ export class DesafioService {
     return this.http.get<Desafio[]>(`${API}/desafios/paciente/${pacienteId}`);
   }
 
-  marcarConcluido(desafioId: string): Observable<Desafio> {
-    return this.http.patch<Desafio>(`${API}/desafios/${desafioId}/estado`, { estado: 'concluido' });
+  marcarConcluido(desafioId: string, comentario?: string, resposta?: string): Observable<Desafio> {
+    return this.http.patch<Desafio>(`${API}/desafios/${desafioId}/estado`, { estado: 'concluido', comentario, resposta });
   }
 
   getDesafiosByPsicologo(): Observable<Desafio[]> {
@@ -43,6 +47,7 @@ export class DesafioService {
     descricao?: string;
     duracao: 'diario' | 'semanal' | 'mensal';
     pacientes: string[];
+    respostaObrigatoria?: boolean;
   }): Observable<Desafio> {
     return this.http.post<Desafio>(`${API}/desafios`, payload);
   }

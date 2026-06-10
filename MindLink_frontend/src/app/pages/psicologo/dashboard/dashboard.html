@@ -70,7 +70,7 @@
         } @else {
           <div class="desafio-list">
             @for (item of desafiosPendentesDetalhe().slice(0, 5); track item.desafioId + item.paciente._id) {
-              <div class="card desafio-alerta">
+              <div class="card desafio-alerta" [class.desafio-alerta--overdue]="item.diasAtraso > 0">
                 <div class="desafio-alerta__main">
                   <div class="desafio-alerta__title-row">
                     <span class="desafio-alerta__title">{{ item.titulo }}</span>
@@ -83,7 +83,11 @@
                   </div>
                   <div class="desafio-alerta__meta">
                     @if (item.data_fim) {
-                      <span>Devia ter sido cumprido em: {{ item.data_fim | date:'dd/MM/yyyy' }}</span>
+                      @if (item.diasAtraso > 0) {
+                        <span>Devia ter sido cumprido em: {{ item.data_fim | date:'dd/MM/yyyy' }}</span>
+                      } @else {
+                        <span>Prazo até: {{ item.data_fim | date:'dd/MM/yyyy' }}</span>
+                      }
                     }
                     @if (item.diasAtraso > 0) {
                       <span class="badge badge--atraso">
@@ -98,9 +102,11 @@
                   <a [routerLink]="['/psicologo/pacientes', item.paciente._id]" class="btn-secondary btn--sm">
                     Ver detalhes
                   </a>
-                  <button type="button" class="btn-primary btn--sm" (click)="abrirChat(item.paciente._id)">
-                    Conversar
-                  </button>
+                  @if (item.diasAtraso > 0) {
+                    <button type="button" class="btn-primary btn--sm" (click)="abrirChat(item.paciente._id)">
+                      Conversar
+                    </button>
+                  }
                 </div>
               </div>
             }
@@ -131,7 +137,16 @@
                   </a>
                   <div class="consulta-card__meta">{{ c.data | date:'HH:mm' }} &middot; {{ c.duracao }} min</div>
                 </div>
-                <span class="badge badge--agendada">Agendada</span>
+                @if (c.estado === 'agendada' && isHoje(c.data)) {
+                  <button type="button" class="btn-primary btn--sm" [disabled]="savingConsultaId() === c._id"
+                          (click)="marcarRealizada(c)">
+                    {{ savingConsultaId() === c._id ? 'A guardar...' : 'Marcar como realizada' }}
+                  </button>
+                } @else if (c.estado === 'realizada') {
+                  <span class="badge badge--realizada">Realizada</span>
+                } @else {
+                  <span class="badge badge--agendada">Agendada</span>
+                }
               </div>
             }
           </div>

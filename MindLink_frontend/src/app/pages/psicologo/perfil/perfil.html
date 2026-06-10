@@ -1,0 +1,150 @@
+<div class="perfil-page">
+  <div class="container">
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+    } @else {
+
+      <div class="perfil-header">
+        <div class="perfil-avatar">{{ initials() }}</div>
+        <div>
+          <h1>{{ auth.user()?.nome }}</h1>
+          <p>{{ auth.user()?.email }}</p>
+        </div>
+        @if (!editing()) {
+          <button type="button" class="btn-primary perfil-edit-btn" (click)="startEditing()">Editar perfil</button>
+        }
+      </div>
+
+      @if (success()) {
+        <div class="banner banner--success">Perfil atualizado com sucesso!</div>
+      }
+
+      @if (!editing()) {
+
+        <div class="perfil-grid">
+
+          <!-- Dados pessoais -->
+          <div class="card perfil-section">
+            <h2>Dados pessoais</h2>
+            <div class="info-list">
+              <div class="info-item">
+                <span class="info-label">Nome completo</span>
+                <span class="info-value">{{ auth.user()?.nome }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ auth.user()?.email }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Género</span>
+                <span class="info-value">{{ auth.user()?.genero }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Data de nascimento</span>
+                <span class="info-value">{{ auth.user()?.data_nascimento | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dados profissionais -->
+          <div class="card perfil-section">
+            <h2>Dados profissionais</h2>
+            <div class="info-list">
+              <div class="info-item">
+                <span class="info-label">Especialidade</span>
+                <span class="info-value">{{ profile()?.especialidade ?? '—' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Pacientes acompanhados</span>
+                <span class="info-value">{{ profile()?.pacientes?.length ?? 0 }}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      } @else {
+
+        <!-- Edit form -->
+        <div class="card perfil-section perfil-edit">
+          <h2>Editar perfil</h2>
+
+          @if (error()) {
+            <div class="banner banner--error">{{ error() }}</div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="submit()" class="perfil-form">
+
+            <div class="form-row">
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Nome completo</mat-label>
+                <input matInput formControlName="nome" />
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Email</mat-label>
+                <input matInput type="email" formControlName="email" />
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Género</mat-label>
+                <mat-select formControlName="genero">
+                  <mat-option value="masculino">Masculino</mat-option>
+                  <mat-option value="feminino">Feminino</mat-option>
+                  <mat-option value="outro">Outro</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Data de nascimento</mat-label>
+                <input matInput type="date" formControlName="data_nascimento" [max]="maxBirthDate" />
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="fill" class="form-field">
+              <mat-label>Especialidade</mat-label>
+              <input matInput formControlName="especialidade" />
+            </mat-form-field>
+
+            <div class="form-divider">Alterar password (opcional)</div>
+
+            <div class="form-row">
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Nova password</mat-label>
+                <input matInput [type]="hideNew ? 'password' : 'text'"
+                       formControlName="newPassword" autocomplete="new-password" />
+                <button mat-icon-button matSuffix type="button" (click)="hideNew = !hideNew">
+                  <mat-icon>{{ hideNew ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Confirmar nova password</mat-label>
+                <input matInput [type]="hideConfirm ? 'password' : 'text'"
+                       formControlName="confirmPassword" autocomplete="new-password" />
+                <button mat-icon-button matSuffix type="button" (click)="hideConfirm = !hideConfirm">
+                  <mat-icon>{{ hideConfirm ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                @if (form.errors?.['mismatch'] && form.get('confirmPassword')?.touched) {
+                  <mat-error>As passwords não coincidem.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="perfil-form__actions">
+              <button type="button" class="btn-secondary" (click)="cancelEditing()" [disabled]="saving()">Cancelar</button>
+              <button type="submit" class="btn-primary" [disabled]="form.invalid || saving()">
+                {{ saving() ? 'A guardar...' : 'Guardar alterações' }}
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+      }
+    }
+  </div>
+</div>

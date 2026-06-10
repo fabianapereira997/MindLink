@@ -1,0 +1,145 @@
+<div class="psi-page">
+  <div class="container">
+
+    <div class="psi-header">
+      <h1>Agenda</h1>
+      <div class="agenda-nav">
+        <button class="btn-secondary btn--sm" (click)="prevWeek()">&#8249;</button>
+        <span class="agenda-week-label">{{ weekLabel() }}</span>
+        <button class="btn-secondary btn--sm" (click)="nextWeek()">&#8250;</button>
+        <button class="btn-secondary btn--sm" (click)="goToToday()">Hoje</button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading">A carregar...</div>
+
+    } @else if (profileError()) {
+      <div class="banner banner--error"><strong>Erro:</strong> {{ profileError() }}</div>
+
+    } @else {
+
+      <!-- Week grid: consultas + desafios -->
+      @if (consultaError()) {
+        <div class="banner banner--error">{{ consultaError() }}</div>
+      }
+      @if (desafioError()) {
+        <div class="banner banner--error">{{ desafioError() }}</div>
+      }
+      @if (!consultaError()) {
+        <div class="week-grid card">
+          @for (day of weekDays(); track day.iso) {
+            <div class="week-day" [class.week-day--today]="day.isToday">
+              <div class="week-day__header">
+                <span class="week-day__weekday">{{ day.weekday }}</span>
+                <span class="week-day__num" [class.week-day__num--today]="day.isToday">{{ day.num }}</span>
+              </div>
+              <div class="week-day__slots">
+                @for (c of consultasForDay(day.iso); track c._id) {
+                  <div class="slot" [class.slot--cancelada]="c.estado === 'cancelada'">
+                    <div class="slot__time">{{ c.data | date:'HH:mm' }}</div>
+                    <span class="slot__name">Dr(a). {{ c.psicologo?.user?.nome ?? 'Psicólogo' }}</span>
+                    <span class="slot__dur">{{ c.duracao }}min</span>
+                  </div>
+                }
+                @for (d of desafiosForDay(day.iso); track d._id) {
+                  <div class="slot slot--desafio"
+                       [class.slot--done]="d.estado === 'concluido'"
+                       [class.slot--cancelada]="d.estado === 'cancelado'"
+                       [class.slot--overdue]="d.estado === 'pendente' && isPastDeadline(d)"
+                       [class.slot--clickable]="d.estado === 'pendente'"
+                       (click)="d.estado === 'pendente' && abrirCompletarModal(d)">
+                    <div class="slot__time">
+                      @if (d.estado === 'concluido') { Concluído }
+                      @else if (d.estado === 'cancelado') { Cancelado }
+                      @else if (isPastDeadline(d)) { Em atraso }
+                      @else { Desafio }
+                    </div>
+                    <span class="slot__name">{{ d.titulo }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Full list below grid -->
+        <div class="agenda-list-section">
+          <h2>Consultas desta semana</h2>
+          @if (weekConsultas().length === 0) {
+            <div class="card empty-card"><p>Sem consultas esta semana.</p></div>
+          } @else {
+            <div class="consulta-list">
+              @for (c of weekConsultas(); track c._id) {
+                <div class="card consulta-card-wrap">
+                  <div class="consulta-card">
+                    <div class="consulta-card__date">
+                      <span class="consulta-card__day">{{ c.data | date:'d' }}</span>
+                      <span class="consulta-card__month">{{ c.data | date:'MMM' }}</span>
+                    </div>
+                    <div class="consulta-card__info">
+                      <div class="consulta-card__title">Dr(a). {{ c.psicologo?.user?.nome ?? 'Psicólogo' }}</div>
+                      <div class="consulta-card__meta">
+                        {{ c.data | date:'HH:mm' }} &middot; {{ c.duracao }} min
+                        @if (c.psicologo?.especialidade) { &middot; {{ c.psicologo.especialidade }} }
+                        @if (c.notas) { &middot; <em>{{ c.notas }}</em> }
+                      </div>
+                    </div>
+                    <div class="consulta-card__right">
+                      <span class="badge" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+    }
+  </div>
+</div>
+
+<!-- Modal: marcar desafio como feito (com comentário opcional) -->
+@if (desafioToComplete(); as d) {
+  <div class="modal-backdrop" (click)="cancelarCompletar()">
+    <div class="modal card modal--sm" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2>Marcar desafio como feito</h2>
+        <button class="modal__close" (click)="cancelarCompletar()">✕</button>
+      </div>
+      <p class="desafio-card__title">{{ d.titulo }}</p>
+      @if (d.respostaObrigatoria) {
+        <mat-form-field appearance="fill" class="form-field form-field--full">
+          <mat-label>Resposta ao desafio (obrigatório)</mat-label>
+          <textarea
+            matInput
+            rows="4"
+            placeholder="Escreva aqui a sua resposta a este desafio..."
+            [value]="respostaInput()"
+            (input)="respostaInput.set($any($event.target).value); respostaError.set(null)"
+          ></textarea>
+        </mat-form-field>
+        @if (respostaError()) {
+          <div class="banner banner--error">{{ respostaError() }}</div>
+        }
+      }
+      <mat-form-field appearance="fill" class="form-field form-field--full">
+        <mat-label>Comentário (opcional)</mat-label>
+        <textarea
+          matInput
+          rows="4"
+          placeholder="Como se sentiu? Sentiu alguma dificuldade?"
+          [value]="comentarioInput()"
+          (input)="comentarioInput.set($any($event.target).value)"
+        ></textarea>
+      </mat-form-field>
+      <div class="modal__actions">
+        <button type="button" class="btn-secondary" (click)="cancelarCompletar()" [disabled]="completing()">Cancelar</button>
+        <button type="button" class="btn-primary" (click)="confirmarCompletar()" [disabled]="completing()">
+          {{ completing() ? 'A guardar...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -51,6 +51,25 @@
             ></textarea>
           </div>
 
+          <div class="form-field">
+            <label class="form-label">Resposta escrita obrigatória</label>
+            <div class="toggle-row">
+              <button
+                type="button"
+                class="toggle-switch"
+                [class.toggle-switch--on]="respostaObrigatoria()"
+                role="switch"
+                [attr.aria-checked]="respostaObrigatoria()"
+                (click)="toggleRespostaObrigatoria()"
+              >
+                <span class="toggle-switch__knob"></span>
+              </button>
+              <span class="toggle-switch__label">
+                {{ respostaObrigatoria() ? 'Sim, o paciente tem de escrever uma resposta' : 'Não, resposta opcional' }}
+              </span>
+            </div>
+          </div>
+
           <div class="form-field form-field--full">
             <label class="form-label">Pacientes</label>
             <div class="paciente-chips">
@@ -104,24 +123,35 @@
                   </span>
                   <div class="chip-row">
                     @for (p of d.pacientesCumpriram; track p._id) {
-                      <a [routerLink]="['/psicologo/pacientes', p._id]" class="chip chip--ok">
-                        {{ p.user?.nome }}
-                      </a>
+                      @if (p.comentario || p.resposta) {
+                        <button type="button" class="chip chip--ok chip--commented" (click)="abrirComentario(p)">
+                          {{ p.user?.nome }} 💬
+                        </button>
+                      } @else {
+                        <a [routerLink]="['/psicologo/pacientes', p._id]" class="chip chip--ok">
+                          {{ p.user?.nome }}
+                        </a>
+                      }
                     }
                   </div>
                 </div>
               }
 
-              <!-- Não cumpriram -->
-              @if (d.pacientesNaoCumpriram?.length) {
+              <!-- Por cumprir: pendentes (ainda dentro do prazo) + não cumpridos (prazo expirado) -->
+              @if (d.pacientesPendentes?.length || d.pacientesNaoCumpriram?.length) {
                 <div class="desafio-grupo">
                   <span class="desafio-grupo__label desafio-grupo__label--nok">
-                    ✗ Por cumprir ({{ d.pacientesNaoCumpriram?.length }})
+                    ✗ Por cumprir ({{ (d.pacientesPendentes?.length ?? 0) + (d.pacientesNaoCumpriram?.length ?? 0) }})
                   </span>
                   <div class="chip-row">
+                    @for (p of d.pacientesPendentes; track p._id) {
+                      <a [routerLink]="['/psicologo/pacientes', p._id]" class="chip chip--pending" title="Ainda dentro do prazo">
+                        {{ p.user?.nome }} ⏳
+                      </a>
+                    }
                     @for (p of d.pacientesNaoCumpriram; track p._id) {
-                      <a [routerLink]="['/psicologo/pacientes', p._id]" class="chip chip--nok">
-                        {{ p.user?.nome }}
+                      <a [routerLink]="['/psicologo/pacientes', p._id]" class="chip chip--nok" title="Prazo expirado">
+                        {{ p.user?.nome }} ✗
                       </a>
                     }
                   </div>
@@ -135,3 +165,27 @@
 
   </div>
 </div>
+
+<!-- Modal: comentário do paciente sobre o desafio -->
+@if (comentarioModal(); as p) {
+  <div class="modal-backdrop" (click)="fecharComentario()">
+    <div class="modal card modal--sm" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2>Comentário de {{ p.user?.nome }}</h2>
+        <button class="modal__close" (click)="fecharComentario()">✕</button>
+      </div>
+      @if (p.resposta) {
+        <p class="form-label">Resposta ao desafio</p>
+        <p class="comentario-text">"{{ p.resposta }}"</p>
+      }
+      @if (p.comentario) {
+        <p class="form-label">Comentário</p>
+        <p class="comentario-text">"{{ p.comentario }}"</p>
+      }
+      <div class="modal__actions">
+        <button type="button" class="btn-secondary" (click)="fecharComentario()">Fechar</button>
+        <button type="button" class="btn-primary" (click)="enviarMensagem()">Enviar mensagem</button>
+      </div>
+    </div>
+  </div>
+}

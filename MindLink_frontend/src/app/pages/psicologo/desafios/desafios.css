@@ -19,6 +19,51 @@
 
 .psi-header h1 { font-size: clamp(1.4rem, 3vw, 2rem); }
 
+/* Toggle switch (resposta obrigatória) */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: rgba(0,0,0,0.15);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background var(--transition-fast);
+}
+
+.toggle-switch--on {
+  background: var(--color-primary);
+}
+
+.toggle-switch__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform var(--transition-fast);
+}
+
+.toggle-switch--on .toggle-switch__knob {
+  transform: translateX(18px);
+}
+
+.toggle-switch__label {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-left: var(--space-sm);
+}
+
 /* Banners */
 .banner {
   border-radius: var(--radius-md);
@@ -196,6 +241,77 @@
 .chip--nok {
   background: rgba(220,38,38,0.08);
   color: #dc2626;
+}
+
+.chip--pending {
+  background: rgba(180,83,9,0.08);
+  color: #b45309;
+}
+
+.chip--commented {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Modal: comentário do paciente */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-xl);
+}
+
+.modal {
+  width: 100%;
+  max-width: 480px;
+  padding: var(--space-2xl);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal--sm { max-width: 420px; }
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+
+.modal__header h2 { font-size: 1.1rem; }
+
+.modal__close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  line-height: 1;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
+}
+.modal__close:hover { color: var(--color-text-primary); }
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding-top: var(--space-md);
+  margin-top: var(--space-md);
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.comentario-text {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  font-style: italic;
+  line-height: 1.5;
 }
 
 /* Badges */

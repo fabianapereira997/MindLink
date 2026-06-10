@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { todayDateString } from '../../../core/utils/date.utils';
 
 const API = 'http://localhost:8080/api';
 
@@ -28,6 +29,9 @@ export class RegisterComponent {
 
   hidePassword  = true;
   hideToken     = true;
+
+  /** Today's date ('YYYY-MM-DD'); data de nascimento cannot be later than this. */
+  readonly maxBirthDate = todayDateString();
   loading       = signal(false);
   error         = signal<string | null>(null);
   success       = signal(false);

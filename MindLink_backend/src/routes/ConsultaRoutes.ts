@@ -4,6 +4,7 @@ import {
     getPacienteByUserId,
     isPsicologoAssignedToPaciente,
     isValidObjectId,
+    isTodayOrFuture,
 } from '../utils/helpers';
 
 const express  = require('express');
@@ -24,6 +25,10 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
 
         if (!isValidObjectId(paciente)) {
             return res.status(400).json({ error: 'ID de paciente inválido' });
+        }
+
+        if (!isTodayOrFuture(data)) {
+            return res.status(400).json({ error: 'Não é possível agendar uma consulta numa data que já passou' });
         }
 
         const assigned = await isPsicologoAssignedToPaciente(req.user!.id, paciente);
@@ -208,25 +213,31 @@ router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admi
 });
 
 // ─── PUT /api/consultas/:id ────────────────────────────────────────────────────
-// Psicologo only. Must own the consulta.
-router.put('/:id', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
+// Psicologo: must own the consulta. Admin: any consulta (e.g. to change `estado`).
+router.put('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidObjectId(id)) {
             return res.status(400).json({ error: 'ID de consulta inválido' });
         }
 
-        const psicologoProfile = await getPsicologoByUserId(req.user!.id);
-        if (!psicologoProfile) {
-            return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
-        }
-
         const existing = await Consulta.findById(id);
         if (!existing) {
             return res.status(404).json({ error: 'Consulta não encontrada' });
         }
-        if (existing.psicologo.toString() !== psicologoProfile._id.toString()) {
-            return res.status(403).json({ error: 'Acesso negado: consulta não pertence a este psicólogo' });
+
+        if (req.user!.tipo === 'psicologo') {
+            const psicologoProfile = await getPsicologoByUserId(req.user!.id);
+            if (!psicologoProfile) {
+                return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
+            }
+            if (existing.psicologo.toString() !== psicologoProfile._id.toString()) {
+                return res.status(403).json({ error: 'Acesso negado: consulta não pertence a este psicólogo' });
+            }
+        }
+
+        if (req.body.data !== undefined && !isTodayOrFuture(req.body.data)) {
+            return res.status(400).json({ error: 'Não é possível reagendar uma consulta para uma data que já passou' });
         }
 
         const consulta = await Consulta.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
@@ -239,25 +250,27 @@ router.put('/:id', verifyToken, verifyTokenByRole('psicologo'), async (req: Requ
 });
 
 // ─── DELETE /api/consultas/:id ─────────────────────────────────────────────────
-// Psicologo only. Must own the consulta.
-router.delete('/:id', verifyToken, verifyTokenByRole('psicologo'), async (req: Request, res: Response) => {
+// Psicologo: must own the consulta. Admin: any consulta.
+router.delete('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidObjectId(id)) {
             return res.status(400).json({ error: 'ID de consulta inválido' });
         }
 
-        const psicologoProfile = await getPsicologoByUserId(req.user!.id);
-        if (!psicologoProfile) {
-            return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
-        }
-
         const existing = await Consulta.findById(id);
         if (!existing) {
             return res.status(404).json({ error: 'Consulta não encontrada' });
         }
-        if (existing.psicologo.toString() !== psicologoProfile._id.toString()) {
-            return res.status(403).json({ error: 'Acesso negado: consulta não pertence a este psicólogo' });
+
+        if (req.user!.tipo === 'psicologo') {
+            const psicologoProfile = await getPsicologoByUserId(req.user!.id);
+            if (!psicologoProfile) {
+                return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
+            }
+            if (existing.psicologo.toString() !== psicologoProfile._id.toString()) {
+                return res.status(403).json({ error: 'Acesso negado: consulta não pertence a este psicólogo' });
+            }
         }
 
         await Consulta.findByIdAndDelete(id);

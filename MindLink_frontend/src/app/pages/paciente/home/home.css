@@ -409,6 +409,72 @@
   margin: var(--space-xs) 0 0;
 }
 
+.desafio-card__comentario {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin: var(--space-xs) 0 0;
+}
+
+.desafio-card__prazo {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin: var(--space-xs) 0 0;
+}
+
+/* Modal: marcar desafio como feito */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-xl);
+}
+
+.modal {
+  width: 100%;
+  max-width: 480px;
+  padding: var(--space-2xl);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal--sm { max-width: 420px; }
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+
+.modal__header h2 { font-size: 1.2rem; }
+
+.modal__close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  line-height: 1;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
+}
+.modal__close:hover { color: var(--color-text-primary); }
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding-top: var(--space-md);
+  margin-top: var(--space-md);
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
 /* Consultas */
 .consulta-list { display: flex; flex-direction: column; gap: var(--space-md); }
 

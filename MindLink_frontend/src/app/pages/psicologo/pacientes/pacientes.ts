@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { PsicologoService } from '../../../core/services/psicologo.service';
 import { QuestionarioService } from '../../../core/services/questionario.service';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { todayDateString } from '../../../core/utils/date.utils';
 
 export interface PacienteRow {
   _id: string;
@@ -42,6 +43,9 @@ export class PsicologoPacientesComponent implements OnInit {
   createDone  = signal(false);
   hidePassword = true;
 
+  /** Today's date ('YYYY-MM-DD'); data de nascimento cannot be later than this. */
+  readonly maxBirthDate = todayDateString();
+
   form = this.fb.group({
     nome:             ['', [Validators.required, Validators.minLength(2)]],
     email:            ['', [Validators.required, Validators.email]],
@@ -58,6 +62,10 @@ export class PsicologoPacientesComponent implements OnInit {
   deletingPaciente = signal<PacienteRow | null>(null);
   deleteSaving     = signal(false);
   deleteError      = signal<string | null>(null);
+
+  // ── Exportar lista (XML) ─────────────────────────────────────────────────────
+  exportingLista = signal(false);
+  exportError    = signal<string | null>(null);
 
   filtered = computed(() => {
     const s = this.search().toLowerCase();
@@ -193,5 +201,30 @@ export class PsicologoPacientesComponent implements OnInit {
         this.deleteError.set(err.error?.error ?? 'Erro ao eliminar paciente.');
       },
     });
+  }
+
+  // ── Exportar lista (XML) ─────────────────────────────────────────────────────
+  exportarLista(): void {
+    this.exportError.set(null);
+    this.exportingLista.set(true);
+    this.pacienteSvc.exportarListaPacientes().subscribe({
+      next: blob => {
+        this.exportingLista.set(false);
+        this.downloadBlob(blob, 'pacientes.xml');
+      },
+      error: err => {
+        this.exportingLista.set(false);
+        this.exportError.set(err.error?.error ?? 'Erro ao exportar a lista de pacientes.');
+      },
+    });
+  }
+
+  private downloadBlob(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
   }
 }

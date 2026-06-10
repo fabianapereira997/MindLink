@@ -10,6 +10,9 @@ const desafioSchema = new mongoose.Schema({
     data_fim:    { type: Date, required: true },
     estado:      { type: String, required: true, enum: ['pendente', 'concluido', 'cancelado'], default: 'pendente' },
     sugestao:    { type: String },
+    comentario:  { type: String, default: null },
+    respostaObrigatoria: { type: Boolean, default: false },
+    resposta:    { type: String, default: null },
     grupo:       { type: mongoose.Schema.Types.ObjectId, default: null },
 }, { timestamps: true });
 

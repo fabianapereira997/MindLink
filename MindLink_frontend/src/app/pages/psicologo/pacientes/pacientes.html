@@ -3,7 +3,12 @@
 
     <div class="psi-header">
       <h1>Pacientes</h1>
-      <button class="btn-primary" (click)="openModal()">+ Novo paciente</button>
+      <div class="agenda-nav">
+        <button class="btn-secondary" (click)="exportarLista()" [disabled]="exportingLista()">
+          {{ exportingLista() ? 'A exportar...' : 'Exportar lista (XML)' }}
+        </button>
+        <button class="btn-primary" (click)="openModal()">+ Novo paciente</button>
+      </div>
     </div>
 
     @if (createDone()) {
@@ -11,6 +16,9 @@
     }
     @if (deleteError()) {
       <div class="banner banner--error">{{ deleteError() }}</div>
+    }
+    @if (exportError()) {
+      <div class="banner banner--error">{{ exportError() }}</div>
     }
 
     @if (loading()) {
@@ -104,7 +112,7 @@
 
           <mat-form-field appearance="fill" class="form-field">
             <mat-label>Data de nascimento</mat-label>
-            <input matInput type="date" formControlName="data_nascimento" />
+            <input matInput type="date" formControlName="data_nascimento" [max]="maxBirthDate" />
           </mat-form-field>
         </div>
 

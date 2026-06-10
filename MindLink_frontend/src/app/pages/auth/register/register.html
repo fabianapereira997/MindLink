@@ -1,8 +1,13 @@
 <div class="auth-page">
   <div class="auth-card card">
+    <div class="auth-tabs">
+      <a routerLink="/login" class="auth-tab">Entrar</a>
+      <span class="auth-tab auth-tab--active">Criar conta</span>
+    </div>
+
     <div class="auth-card__header">
       <a routerLink="/" class="auth-card__logo">
-        <img src="/logo1.png" alt="MindLink" class="auth-card__logo-img"
+        <img src="/logo.png" alt="MindLink" class="auth-card__logo-img"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='inline'" />
         <span style="display:none">MindLink</span>
       </a>
@@ -52,7 +57,7 @@
 
           <mat-form-field appearance="fill" class="auth-field">
             <mat-label>Data de nascimento</mat-label>
-            <input matInput type="date" formControlName="data_nascimento" />
+            <input matInput type="date" formControlName="data_nascimento" [max]="maxBirthDate" />
             @if (form.get('data_nascimento')?.invalid && form.get('data_nascimento')?.touched) {
               <mat-error>Campo obrigatório.</mat-error>
             }
@@ -88,10 +93,6 @@
           {{ loading() ? 'A criar conta...' : 'Criar conta de administrador' }}
         </button>
       </form>
-
-      <p class="auth-card__switch">
-        Já tem conta? <a routerLink="/login">Iniciar sessão</a>
-      </p>
     }
   </div>
 </div>

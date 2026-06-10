@@ -149,7 +149,7 @@
                       <p class="desafio-card__sugestao">Sugestão: {{ d.sugestao }}</p>
                     }
                   </div>
-                  <button class="btn-overdue btn--sm" (click)="marcarConcluido(d)">
+                  <button class="btn-overdue btn--sm" (click)="abrirCompletarModal(d)">
                     Marcar como feito
                   </button>
                 </div>
@@ -162,8 +162,9 @@
                     <div class="desafio-card__title">{{ d.titulo }}</div>
                     <p class="desafio-card__desc">{{ d.descricao }}</p>
                     @if (d.sugestao) { <p class="desafio-card__sugestao">Sugestão: {{ d.sugestao }}</p> }
+                    <p class="desafio-card__prazo">{{ prazoLabel(d) }}</p>
                   </div>
-                  <button class="btn-primary btn--sm" (click)="marcarConcluido(d)">Marcar como feito</button>
+                  <button class="btn-primary btn--sm" (click)="abrirCompletarModal(d)">Marcar como feito</button>
                 </div>
               }
 
@@ -178,6 +179,9 @@
                   <div class="desafio-card__body">
                     <div class="desafio-card__title">{{ d.titulo }}</div>
                     <p class="desafio-card__desc">{{ d.descricao }}</p>
+                    @if (d.comentario) {
+                      <p class="desafio-card__comentario"><em>"{{ d.comentario }}"</em></p>
+                    }
                   </div>
                   <span class="badge badge--done">Concluído</span>
                 </div>
@@ -187,9 +191,34 @@
           }
 
           <!-- ── WEEKLY ── -->
-          @if (weekly_pending().length > 0 || weekly_done().length > 0) {
+          @if (weekly_pending().length > 0 || weekly_done().length > 0 || weekly_overdue().length > 0) {
             <h3 class="section-sub">Semanal</h3>
             <div class="desafio-list">
+
+              <!-- Overdue: prazo de 1 semana terminado, não concluído → red alert -->
+              @for (d of weekly_overdue(); track d._id) {
+                <div class="desafio-card desafio-card--overdue card">
+                  <div class="desafio-card__alert-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                  </div>
+                  <div class="desafio-card__body">
+                    <div class="desafio-card__title">{{ d.titulo }}</div>
+                    <p class="desafio-card__desc">{{ d.descricao }}</p>
+                    <p class="desafio-card__overdue-label">
+                      Prazo terminado em {{ d.data_fim | date:'dd/MM/yyyy' }} — não cumprido.
+                    </p>
+                    @if (d.sugestao) {
+                      <p class="desafio-card__sugestao">Sugestão: {{ d.sugestao }}</p>
+                    }
+                  </div>
+                  <button class="btn-overdue btn--sm" (click)="abrirCompletarModal(d)">
+                    Marcar como feito
+                  </button>
+                </div>
+              }
 
               @for (d of weekly_pending(); track d._id) {
                 <div class="desafio-card card">
@@ -197,9 +226,9 @@
                     <div class="desafio-card__title">{{ d.titulo }}</div>
                     <p class="desafio-card__desc">{{ d.descricao }}</p>
                     @if (d.sugestao) { <p class="desafio-card__sugestao">Sugestão: {{ d.sugestao }}</p> }
-                    <p class="desafio-card__date">Até {{ d.data_fim | date:'dd/MM/yyyy' }}</p>
+                    <p class="desafio-card__prazo">{{ prazoLabel(d) }}</p>
                   </div>
-                  <button class="btn-primary btn--sm" (click)="marcarConcluido(d)">Marcar como feito</button>
+                  <button class="btn-primary btn--sm" (click)="abrirCompletarModal(d)">Marcar como feito</button>
                 </div>
               }
 
@@ -214,6 +243,9 @@
                     <div class="desafio-card__title">{{ d.titulo }}</div>
                     <p class="desafio-card__desc">{{ d.descricao }}</p>
                     <p class="desafio-card__date">Até {{ d.data_fim | date:'dd/MM/yyyy' }}</p>
+                    @if (d.comentario) {
+                      <p class="desafio-card__comentario"><em>"{{ d.comentario }}"</em></p>
+                    }
                   </div>
                   <span class="badge badge--done">Concluído</span>
                 </div>
@@ -257,3 +289,47 @@
     }
   </div>
 </div>
+
+<!-- Modal: marcar desafio como feito (com comentário opcional) -->
+@if (desafioToComplete(); as d) {
+  <div class="modal-backdrop" (click)="cancelarCompletar()">
+    <div class="modal card modal--sm" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2>Marcar desafio como feito</h2>
+        <button class="modal__close" (click)="cancelarCompletar()">✕</button>
+      </div>
+      <p class="desafio-card__title">{{ d.titulo }}</p>
+      @if (d.respostaObrigatoria) {
+        <mat-form-field appearance="fill" class="form-field form-field--full">
+          <mat-label>Resposta ao desafio (obrigatório)</mat-label>
+          <textarea
+            matInput
+            rows="4"
+            placeholder="Escreva aqui a sua resposta a este desafio..."
+            [value]="respostaInput()"
+            (input)="respostaInput.set($any($event.target).value); respostaError.set(null)"
+          ></textarea>
+        </mat-form-field>
+        @if (respostaError()) {
+          <div class="banner banner--error">{{ respostaError() }}</div>
+        }
+      }
+      <mat-form-field appearance="fill" class="form-field form-field--full">
+        <mat-label>Comentário (opcional)</mat-label>
+        <textarea
+          matInput
+          rows="4"
+          placeholder="Como se sentiu? Sentiu alguma dificuldade?"
+          [value]="comentarioInput()"
+          (input)="comentarioInput.set($any($event.target).value)"
+        ></textarea>
+      </mat-form-field>
+      <div class="modal__actions">
+        <button type="button" class="btn-secondary" (click)="cancelarCompletar()" [disabled]="completing()">Cancelar</button>
+        <button type="button" class="btn-primary" (click)="confirmarCompletar()" [disabled]="completing()">
+          {{ completing() ? 'A guardar...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

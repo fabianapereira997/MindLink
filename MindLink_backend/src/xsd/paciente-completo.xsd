@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+  <!-- ─── Root ─────────────────────────────────────────────────────────────── -->
+  <xs:element name="PacienteExport">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="GeradoEm" type="xs:dateTime"/>
+        <xs:element name="Paciente" type="PacienteType"/>
+        <xs:element name="RegistosHumor" type="RegistosHumorType"/>
+        <xs:element name="Desafios" type="DesafiosType"/>
+        <xs:element name="Consultas" type="ConsultasType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ─── Paciente ─────────────────────────────────────────────────────────── -->
+  <xs:complexType name="PacienteType">
+    <xs:sequence>
+      <xs:element name="Id" type="xs:string"/>
+      <xs:element name="Nome" type="xs:string"/>
+      <xs:element name="Email" type="xs:string"/>
+      <xs:element name="Genero" type="xs:string"/>
+      <xs:element name="DataNascimento" type="xs:date"/>
+      <xs:element name="Doenca" type="xs:string"/>
+      <xs:element name="Formulario" type="FormularioType"/>
+      <xs:element name="Psicologo" type="PsicologoType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="FormularioType">
+    <xs:sequence>
+      <xs:element name="HistoricoMedico">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Comorbilidade" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="EstiloDeVida">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="ExercicioRegular" type="xs:boolean" nillable="true"/>
+            <xs:element name="Fumador" type="xs:boolean" nillable="true"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PsicologoType">
+    <xs:sequence>
+      <xs:element name="Id" type="xs:string"/>
+      <xs:element name="Nome" type="xs:string"/>
+      <xs:element name="Especialidade" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ─── Registos de humor (check-ins diários) ──────────────────────────────── -->
+  <xs:complexType name="RegistosHumorType">
+    <xs:sequence>
+      <xs:element name="RegistoHumor" type="RegistoHumorType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="RegistoHumorType">
+    <xs:sequence>
+      <xs:element name="Id" type="xs:string"/>
+      <xs:element name="Data" type="xs:dateTime"/>
+      <xs:element name="Humor" type="HumorValueType"/>
+      <xs:element name="Sintomas">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Sintoma" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="Notas" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="HumorValueType">
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="1"/>
+      <xs:maxInclusive value="5"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ─── Desafios ────────────────────────────────────────────────────────────── -->
+  <xs:complexType name="DesafiosType">
+    <xs:sequence>
+      <xs:element name="Desafio" type="DesafioType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="DesafioType">
+    <xs:sequence>
+      <xs:element name="Id" type="xs:string"/>
+      <xs:element name="Titulo" type="xs:string"/>
+      <xs:element name="Descricao" type="xs:string"/>
+      <xs:element name="Tipo" type="DesafioTipoType"/>
+      <xs:element name="DataInicio" type="xs:date"/>
+      <xs:element name="DataFim" type="xs:date"/>
+      <xs:element name="Estado" type="DesafioEstadoType"/>
+      <xs:element name="Sugestao" type="xs:string" minOccurs="0"/>
+      <xs:element name="RespostaObrigatoria" type="xs:boolean"/>
+      <xs:element name="Resposta" type="xs:string" minOccurs="0"/>
+      <xs:element name="Comentario" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="DesafioTipoType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="diario"/>
+      <xs:enumeration value="semanal"/>
+      <xs:enumeration value="mensal"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DesafioEstadoType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="pendente"/>
+      <xs:enumeration value="concluido"/>
+      <xs:enumeration value="cancelado"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ─── Consultas ───────────────────────────────────────────────────────────── -->
+  <xs:complexType name="ConsultasType">
+    <xs:sequence>
+      <xs:element name="Consulta" type="ConsultaType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ConsultaType">
+    <xs:sequence>
+      <xs:element name="Id" type="xs:string"/>
+      <xs:element name="Data" type="xs:dateTime"/>
+      <xs:element name="DuracaoMinutos" type="xs:positiveInteger"/>
+      <xs:element name="Estado" type="ConsultaEstadoType"/>
+      <xs:element name="Notas" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="ConsultaEstadoType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="agendada"/>
+      <xs:enumeration value="realizada"/>
+      <xs:enumeration value="cancelada"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

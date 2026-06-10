@@ -41,6 +41,14 @@ export class PacienteHomeComponent implements OnInit {
   submitDone     = signal(false);
   todayDone      = signal(false);
 
+  // "Marcar como feito" modal — optional comment about how the patient felt
+  desafioToComplete = signal<Desafio | null>(null);
+  comentarioInput   = signal('');
+  // Resposta obrigatória ao desafio (separado do comentário, exigido quando d.respostaObrigatoria === true)
+  respostaInput     = signal('');
+  respostaError     = signal<string | null>(null);
+  completing        = signal(false);
+
   // Mood slider (1–5)
   humorValue     = signal<number>(3);
   // Symptom chips
@@ -74,45 +82,35 @@ export class PacienteHomeComponent implements OnInit {
         && d.getDate()     === t.getDate();
   }
 
-  private getMondayOfWeek(ref: Date): Date {
-    const d = new Date(ref);
-    const day = d.getDay();            // 0 = Sun
-    const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  private isThisWeek(dateStr?: string): boolean {
-    if (!dateStr) return false;
-    const d = new Date(dateStr);
-    const monday = this.getMondayOfWeek(new Date());
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
-    return d >= monday && d <= sunday;
+  /** Verdadeiro se o prazo do desafio (data_fim, ou calculado a partir de createdAt) já passou. */
+  private isPastDeadline(d: Desafio): boolean {
+    return this.prazoData(d).getTime() < Date.now();
   }
 
   // ── Computed slices ─────────────────────────────────────────────────────────
 
   /** Daily challenges created today — pending or done */
   daily_today_pending  = computed(() =>
-    this.allDesafios().filter(d => d.tipo === 'diario' && this.isToday(d.createdAt) && d.estado === 'pendente')
+    this.allDesafios().filter(d => d.tipo === 'diario' && d.estado === 'pendente' && !this.isPastDeadline(d))
   );
   daily_today_done     = computed(() =>
     this.allDesafios().filter(d => d.tipo === 'diario' && this.isToday(d.createdAt) && d.estado === 'concluido')
   );
-  /** Daily challenges from a past day that were NOT completed — show as overdue/red */
+  /** Daily challenges whose deadline (end of the day) already passed without being completed */
   daily_overdue        = computed(() =>
-    this.allDesafios().filter(d => d.tipo === 'diario' && !this.isToday(d.createdAt) && d.estado === 'pendente')
+    this.allDesafios().filter(d => d.tipo === 'diario' && d.estado === 'pendente' && this.isPastDeadline(d))
   );
 
-  /** Weekly challenges created this week — pending or done */
+  /** Weekly challenges still within their 1-week deadline — pending or done */
   weekly_pending       = computed(() =>
-    this.allDesafios().filter(d => d.tipo === 'semanal' && this.isThisWeek(d.createdAt) && d.estado === 'pendente')
+    this.allDesafios().filter(d => d.tipo === 'semanal' && d.estado === 'pendente' && !this.isPastDeadline(d))
   );
   weekly_done          = computed(() =>
-    this.allDesafios().filter(d => d.tipo === 'semanal' && this.isThisWeek(d.createdAt) && d.estado === 'concluido')
+    this.allDesafios().filter(d => d.tipo === 'semanal' && d.estado === 'concluido')
+  );
+  /** Weekly challenges whose 1-week deadline already passed without being completed */
+  weekly_overdue       = computed(() =>
+    this.allDesafios().filter(d => d.tipo === 'semanal' && d.estado === 'pendente' && this.isPastDeadline(d))
   );
 
   hasAny = computed(() =>
@@ -120,7 +118,8 @@ export class PacienteHomeComponent implements OnInit {
     this.daily_today_done().length     > 0 ||
     this.daily_overdue().length        > 0 ||
     this.weekly_pending().length       > 0 ||
-    this.weekly_done().length          > 0
+    this.weekly_done().length          > 0 ||
+    this.weekly_overdue().length       > 0
   );
 
   // ── Lifecycle ───────────────────────────────────────────────────────────────
@@ -198,10 +197,74 @@ export class PacienteHomeComponent implements OnInit {
     }
   }
 
-  marcarConcluido(d: Desafio): void {
-    this.desafioSvc.marcarConcluido(d._id).subscribe({
-      next: updated => this.allDesafios.update(list => list.map(x => x._id === updated._id ? updated : x)),
-      error: err => console.error('marcarConcluido error:', err),
+  /** Data/hora limite para cumprir o desafio. */
+  private prazoData(d: Desafio): Date {
+    if (d.data_fim) return new Date(d.data_fim);
+    const fim = new Date(d.createdAt!);
+    if (d.tipo === 'diario') {
+      fim.setHours(23, 59, 59, 999);
+    } else {
+      fim.setDate(fim.getDate() + 7);
+    }
+    return fim;
+  }
+
+  /** Mensagem a indicar até quando o paciente tem para cumprir o desafio. */
+  prazoLabel(d: Desafio): string {
+    if (d.tipo === 'diario') {
+      return 'Tem até ao final do dia de hoje para cumprir este desafio.';
+    }
+    const fim = this.prazoData(d);
+    const dd = String(fim.getDate()).padStart(2, '0');
+    const mm = String(fim.getMonth() + 1).padStart(2, '0');
+    const yyyy = fim.getFullYear();
+    const hh = String(fim.getHours()).padStart(2, '0');
+    const min = String(fim.getMinutes()).padStart(2, '0');
+    return `Tem até ${dd}/${mm}/${yyyy} às ${hh}:${min} para cumprir este desafio.`;
+  }
+
+  // Open the "marcar como feito" modal for a given desafio.
+  abrirCompletarModal(d: Desafio): void {
+    this.desafioToComplete.set(d);
+    this.comentarioInput.set('');
+    this.respostaInput.set('');
+    this.respostaError.set(null);
+  }
+
+  cancelarCompletar(): void {
+    if (this.completing()) return;
+    this.desafioToComplete.set(null);
+    this.comentarioInput.set('');
+    this.respostaInput.set('');
+    this.respostaError.set(null);
+  }
+
+  confirmarCompletar(): void {
+    const d = this.desafioToComplete();
+    if (!d) return;
+
+    const resposta = this.respostaInput().trim();
+    if (d.respostaObrigatoria && !resposta) {
+      this.respostaError.set('Este desafio exige uma resposta escrita.');
+      return;
+    }
+    this.respostaError.set(null);
+
+    this.completing.set(true);
+    const comentario = this.comentarioInput().trim();
+    this.desafioSvc.marcarConcluido(d._id, comentario || undefined, resposta || undefined).subscribe({
+      next: updated => {
+        this.allDesafios.update(list => list.map(x => x._id === updated._id ? updated : x));
+        this.completing.set(false);
+        this.desafioToComplete.set(null);
+        this.comentarioInput.set('');
+        this.respostaInput.set('');
+      },
+      error: err => {
+        console.error('marcarConcluido error:', err);
+        this.completing.set(false);
+        this.respostaError.set(err.error?.error ?? 'Erro ao confirmar. Tente novamente.');
+      },
     });
   }
 

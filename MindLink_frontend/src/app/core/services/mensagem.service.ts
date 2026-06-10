@@ -12,7 +12,11 @@ export interface Mensagem {
   mensagem: string;
   data: string;
   createdAt: string;
+  lida?: boolean;
 }
+
+/** Paciente: { count }. Psicólogo: { [pacienteId]: count }. */
+export type UnreadResponse = { count: number } | Record<string, number>;
 
 @Injectable({ providedIn: 'root' })
 export class MensagemService {
@@ -30,5 +34,15 @@ export class MensagemService {
   // Psychologist: must include paciente ID
   sendAsPsicologo(mensagem: string, pacienteId: string): Observable<Mensagem> {
     return this.http.post<Mensagem>(`${API}/mensagens`, { mensagem, paciente: pacienteId });
+  }
+
+  // Returns { count } for paciente, or { [pacienteId]: count } for psicólogo.
+  getUnread(): Observable<UnreadResponse> {
+    return this.http.get<UnreadResponse>(`${API}/mensagens/unread`);
+  }
+
+  // Marks all messages from the other party in this conversation as read.
+  markAsRead(pacienteId: string, psicologoId: string): Observable<{ message: string }> {
+    return this.http.patch<{ message: string }>(`${API}/mensagens/conversa/${pacienteId}/${psicologoId}/ler`, {});
   }
 }

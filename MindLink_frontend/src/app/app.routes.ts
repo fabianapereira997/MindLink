@@ -41,6 +41,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/paciente/dashboard/dashboard').then(m => m.PacienteDashboardComponent),
       },
       {
+        path: 'agenda',
+        loadComponent: () => import('./pages/paciente/agenda/agenda').then(m => m.PacienteAgendaComponent),
+      },
+      {
         path: 'perfil',
         loadComponent: () => import('./pages/paciente/perfil/perfil').then(m => m.PacientePerfilComponent),
       },
@@ -78,6 +82,10 @@ export const routes: Routes = [
         path: 'estatisticas',
         loadComponent: () => import('./pages/psicologo/estatisticas/estatisticas').then(m => m.PsicologoEstatisticasComponent),
       },
+      {
+        path: 'perfil',
+        loadComponent: () => import('./pages/psicologo/perfil/perfil').then(m => m.PsicologoPerfilComponent),
+      },
     ],
   },
 
@@ -105,6 +113,10 @@ export const routes: Routes = [
       {
         path: 'pacientes/:id',
         loadComponent: () => import('./pages/admin/paciente-detalhe/paciente-detalhe').then(m => m.AdminPacienteDetalheComponent),
+      },
+      {
+        path: 'consultas',
+        loadComponent: () => import('./pages/admin/consultas/consultas').then(m => m.AdminConsultasComponent),
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],

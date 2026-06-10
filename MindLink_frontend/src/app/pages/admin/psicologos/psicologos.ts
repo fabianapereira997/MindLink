@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminService, AdminPsicologo } from '../../../core/services/admin.service';
+import { todayDateString } from '../../../core/utils/date.utils';
 
 @Component({
   selector: 'app-admin-psicologos',
@@ -32,6 +33,9 @@ export class AdminPsicologosComponent implements OnInit {
   createDone  = signal(false);
   searchTerm         = signal('');
   filterEspecialidade = signal('');
+
+  /** Today's date ('YYYY-MM-DD'); data de nascimento cannot be later than this. */
+  readonly maxBirthDate = todayDateString();
 
   get especialidadeOptions(): string[] {
     const vals = this.psicologos()

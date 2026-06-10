@@ -17,14 +17,10 @@ function getDateRangeForDuracao(duracao: string): { data_inicio: Date; data_fim:
     const now = new Date();
 
     if (duracao === 'semanal') {
-        const day = now.getDay(); // 0 = domingo
-        const diffToMonday = day === 0 ? -6 : 1 - day;
+        // O paciente tem uma semana a partir do momento em que o desafio é definido.
         const inicio = new Date(now);
-        inicio.setDate(now.getDate() + diffToMonday);
-        inicio.setHours(0, 0, 0, 0);
-        const fim = new Date(inicio);
-        fim.setDate(inicio.getDate() + 6);
-        fim.setHours(23, 59, 59, 999);
+        const fim = new Date(now);
+        fim.setDate(fim.getDate() + 7);
         return { data_inicio: inicio, data_fim: fim };
     }
 
@@ -54,7 +50,8 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
             return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
         }
 
-        const { paciente, pacientes, titulo, descricao, tipo, duracao, data_inicio, data_fim, sugestao } = req.body;
+        const { paciente, pacientes, titulo, descricao, tipo, duracao, data_inicio, data_fim, sugestao, respostaObrigatoria } = req.body;
+        const respostaObrigatoriaFinal = respostaObrigatoria === true;
 
         // ─── New format: one challenge → multiple pacientes ────────────────────
         if (Array.isArray(pacientes)) {
@@ -84,6 +81,7 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
                 data_inicio: inicio,
                 data_fim: fim,
                 sugestao,
+                respostaObrigatoria: respostaObrigatoriaFinal,
                 grupo,
             })));
 
@@ -100,9 +98,11 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
                 data_inicio: inicio,
                 data_fim: fim,
                 estado: 'pendente',
+                respostaObrigatoria: respostaObrigatoriaFinal,
                 createdAt: docs[0]?.createdAt,
                 pacientesCumpriram: [],
-                pacientesNaoCumpriram: pacientesPopulados,
+                pacientesPendentes: pacientesPopulados,
+                pacientesNaoCumpriram: [],
             });
         }
 
@@ -125,6 +125,7 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
             data_inicio,
             data_fim,
             sugestao,
+            respostaObrigatoria: respostaObrigatoriaFinal,
         });
         await desafio.save();
         res.status(201).json(desafio);
@@ -187,9 +188,11 @@ router.get('/psicologo', verifyToken, verifyTokenByRole('psicologo'), async (req
                     data_inicio: d.data_inicio,
                     data_fim: d.data_fim,
                     estado: d.estado,
+                    respostaObrigatoria: d.respostaObrigatoria ?? false,
                     createdAt: d.createdAt,
                     psicologo: d.psicologo,
                     pacientesCumpriram: [] as any[],
+                    pacientesPendentes: [] as any[],
                     pacientesNaoCumpriram: [] as any[],
                 });
             }
@@ -197,9 +200,19 @@ router.get('/psicologo', verifyToken, verifyTokenByRole('psicologo'), async (req
             const grupoEntry = grupos.get(key);
             if (d.paciente) {
                 if (d.estado === 'concluido') {
-                    grupoEntry.pacientesCumpriram.push(d.paciente);
+                    grupoEntry.pacientesCumpriram.push({
+                        ...d.paciente.toObject(),
+                        comentario: d.comentario ?? null,
+                        resposta: d.resposta ?? null,
+                    });
                 } else {
-                    grupoEntry.pacientesNaoCumpriram.push(d.paciente);
+                    // Ainda dentro do prazo (data_fim) → pendente; passou o prazo → não cumpriu.
+                    const prazoExpirado = d.data_fim ? new Date(d.data_fim).getTime() < Date.now() : false;
+                    if (prazoExpirado) {
+                        grupoEntry.pacientesNaoCumpriram.push(d.paciente);
+                    } else {
+                        grupoEntry.pacientesPendentes.push(d.paciente);
+                    }
                 }
             }
         }
@@ -292,11 +305,24 @@ router.patch('/:id/estado', verifyToken, verifyTokenByRole('psicologo', 'pacient
             if (!pacienteProfile || desafio.paciente.toString() !== pacienteProfile._id.toString()) {
                 return res.status(403).json({ error: 'Acesso negado: desafio não pertence a este paciente' });
             }
-            const { estado } = req.body;
+            const { estado, comentario, resposta } = req.body;
             if (estado !== 'concluido') {
                 return res.status(403).json({ error: 'Paciente só pode marcar desafio como "concluido"' });
             }
+
+            const respostaTrimmed = typeof resposta === 'string' ? resposta.trim() : '';
+            if (desafio.respostaObrigatoria && !respostaTrimmed) {
+                return res.status(400).json({ error: 'Este desafio exige uma resposta escrita.' });
+            }
+
             desafio.estado = 'concluido';
+            if (comentario !== undefined) {
+                const trimmed = typeof comentario === 'string' ? comentario.trim() : '';
+                desafio.comentario = trimmed || null;
+            }
+            if (resposta !== undefined) {
+                desafio.resposta = respostaTrimmed || null;
+            }
             await desafio.save();
             return res.json(desafio);
         }

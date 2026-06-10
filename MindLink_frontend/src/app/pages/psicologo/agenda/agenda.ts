@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ConsultaService, Consulta } from '../../../core/services/consulta.service';
 import { PsicologoService } from '../../../core/services/psicologo.service';
+import { todayDateString } from '../../../core/utils/date.utils';
 
 interface WeekDay {
   iso: string;
@@ -30,6 +31,9 @@ export class PsicologoAgendaComponent implements OnInit {
   allConsultas = signal<Consulta[]>([]);
   loading      = signal(true);
   weekStart    = signal<Date>(this.getMonday(new Date()));
+
+  /** Today's date ('YYYY-MM-DD'); novas/reagendadas consultas não podem ser no passado. */
+  readonly minConsultaDate = todayDateString();
 
   // ── Nova consulta form ───────────────────────────────────────────────────────
   pacientes      = signal<PacienteBasic[]>([]);

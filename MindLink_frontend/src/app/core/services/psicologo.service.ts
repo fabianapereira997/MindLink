@@ -6,7 +6,7 @@ const API = 'http://localhost:8080/api';
 
 export interface PsicologoProfile {
   _id: string;
-  user?: { nome?: string; email?: string };
+  user?: { _id?: string; nome?: string; email?: string; genero?: string; data_nascimento?: string };
   especialidade?: string;
   pacientes?: any[];
 }
@@ -17,5 +17,9 @@ export class PsicologoService {
 
   getMyProfile(): Observable<PsicologoProfile> {
     return this.http.get<PsicologoProfile>(`${API}/psicologos/me`);
+  }
+
+  updateProfile(id: string, payload: { especialidade?: string }): Observable<PsicologoProfile> {
+    return this.http.put<PsicologoProfile>(`${API}/psicologos/${id}`, payload);
   }
 }
