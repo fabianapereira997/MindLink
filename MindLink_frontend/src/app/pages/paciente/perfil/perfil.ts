@@ -40,8 +40,6 @@ export class PacientePerfilComponent implements OnInit {
   saving  = signal(false);
   error   = signal<string | null>(null);
   success = signal(false);
-  exporting   = signal(false);
-  exportError = signal<string | null>(null);
   hideNew     = true;
   hideConfirm = true;
 
@@ -72,30 +70,6 @@ export class PacientePerfilComponent implements OnInit {
   initials(): string {
     const nome = this.auth.user()?.nome ?? '';
     return nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  }
-
-  // ── Exportar os meus dados (XML) ─────────────────────────────────────────────
-  exportarDados(): void {
-    const profile = this.profile();
-    if (!profile) return;
-
-    this.exportError.set(null);
-    this.exporting.set(true);
-    this.pacSvc.exportarPaciente(profile._id).subscribe({
-      next: blob => {
-        this.exporting.set(false);
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `os-meus-dados.xml`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
-      error: err => {
-        this.exporting.set(false);
-        this.exportError.set(err.error?.error ?? 'Erro ao exportar os dados.');
-      },
-    });
   }
 
   startEditing(): void {

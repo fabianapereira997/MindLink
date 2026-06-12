@@ -18,3 +18,25 @@
   background: rgba(234,179,8,0.1);
   color: #92400e;
 }
+
+.detail-hero__actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-left: auto;
+  flex-wrap: wrap;
+  align-self: center;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  display: block;
+  margin-bottom: var(--space-xs);
+}
+
+.modal__form .form-field input[type="file"] {
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}

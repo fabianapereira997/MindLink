@@ -6,6 +6,12 @@
         <h1>Consultas</h1>
         <p>Todas as consultas agendadas na plataforma.</p>
       </div>
+      <div class="view-toggle">
+        <button type="button" class="view-toggle__btn" [class.view-toggle__btn--active]="viewMode() === 'lista'"
+                (click)="viewMode.set('lista')">Lista</button>
+        <button type="button" class="view-toggle__btn" [class.view-toggle__btn--active]="viewMode() === 'agenda'"
+                (click)="viewMode.set('agenda')">Agenda</button>
+      </div>
     </div>
 
     @if (error()) {
@@ -61,43 +67,81 @@
 
     @if (loading()) {
       <div class="loading">A carregar...</div>
-    } @else if (filtered.length === 0) {
-      <div class="card empty-card"><p>Nenhuma consulta encontrada.</p></div>
-    } @else {
-      <div class="list-table card consultas-table">
-        <div class="list-table__header">
-          <span>Paciente</span>
-          <span>Psicólogo</span>
-          <span>Data / Hora</span>
-          <span>Duração</span>
-          <span>Estado</span>
-          <span></span>
-        </div>
-        @for (c of filtered; track c._id) {
-          <div class="list-table__row">
-            <span class="list-row__spec">{{ c.paciente?.user?.nome ?? '—' }}</span>
-            <span class="list-row__spec">{{ c.psicologo?.user?.nome ?? '—' }}</span>
-            <span class="list-row__spec">{{ c.data | date:'dd/MM/yyyy HH:mm' }}</span>
-            <span class="list-row__spec">{{ c.duracao }} min</span>
-            <span>
-              <select class="estado-select"
-                      [class.estado-select--agendada]="c.estado === 'agendada'"
-                      [class.estado-select--realizada]="c.estado === 'realizada'"
-                      [class.estado-select--cancelada]="c.estado === 'cancelada'"
-                      [value]="c.estado"
-                      [disabled]="savingId() === c._id"
-                      (change)="changeEstado(c, $any($event.target).value)">
-                <option value="agendada">Agendada</option>
-                <option value="realizada">Realizada</option>
-                <option value="cancelada">Cancelada</option>
-              </select>
-            </span>
-            <div class="list-row__actions">
-              <button type="button" class="btn-danger btn--sm" (click)="askDelete(c._id)">Eliminar</button>
-            </div>
+    } @else if (viewMode() === 'lista') {
+      @if (filtered.length === 0) {
+        <div class="card empty-card"><p>Nenhuma consulta encontrada.</p></div>
+      } @else {
+        <div class="list-table card consultas-table">
+          <div class="list-table__header">
+            <span>Paciente</span>
+            <span>Psicólogo</span>
+            <span>Data / Hora</span>
+            <span>Duração</span>
+            <span>Estado</span>
+            <span></span>
           </div>
-        }
+          @for (c of filtered; track c._id) {
+            <div class="list-table__row">
+              <span class="list-row__spec">{{ c.paciente?.user?.nome ?? '—' }}</span>
+              <span class="list-row__spec">{{ c.psicologo?.user?.nome ?? '—' }}</span>
+              <span class="list-row__spec">{{ c.data | date:'dd/MM/yyyy HH:mm' }}</span>
+              <span class="list-row__spec">{{ c.duracao }} min</span>
+              <span>
+                <select class="estado-select"
+                        [class.estado-select--agendada]="c.estado === 'agendada'"
+                        [class.estado-select--realizada]="c.estado === 'realizada'"
+                        [class.estado-select--cancelada]="c.estado === 'cancelada'"
+                        [value]="c.estado"
+                        [disabled]="savingId() === c._id"
+                        (change)="changeEstado(c, $any($event.target).value)">
+                  <option value="agendada">Agendada</option>
+                  <option value="realizada">Realizada</option>
+                  <option value="cancelada">Cancelada</option>
+                </select>
+              </span>
+              <div class="list-row__actions">
+                <button type="button" class="btn-danger btn--sm" (click)="askDelete(c._id)">Eliminar</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    } @else {
+      <!-- Formato agenda: vista semanal -->
+      <div class="agenda-nav agenda-nav--week">
+        <button type="button" class="btn-secondary btn--sm" (click)="prevWeek()">&#8249;</button>
+        <span class="agenda-week-label">{{ weekLabel }}</span>
+        <button type="button" class="btn-secondary btn--sm" (click)="nextWeek()">&#8250;</button>
+        <button type="button" class="btn-secondary btn--sm" (click)="goToToday()">Hoje</button>
       </div>
+
+      @if (filtered.length === 0) {
+        <div class="card empty-card"><p>Nenhuma consulta encontrada.</p></div>
+      } @else {
+        <div class="week-grid card">
+          @for (day of weekDays; track day.iso) {
+            <div class="week-day" [class.week-day--today]="day.isToday">
+              <div class="week-day__header">
+                <span class="week-day__weekday">{{ day.weekday }}</span>
+                <span class="week-day__num" [class.week-day__num--today]="day.isToday">{{ day.num }}</span>
+              </div>
+              <div class="week-day__slots">
+                @for (c of consultasForDay(day.iso); track c._id) {
+                  <div class="slot"
+                       [class.slot--agendada]="c.estado === 'agendada'"
+                       [class.slot--realizada]="c.estado === 'realizada'"
+                       [class.slot--cancelada]="c.estado === 'cancelada'">
+                    <div class="slot__time">{{ c.data | date:'HH:mm' }}</div>
+                    <div class="slot__name">{{ c.paciente?.user?.nome ?? 'Paciente' }}</div>
+                    <div class="slot__psi">{{ c.psicologo?.user?.nome ?? 'Psicólogo' }}</div>
+                    <span class="badge" [class]="'badge--' + c.estado">{{ estadoLabel(c.estado) }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
     }
 
   </div>

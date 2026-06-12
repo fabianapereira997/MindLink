@@ -19,8 +19,8 @@
       <div class="auth-error">{{ error() }}</div>
     }
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
-      <mat-form-field appearance="fill" class="auth-field">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal__form">
+      <mat-form-field appearance="fill" class="form-field">
         <mat-label>Email</mat-label>
         <input matInput type="email" formControlName="email" autocomplete="email" />
         <mat-icon matSuffix>mail_outline</mat-icon>
@@ -29,7 +29,7 @@
         }
       </mat-form-field>
 
-      <mat-form-field appearance="fill" class="auth-field">
+      <mat-form-field appearance="fill" class="form-field">
         <mat-label>Password</mat-label>
         <input
           matInput

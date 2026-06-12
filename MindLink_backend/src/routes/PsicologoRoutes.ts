@@ -36,7 +36,9 @@ router.get('/me', verifyToken, verifyTokenByRole('psicologo'), async (req: Reque
         if (!psicologoProfile) {
             return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
         }
-        const pacientes = await Paciente.find({ psicologo: psicologoProfile._id })
+        // Pacientes cujo percurso de monitorização foi terminado deixam de
+        // aparecer ao psicólogo (dashboard, estatísticas, etc.).
+        const pacientes = await Paciente.find({ psicologo: psicologoProfile._id, ativo: { $ne: false } })
             .populate('user', '-password');
         const result = psicologoProfile.toObject();
         result.pacientes = pacientes;

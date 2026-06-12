@@ -1,4 +1,6 @@
 /* Reuse the same layout as login */
+@import '../../admin/admin-shared.css';
+
 .auth-page {
   min-height: calc(100vh - 68px);
   display: flex;
@@ -83,14 +85,6 @@
   font-size: 0.95rem;
 }
 
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.auth-field { width: 100%; }
-
 .auth-submit {
   width: 100%;
   justify-content: center;
@@ -109,12 +103,6 @@
   margin-top: var(--space-lg);
   font-size: 0.9rem;
   color: var(--color-text-secondary);
-}
-
-.auth-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
 }
 
 .auth-error {
@@ -136,8 +124,4 @@
   padding: var(--space-lg);
   text-align: center;
   font-weight: 500;
-}
-
-@media (max-width: 480px) {
-  .auth-row { grid-template-columns: 1fr; }
 }

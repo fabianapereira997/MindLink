@@ -12,6 +12,8 @@ export interface PacienteComStats {
   _id: string;
   user?: { nome?: string };
   avgHumor?: string;
+  humorBaixo?: boolean;
+  semRegistoHumor3Dias?: boolean;
 }
 
 export interface DesafioPendenteItem {
@@ -39,7 +41,6 @@ export class PsicologoDashboardComponent implements OnInit {
   private chatSvc     = inject(ChatService);
 
   pacientes         = signal<PacienteComStats[]>([]);
-  pacientesCriticos = signal<PacienteComStats[]>([]);
   proximasConsultas = signal<Consulta[]>([]);
   desafiosPendentes = signal<Desafio[]>([]);
   loading           = signal(true);
@@ -76,6 +77,24 @@ export class PsicologoDashboardComponent implements OnInit {
     return items.sort((a, b) => b.diasAtraso - a.diasAtraso);
   });
 
+  /** Ids dos pacientes com pelo menos um desafio não cumprido há 3 ou mais dias. */
+  private desafioAtraso3DiasIds = computed<Set<string>>(() => {
+    const ids = new Set<string>();
+    for (const item of this.desafiosPendentesDetalhe()) {
+      if (item.diasAtraso >= 3) ids.add(item.paciente._id);
+    }
+    return ids;
+  });
+
+  /** Pacientes com humor 1 ou 2 recente, sem registo de humor há 3+ dias,
+   *  ou com desafios não cumpridos há 3+ dias. */
+  pacientesCriticos = computed<PacienteComStats[]>(() => {
+    const atrasoIds = this.desafioAtraso3DiasIds();
+    return this.pacientes()
+      .filter(p => p.humorBaixo || p.semRegistoHumor3Dias || atrasoIds.has(p._id))
+      .sort((a, b) => parseFloat(a.avgHumor ?? '5') - parseFloat(b.avgHumor ?? '5'));
+  });
+
   ngOnInit(): void {
     this.psiSvc.getMyProfile().subscribe({
       next: profile => {
@@ -93,13 +112,18 @@ export class PsicologoDashboardComponent implements OnInit {
         enriched.forEach((p, i) => {
           this.qSvc.getQuestionariosByPaciente(p._id).subscribe({
             next: qs => {
-              const recent = qs
-                .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-                .slice(0, 7);
+              const sorted = qs
+                .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+              const recent = sorted.slice(0, 7);
               if (recent.length) {
                 const avg = recent.reduce((s, q) => s + q.humor, 0) / recent.length;
                 enriched[i].avgHumor = avg.toFixed(1);
               }
+              enriched[i].humorBaixo = recent.some(q => q.humor <= 2);
+
+              const lastDate = sorted.length ? new Date(sorted[0].data) : null;
+              enriched[i].semRegistoHumor3Dias = !lastDate
+                || (Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24) >= 3;
             },
             complete: () => {
               remaining--;
@@ -177,10 +201,6 @@ export class PsicologoDashboardComponent implements OnInit {
 
   private finalize(enriched: PacienteComStats[]): void {
     this.pacientes.set(enriched);
-    const criticos = enriched
-      .filter(p => p.avgHumor && parseFloat(p.avgHumor) <= 2.5)
-      .sort((a, b) => parseFloat(a.avgHumor ?? '5') - parseFloat(b.avgHumor ?? '5'));
-    this.pacientesCriticos.set(criticos);
     this.loading.set(false);
   }
 }

@@ -4,6 +4,14 @@ import { ConsultaService, Consulta } from '../../../core/services/consulta.servi
 import { todayDateString } from '../../../core/utils/date.utils';
 
 type EstadoFiltro = 'todas' | 'agendada' | 'realizada' | 'cancelada';
+type ViewMode = 'lista' | 'agenda';
+
+interface WeekDay {
+  iso: string;
+  num: string;
+  weekday: string;
+  isToday: boolean;
+}
 
 @Component({
   selector: 'app-admin-consultas',
@@ -24,6 +32,10 @@ export class AdminConsultasComponent implements OnInit {
   filterPsi    = signal('');
   filterPac    = signal('');
   filterData   = signal('');
+
+  // ── Formato agenda (vista semanal) ──────────────────────────────────────────
+  viewMode  = signal<ViewMode>('lista');
+  weekStart = signal<Date>(this.getMonday(new Date()));
 
   confirmDeleteId = signal<string | null>(null);
   savingId        = signal<string | null>(null);
@@ -64,6 +76,71 @@ export class AdminConsultasComponent implements OnInit {
       .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
   }
 
+  // ── Formato agenda (vista semanal) ──────────────────────────────────────────
+  get weekDays(): WeekDay[] {
+    const start = this.weekStart();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const iso = this.toLocalISODate(d);
+      const isToday = d.getTime() === today.getTime();
+      return {
+        iso,
+        num: d.getDate().toString(),
+        weekday: d.toLocaleDateString('pt-PT', { weekday: 'short' }),
+        isToday,
+      };
+    });
+  }
+
+  get weekLabel(): string {
+    const days = this.weekDays;
+    const first = new Date(days[0].iso);
+    const last  = new Date(days[6].iso);
+    const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+    return `${first.toLocaleDateString('pt-PT', opts)} – ${last.toLocaleDateString('pt-PT', opts)} ${last.getFullYear()}`;
+  }
+
+  consultasForDay(iso: string): Consulta[] {
+    return this.filtered
+      .filter(c => this.toLocalISODate(new Date(c.data)) === iso)
+      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+  }
+
+  prevWeek(): void {
+    const d = new Date(this.weekStart());
+    d.setDate(d.getDate() - 7);
+    this.weekStart.set(d);
+  }
+
+  nextWeek(): void {
+    const d = new Date(this.weekStart());
+    d.setDate(d.getDate() + 7);
+    this.weekStart.set(d);
+  }
+
+  goToToday(): void {
+    this.weekStart.set(this.getMonday(new Date()));
+  }
+
+  /** Local-timezone date as 'yyyy-MM-dd', avoiding the UTC-shift bug of toISOString(). */
+  private toLocalISODate(d: Date): string {
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  private getMonday(date: Date): Date {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
   get countAgendadas(): number {
     return this.consultas().filter(c => c.estado === 'agendada').length;
   }
@@ -86,6 +163,12 @@ export class AdminConsultasComponent implements OnInit {
       next: list => { this.consultas.set(list); this.loading.set(false); },
       error: err => { this.error.set(err.error?.error ?? 'Erro ao carregar consultas.'); this.loading.set(false); },
     });
+  }
+
+  estadoLabel(estado: string): string {
+    if (estado === 'realizada') return 'Realizada';
+    if (estado === 'cancelada') return 'Cancelada';
+    return 'Agendada';
   }
 
   clearFilters(): void {

@@ -1,5 +1,36 @@
 @import '../admin-shared.css';
 
+/* View toggle (Lista / Agenda) */
+.view-toggle {
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-full);
+  padding: 4px;
+}
+
+.view-toggle__btn {
+  padding: 0.5rem 1.2rem;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.view-toggle__btn:hover { color: var(--color-primary-dark); }
+
+.view-toggle__btn--active {
+  background: var(--color-primary-dark);
+  color: white;
+}
+
+.view-toggle__btn--active:hover { color: white; }
+
 .estado-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -119,4 +150,155 @@
   .consultas-table .list-table__row span:nth-child(4) {
     display: none;
   }
+}
+
+/* ── Formato agenda (vista semanal) ───────────────────────────────────────── */
+.agenda-nav--week {
+  margin-bottom: var(--space-lg);
+  gap: var(--space-md);
+}
+
+.agenda-week-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  min-width: 200px;
+  text-align: center;
+  padding: 0 var(--space-sm);
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  min-height: 280px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.week-day {
+  border-right: 1px solid rgba(0,0,0,0.06);
+  padding: var(--space-md) var(--space-sm);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.week-day:last-child { border-right: none; }
+
+.week-day--today { background: rgba(38,135,78,0.03); }
+
+.week-day__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.week-day__weekday {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.week-day__num {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.week-day__num--today {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+.week-day__slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+/* Slot — colors match the estado-select states used elsewhere in admin */
+.slot {
+  border-radius: var(--radius-sm);
+  border-left: 3px solid;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.slot--agendada {
+  background: rgba(37,99,235,0.08);
+  border-left-color: #2563eb;
+}
+
+.slot--realizada {
+  background: rgba(38,135,78,0.1);
+  border-left-color: var(--color-primary-dark);
+}
+
+.slot--cancelada {
+  background: rgba(220,38,38,0.08);
+  border-left-color: #dc2626;
+  opacity: 0.8;
+}
+
+.slot__time {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.slot--agendada .slot__time  { color: #2563eb; }
+.slot--realizada .slot__time { color: var(--color-primary-dark); }
+.slot--cancelada .slot__time { color: #dc2626; }
+
+.slot__name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slot__psi {
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slot .badge {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 8px;
+  font-size: 0.65rem;
+}
+
+.badge--agendada  { background: rgba(37,99,235,0.08);  color: #2563eb; }
+.badge--realizada { background: rgba(38,135,78,0.1);   color: var(--color-primary-dark); }
+.badge--cancelada { background: rgba(220,38,38,0.08);  color: #dc2626; }
+
+@media (max-width: 900px) {
+  .week-grid { grid-template-columns: repeat(7, minmax(70px, 1fr)); font-size: 0.75rem; }
+  .slot__psi { display: none; }
+}
+
+@media (max-width: 640px) {
+  .week-grid { grid-template-columns: repeat(7, minmax(40px, 1fr)); }
+  .slot__name, .slot .badge { display: none; }
 }

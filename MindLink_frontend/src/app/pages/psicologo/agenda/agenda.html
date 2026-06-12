@@ -216,5 +216,35 @@
         </div>
       </div>
     }
+
+    <!-- Modal: marcar como realizada (observações) -->
+    @if (realizandoConsulta(); as c) {
+      <div class="modal-overlay" (click)="fecharRealizarModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+          <h2>Marcar consulta como realizada</h2>
+          <p>
+            Consulta com <strong>{{ c.paciente?.user?.nome ?? 'este paciente' }}</strong>
+            no dia {{ c.data | date:'dd/MM/yyyy' }} às {{ c.data | date:'HH:mm' }}.
+          </p>
+          <div class="form-field form-field--full">
+            <label class="form-label">Observações da consulta (opcional)</label>
+            <textarea
+              class="form-input form-textarea"
+              placeholder="Registe aqui as observações recolhidas durante a consulta..."
+              [value]="realizarNotas()"
+              (input)="realizarNotas.set($any($event.target).value)"
+            ></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary btn--sm" (click)="fecharRealizarModal()" [disabled]="realizarSaving()">
+              Voltar
+            </button>
+            <button type="button" class="btn-primary btn--sm" (click)="confirmarRealizacao()" [disabled]="realizarSaving()">
+              {{ realizarSaving() ? 'A guardar...' : 'Confirmar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   </div>
 </div>

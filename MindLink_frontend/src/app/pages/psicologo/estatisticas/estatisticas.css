@@ -155,6 +155,22 @@
 .paciente-row__name { font-weight: 600; color: var(--color-text-primary); }
 .paciente-row__meta { font-size: 0.85rem; color: var(--color-text-muted); margin-top: 3px; }
 
+/* Row with action button (e.g. "boa recuperação") */
+.paciente-row__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+@media (max-width: 640px) {
+  .paciente-row--ok { flex-wrap: wrap; }
+  .paciente-row__link { width: 100%; }
+}
+
 .humor-pill {
   padding: 4px 12px;
   border-radius: var(--radius-full);

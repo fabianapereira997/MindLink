@@ -3,6 +3,10 @@
 
     <a routerLink="/admin/psicologos" class="detail-back">← Psicólogos</a>
 
+    @if (success()) {
+      <div class="banner banner--success">{{ success() }}</div>
+    }
+
     @if (loading()) {
       <div class="loading">A carregar...</div>
     } @else if (error()) {
@@ -16,6 +20,12 @@
           <div class="detail-hero__name">{{ d.psicologo.user?.nome }}</div>
           <div class="detail-hero__meta">{{ d.psicologo.especialidade || 'Sem especialidade' }}</div>
           <div class="detail-hero__email">{{ d.psicologo.user?.email }}</div>
+        </div>
+        <div class="detail-hero__actions">
+          <button class="btn-secondary btn--sm" (click)="exportPacientes()">Exportar pacientes</button>
+          @if (d.psicologo.ativo === false) {
+            <button class="btn-secondary btn--sm" (click)="openTransferModal()">Transferir pacientes</button>
+          }
         </div>
       </div>
 
@@ -85,4 +95,54 @@
 
     }
   </div>
+
+  <!-- Transferir pacientes (importar lista XML) -->
+  @if (showTransfer()) {
+    <div class="modal-backdrop" (click)="closeTransferModal()">
+      <div class="modal card" (click)="$event.stopPropagation()">
+        <div class="modal__header">
+          <h2>Transferir pacientes</h2>
+          <button class="modal__close" (click)="closeTransferModal()">✕</button>
+        </div>
+
+        <p>
+          Importe o ficheiro XML com a lista de pacientes de
+          <strong>{{ data()?.psicologo?.user?.nome }}</strong> e escolha o psicólogo
+          que ficará responsável por esses pacientes.
+        </p>
+
+        @if (transferError()) {
+          <div class="banner banner--error">{{ transferError() }}</div>
+        }
+
+        <div class="modal__form">
+          <div class="form-field">
+            <label class="form-label">Psicólogo de destino</label>
+            <select class="filter-select" style="width: 100%;" [value]="transferTargetId()"
+                    (change)="transferTargetId.set($any($event.target).value)">
+              <option value="">Selecione um psicólogo</option>
+              @for (o of otherPsicologos; track o._id) {
+                <option [value]="o._id">{{ o.user.nome }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Ficheiro XML (lista de pacientes exportada)</label>
+            <input type="file" accept=".xml,application/xml,text/xml" (change)="onTransferFileSelected($event)" />
+            @if (transferFileName()) {
+              <span class="filter-count">{{ transferFileName() }}</span>
+            }
+          </div>
+
+          <div class="modal__actions">
+            <button type="button" class="btn-secondary" (click)="closeTransferModal()">Cancelar</button>
+            <button type="button" class="btn-primary" [disabled]="transferring()" (click)="submitTransfer()">
+              {{ transferring() ? 'A transferir...' : 'Transferir pacientes' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>

@@ -93,7 +93,9 @@ router.get('/', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admin')
             if (!psicologoProfile) {
                 return res.status(404).json({ error: 'Perfil de psicólogo não encontrado' });
             }
-            const pacientes = await Paciente.find({ psicologo: psicologoProfile._id })
+            // Pacientes cujo percurso de monitorização foi terminado deixam de
+            // aparecer ao psicólogo (agenda, dados principais, lista de pacientes, etc.).
+            const pacientes = await Paciente.find({ psicologo: psicologoProfile._id, ativo: { $ne: false } })
                 .populate('user', '-password')
                 .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
             return res.json(pacientes);
@@ -199,21 +201,14 @@ router.get('/:id', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admi
 });
 
 // ─── GET /api/pacientes/:id/export — export completo do paciente (XML) ────────
-// Paciente: apenas o seu próprio perfil. Psicologo: apenas se associado. Admin: qualquer.
+// Psicologo: apenas se associado. Admin: qualquer.
 // Inclui perfil, formulário, registos de humor, desafios e consultas, validado
 // contra paciente-completo.xsd.
-router.get('/:id/export', verifyToken, verifyTokenByRole('psicologo', 'paciente', 'admin'), async (req: Request, res: Response) => {
+router.get('/:id/export', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidObjectId(id)) {
             return res.status(400).json({ error: 'ID de paciente inválido' });
-        }
-
-        if (req.user!.tipo === 'paciente') {
-            const pacienteProfile = await getPacienteByUserId(req.user!.id);
-            if (!pacienteProfile || pacienteProfile._id.toString() !== id) {
-                return res.status(403).json({ error: 'Acesso negado: não pode exportar os dados de outro paciente' });
-            }
         }
 
         if (req.user!.tipo === 'psicologo') {

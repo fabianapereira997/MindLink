@@ -13,6 +13,8 @@ const pacienteSchema = new mongoose.Schema({
             fumador: { type: Boolean, default: null }
         }
     },
+    /** false quando o psicólogo termina o percurso de monitorização do paciente. */
+    ativo: { type: Boolean, default: true },
 }, { timestamps: true });
 
 const Paciente = mongoose.model('Paciente', pacienteSchema);

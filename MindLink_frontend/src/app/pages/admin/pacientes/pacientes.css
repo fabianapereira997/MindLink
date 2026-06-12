@@ -30,5 +30,10 @@
 /* 5-column layout for patients (adds diagnosis column) */
 .list-table__header,
 .list-table__row {
-  grid-template-columns: 2fr 2fr 1.5fr 1.5fr 120px !important;
+  grid-template-columns: 2fr 2fr 1.5fr 1.5fr 220px !important;
+}
+
+.list-row__actions {
+  flex-wrap: wrap;
+  row-gap: 6px;
 }

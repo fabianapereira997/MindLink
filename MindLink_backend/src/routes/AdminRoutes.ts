@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { isValidObjectId, isTodayOrPast } from '../utils/helpers';
+import { buildPacientesListaXml, validateXmlAgainstXsd } from '../utils/xmlExport';
 
 const express    = require('express');
 const router     = express.Router();
@@ -188,6 +189,101 @@ router.get('/psicologos/:id', adminOnly, async (req: Request, res: Response) => 
     }
 });
 
+// ─── PUT /api/admin/psicologos/:id/ativo — ativar/inativar psicólogo ──────────
+// Body: { ativo: boolean }. Psicólogos inativos deixam de poder ser atribuídos
+// a novos pacientes, mas mantêm-se visíveis ao admin.
+router.put('/psicologos/:id/ativo', adminOnly, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) return res.status(400).json({ error: 'ID inválido' });
+
+        const { ativo } = req.body;
+        if (typeof ativo !== 'boolean') {
+            return res.status(400).json({ error: 'O campo "ativo" deve ser um booleano' });
+        }
+
+        const psicologo = await Psicologo.findByIdAndUpdate(id, { ativo }, { new: true, runValidators: true })
+            .populate('user', '-password');
+        if (!psicologo) return res.status(404).json({ error: 'Psicólogo não encontrado' });
+
+        res.json(psicologo);
+    } catch (error) {
+        res.status(400).json({ error: (error as Error).message });
+    }
+});
+
+// ─── GET /api/admin/psicologos/:id/export-pacientes — exporta lista XML ───────
+// Exporta a lista de pacientes (resumo) de um psicólogo qualquer, para que o
+// admin possa importá-la noutro psicólogo (transferência de pacientes).
+router.get('/psicologos/:id/export-pacientes', adminOnly, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) return res.status(400).json({ error: 'ID inválido' });
+
+        const psicologo = await Psicologo.findById(id).populate('user', '-password');
+        if (!psicologo) return res.status(404).json({ error: 'Psicólogo não encontrado' });
+
+        const pacientes = await Paciente.find({ psicologo: id }).populate('user', '-password');
+
+        const xml = buildPacientesListaXml(psicologo, pacientes);
+        await validateXmlAgainstXsd(xml, 'pacientes-lista.xsd');
+
+        res.set('Content-Type', 'application/xml');
+        res.set('Content-Disposition', `attachment; filename="pacientes-${id}.xml"`);
+        res.send(xml);
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
+    }
+});
+
+// ─── POST /api/admin/psicologos/:id/import-pacientes — importa lista XML ──────
+// Body: { xml: string }. Reatribui (campo `psicologo`) todos os pacientes
+// identificados no XML (gerado por /export-pacientes) ao psicólogo :id.
+router.post('/psicologos/:id/import-pacientes', adminOnly, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) return res.status(400).json({ error: 'ID inválido' });
+
+        const { xml } = req.body;
+        if (!xml || typeof xml !== 'string') {
+            return res.status(400).json({ error: 'O campo "xml" é obrigatório' });
+        }
+
+        const psicologo = await Psicologo.findById(id);
+        if (!psicologo) return res.status(404).json({ error: 'Psicólogo não encontrado' });
+
+        try {
+            await validateXmlAgainstXsd(xml, 'pacientes-lista.xsd');
+        } catch (validationError) {
+            return res.status(400).json({ error: `XML inválido: ${(validationError as Error).message}` });
+        }
+
+        // Extrai os <Id> dentro de cada <Paciente> da secção <Pacientes>.
+        const pacienteBlocks = xml.match(/<Paciente>[\s\S]*?<\/Paciente>/g) ?? [];
+        const ids = pacienteBlocks
+            .map((block) => block.match(/<Id>(.*?)<\/Id>/))
+            .map((m) => m?.[1])
+            .filter((v): v is string => !!v && isValidObjectId(v));
+
+        if (ids.length === 0) {
+            return res.status(400).json({ error: 'Nenhum paciente válido encontrado no XML' });
+        }
+
+        const result = await Paciente.updateMany(
+            { _id: { $in: ids } },
+            { psicologo: id },
+        );
+
+        res.json({
+            message: 'Pacientes transferidos com sucesso',
+            total: ids.length,
+            atualizados: result.modifiedCount,
+        });
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
+    }
+});
+
 // ─── GET /api/admin/pacientes — all patients ──────────────────────────────────
 router.get('/pacientes', adminOnly, async (_req: Request, res: Response) => {
     try {
@@ -234,9 +330,33 @@ router.delete('/psicologos/:id', adminOnly, async (req: Request, res: Response) 
         const ps = await Psicologo.findById(id);
         if (!ps) return res.status(404).json({ error: 'Psicólogo não encontrado' });
 
+        const pacientesCount = await Paciente.countDocuments({ psicologo: id });
+        if (pacientesCount > 0) {
+            return res.status(409).json({
+                error: 'Este psicólogo tem pacientes associados. Inative-o e transfira os pacientes para outro psicólogo antes de eliminar.',
+            });
+        }
+
         await Psicologo.findByIdAndDelete(id);
         await User.findByIdAndDelete(ps.user);
         res.json({ message: 'Psicólogo removido com sucesso' });
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
+    }
+});
+
+// ─── DELETE /api/admin/pacientes/:id — remove paciente + user ─────────────────
+router.delete('/pacientes/:id', adminOnly, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) return res.status(400).json({ error: 'ID inválido' });
+
+        const paciente = await Paciente.findById(id);
+        if (!paciente) return res.status(404).json({ error: 'Paciente não encontrado' });
+
+        await Paciente.findByIdAndDelete(id);
+        await User.findByIdAndDelete(paciente.user);
+        res.json({ message: 'Paciente removido com sucesso' });
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
     }

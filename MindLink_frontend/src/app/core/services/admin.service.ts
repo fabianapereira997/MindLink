@@ -26,6 +26,7 @@ export interface AdminPsicologo {
   _id: string;
   especialidade: string;
   patientCount?: number;
+  ativo?: boolean;
   user: { _id: string; nome: string; email: string; genero: string; data_nascimento: string };
 }
 
@@ -64,6 +65,20 @@ export class AdminService {
     return this.http.delete(`${API}/psicologos/${id}`);
   }
 
+  setPsicologoAtivo(id: string, ativo: boolean): Observable<AdminPsicologo> {
+    return this.http.put<AdminPsicologo>(`${API}/psicologos/${id}/ativo`, { ativo });
+  }
+
+  exportPacientesXml(psicologoId: string): Observable<Blob> {
+    return this.http.get(`${API}/psicologos/${psicologoId}/export-pacientes`, { responseType: 'blob' });
+  }
+
+  importPacientesXml(psicologoId: string, xml: string): Observable<{ message: string; total: number; atualizados: number }> {
+    return this.http.post<{ message: string; total: number; atualizados: number }>(
+      `${API}/psicologos/${psicologoId}/import-pacientes`, { xml }
+    );
+  }
+
   // ── Pacientes ───────────────────────────────────────────────────────────────
   getPacientes(): Observable<AdminPaciente[]> {
     return this.http.get<AdminPaciente[]>(`${API}/pacientes`);
@@ -71,5 +86,9 @@ export class AdminService {
 
   getPacienteDetalhe(id: string): Observable<{ paciente: AdminPaciente; consultas: any[]; questionarios: any[] }> {
     return this.http.get<any>(`${API}/pacientes/${id}`);
+  }
+
+  deletePaciente(id: string): Observable<any> {
+    return this.http.delete(`${API}/pacientes/${id}`);
   }
 }

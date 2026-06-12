@@ -82,3 +82,15 @@ export function isTodayOrFuture(value: unknown): boolean {
     const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     return day.getTime() >= startOfToday.getTime();
 }
+
+/**
+ * Returns true if `value` is a valid date/time that is now or in the future.
+ * Used to validate consulta dates — they cannot be scheduled for a time of
+ * day that has already passed (not just an earlier calendar day).
+ */
+export function isNowOrFuture(value: unknown): boolean {
+    if (!value) return false;
+    const d = new Date(value as string | number | Date);
+    if (isNaN(d.getTime())) return false;
+    return d.getTime() >= Date.now();
+}

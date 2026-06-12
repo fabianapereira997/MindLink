@@ -210,9 +210,11 @@
 .modal {
   width: 100%;
   max-width: 560px;
-  padding: var(--space-2xl);
+  padding: var(--space-2xl) var(--space-2xl) var(--space-xl);
   max-height: 90vh;
   overflow-y: auto;
+  border-radius: var(--radius-lg, 16px);
+  background: #fff;
 }
 
 .modal__header {
@@ -220,9 +222,15 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
-.modal__header h2 { font-size: 1.2rem; }
+.modal__header h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
 
 .modal__close {
   background: none;
@@ -240,7 +248,7 @@
 .modal__form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-lg);
 }
 
 .form-field { width: 100%; }
@@ -255,8 +263,64 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--space-md);
-  padding-top: var(--space-md);
+  padding-top: var(--space-lg);
+  margin-top: var(--space-sm);
   border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+/* ─── "New Patient Registration Form"-style inputs for create modals ─────── */
+/* Light-gray-bordered, rounded fields with accent-colored labels and
+   required-field asterisks, matching the requested reference template. */
+
+.modal__form ::ng-deep .mat-mdc-text-field-wrapper {
+  background-color: #fff;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-md);
+  transition: border-color var(--transition-fast);
+}
+
+.modal__form ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border-color: var(--color-primary);
+}
+
+.modal__form ::ng-deep .mdc-line-ripple,
+.modal__form ::ng-deep .mdc-line-ripple::before,
+.modal__form ::ng-deep .mdc-line-ripple::after {
+  display: none;
+}
+
+.modal__form ::ng-deep .mat-mdc-form-field-flex {
+  align-items: center;
+}
+
+.modal__form ::ng-deep .mat-mdc-text-field-wrapper {
+  --mat-form-field-container-height: 52px;
+  --mat-form-field-filled-with-label-container-padding-top: 22px;
+  --mat-form-field-filled-with-label-container-padding-bottom: 6px;
+}
+
+.modal__form ::ng-deep .mat-mdc-form-field-infix {
+  min-height: unset;
+}
+
+.modal__form ::ng-deep .mat-mdc-floating-label {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.modal__form ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-floating-label {
+  color: var(--color-primary);
+}
+
+.modal__form ::ng-deep .mdc-floating-label--required::after,
+.modal__form ::ng-deep .mat-mdc-form-field-required-marker {
+  color: var(--color-primary);
+}
+
+.modal__form ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  font-size: 0.78rem;
 }
 
 /* Detail page */

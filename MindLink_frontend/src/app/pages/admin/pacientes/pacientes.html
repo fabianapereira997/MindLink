@@ -20,6 +20,9 @@
       </select>
     </div>
 
+    @if (success()) {
+      <div class="banner banner--success">{{ success() }}</div>
+    }
     @if (error()) {
       <div class="banner banner--error">{{ error() }}</div>
     }
@@ -48,6 +51,7 @@
             <span class="list-row__spec">{{ p.doenca || '—' }}</span>
             <div class="list-row__actions">
               <a [routerLink]="['/admin/pacientes', p._id]" class="btn-secondary btn--sm">Ver ficha</a>
+              <button class="btn-danger btn--sm" (click)="askDelete(p._id)">Eliminar</button>
             </div>
           </div>
         }
@@ -55,4 +59,21 @@
     }
 
   </div>
+
+  <!-- Confirm delete modal -->
+  @if (confirmDeleteId()) {
+    <div class="modal-backdrop" (click)="cancelDelete()">
+      <div class="modal card" (click)="$event.stopPropagation()">
+        <div class="modal__header">
+          <h2>Eliminar paciente</h2>
+          <button type="button" class="modal__close" (click)="cancelDelete()">✕</button>
+        </div>
+        <p>Tem a certeza que pretende eliminar este paciente? Esta ação remove o perfil e a conta associada, e não pode ser revertida.</p>
+        <div class="modal__actions">
+          <button type="button" class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
+          <button type="button" class="btn-danger" (click)="confirmDelete()">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

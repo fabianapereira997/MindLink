@@ -1,3 +1,5 @@
+@import '../../admin/admin-shared.css';
+
 .auth-page {
   min-height: calc(100vh - 68px);
   display: flex;
@@ -90,14 +92,6 @@
   margin-bottom: var(--space-md);
   text-align: center;
 }
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.auth-field { width: 100%; }
 
 .auth-submit {
   width: 100%;

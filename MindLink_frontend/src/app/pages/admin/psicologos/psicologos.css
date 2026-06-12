@@ -75,3 +75,29 @@
   margin-left: auto;
   white-space: nowrap;
 }
+
+/* Extra "Estado" column + wider actions to fit the new buttons */
+.psicologos-table .list-table__header,
+.psicologos-table .list-table__row {
+  grid-template-columns: 1.6fr 1.8fr 1.2fr 80px 90px 220px;
+}
+
+@media (max-width: 900px) {
+  .psicologos-table .list-table__header,
+  .psicologos-table .list-table__row {
+    grid-template-columns: 1fr 1fr 200px;
+  }
+  .psicologos-table .list-table__header span:nth-child(2),
+  .psicologos-table .list-table__row .list-row__email,
+  .psicologos-table .list-table__header span:nth-child(3),
+  .psicologos-table .list-table__row .list-row__spec,
+  .psicologos-table .list-table__header span:nth-child(4),
+  .psicologos-table .list-table__row .list-row__count {
+    display: none;
+  }
+}
+
+.list-row__actions {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}

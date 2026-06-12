@@ -24,8 +24,8 @@
           <div class="stat-card__label">Atenção especial</div>
         </div>
         <div class="stat-card card">
-          <div class="stat-card__value" style="color: var(--color-primary)">{{ pacientesAssiduos().length }}</div>
-          <div class="stat-card__label">Pacientes assíduos</div>
+          <div class="stat-card__value" style="color: var(--color-primary)">{{ pacientesRecuperados().length }}</div>
+          <div class="stat-card__label">Boa recuperação</div>
         </div>
         <div class="stat-card card">
           <div class="stat-card__value">{{ totalRegistos() }}</div>
@@ -65,7 +65,7 @@
       <!-- Atenção especial -->
       <div class="stats-section">
         <h2>Atenção especial</h2>
-        <p class="stats-section__sub">Humor médio baixo (&le;2.5) e desafios por cumprir</p>
+        <p class="stats-section__sub">Humor 1 ou 2 recente, sem registo de humor ou desafios há 3+ dias</p>
         @if (pacientesAtencao().length === 0) {
           <div class="card empty-card"><p>Nenhum paciente em atenção especial.</p></div>
         } @else {
@@ -76,7 +76,7 @@
                 <div class="paciente-row__info">
                   <div class="paciente-row__name">{{ p.user?.nome }}</div>
                   <div class="paciente-row__meta">
-                    Humor: {{ p.avgHumor }}/5 &middot; {{ p.desafiosPendentes }} desafio(s) pendente(s)
+                    Humor médio recente: {{ p.avgHumor }}/5
                   </div>
                 </div>
                 <div class="humor-pill humor-pill--low">{{ p.avgHumor }}/5</div>
@@ -86,25 +86,38 @@
         }
       </div>
 
-      <!-- Assíduos -->
+      <!-- Boa recuperação -->
       <div class="stats-section">
-        <h2>Pacientes assíduos</h2>
-        <p class="stats-section__sub">Cumprem desafios e registam humor regularmente</p>
-        @if (pacientesAssiduos().length === 0) {
-          <div class="card empty-card"><p>Ainda sem pacientes assíduos identificados.</p></div>
+        <h2>Pacientes com boa recuperação</h2>
+        <p class="stats-section__sub">Humor positivo (4 ou 5), desafios cumpridos e boas estatísticas durante um mês completo</p>
+        @if (terminarError()) {
+          <div class="banner banner--error">{{ terminarError() }}</div>
+        }
+        @if (pacientesRecuperados().length === 0) {
+          <div class="card empty-card"><p>Ainda sem pacientes com boa recuperação identificados.</p></div>
         } @else {
           <div class="paciente-list">
-            @for (p of pacientesAssiduos(); track p._id) {
-              <a [routerLink]="['/psicologo/pacientes', p._id]" class="card paciente-row paciente-row--ok">
-                <div class="paciente-row__avatar">{{ p.user?.nome?.charAt(0) ?? 'P' }}</div>
-                <div class="paciente-row__info">
-                  <div class="paciente-row__name">{{ p.user?.nome }}</div>
-                  <div class="paciente-row__meta">
-                    Humor: {{ p.avgHumor }}/5 &middot; Streak: {{ p.streak }} dias
+            @for (p of pacientesRecuperados(); track p._id) {
+              <div class="card paciente-row paciente-row--ok">
+                <a [routerLink]="['/psicologo/pacientes', p._id]" class="paciente-row__link">
+                  <div class="paciente-row__avatar">{{ p.user?.nome?.charAt(0) ?? 'P' }}</div>
+                  <div class="paciente-row__info">
+                    <div class="paciente-row__name">{{ p.user?.nome }}</div>
+                    <div class="paciente-row__meta">
+                      Humor (último mês): {{ p.avgMes.toFixed(1) }}/5
+                    </div>
                   </div>
-                </div>
-                <div class="humor-pill humor-pill--ok">{{ p.avgHumor }}/5</div>
-              </a>
+                </a>
+                <div class="humor-pill humor-pill--ok">{{ p.avgMes.toFixed(1) }}/5</div>
+                <button
+                  type="button"
+                  class="btn-secondary btn--sm"
+                  (click)="terminarMonitorizacao(p)"
+                  [disabled]="terminandoId() === p._id"
+                >
+                  {{ terminandoId() === p._id ? 'A terminar...' : 'Terminar percurso de monitorização' }}
+                </button>
+              </div>
             }
           </div>
         }

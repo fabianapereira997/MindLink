@@ -27,12 +27,15 @@ export class AdminPsicologosComponent implements OnInit {
   psicologos  = signal<AdminPsicologo[]>([]);
   loading     = signal(true);
   error       = signal<string | null>(null);
+  success     = signal<string | null>(null);
   showModal   = signal(false);
   creating    = signal(false);
   createError = signal<string | null>(null);
   createDone  = signal(false);
   searchTerm         = signal('');
   filterEspecialidade = signal('');
+
+  confirmInativarTarget = signal<AdminPsicologo | null>(null);
 
   /** Today's date ('YYYY-MM-DD'); data de nascimento cannot be later than this. */
   readonly maxBirthDate = todayDateString();
@@ -116,4 +119,37 @@ export class AdminPsicologosComponent implements OnInit {
       error: err => alert(err.error?.error ?? 'Erro ao remover.'),
     });
   }
+
+  toggleAtivo(p: AdminPsicologo): void {
+    const novoEstado = !(p.ativo ?? true);
+    if (novoEstado === false) {
+      this.confirmInativarTarget.set(p);
+      return;
+    }
+    this.applyAtivo(p, novoEstado);
+  }
+
+  cancelInativar(): void {
+    this.confirmInativarTarget.set(null);
+  }
+
+  confirmInativar(): void {
+    const p = this.confirmInativarTarget();
+    if (!p) return;
+    this.confirmInativarTarget.set(null);
+    this.applyAtivo(p, false);
+  }
+
+  private applyAtivo(p: AdminPsicologo, novoEstado: boolean): void {
+    this.error.set(null);
+    this.success.set(null);
+    this.adminSvc.setPsicologoAtivo(p._id, novoEstado).subscribe({
+      next: updated => {
+        this.psicologos.update(list => list.map(x => x._id === updated._id ? { ...x, ativo: updated.ativo } : x));
+        this.success.set(novoEstado ? 'Psicólogo ativado com sucesso.' : 'Psicólogo inativado com sucesso.');
+      },
+      error: err => this.error.set(err.error?.error ?? 'Erro ao atualizar o estado do psicólogo.'),
+    });
+  }
+
 }

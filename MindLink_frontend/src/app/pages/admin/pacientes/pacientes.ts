@@ -16,8 +16,11 @@ export class AdminPacientesComponent implements OnInit {
   pacientes  = signal<AdminPaciente[]>([]);
   loading    = signal(true);
   error      = signal<string | null>(null);
+  success    = signal<string | null>(null);
   searchTerm = signal('');
   filterPsi  = signal('');
+
+  confirmDeleteId = signal<string | null>(null);
 
   get psicologoOptions(): string[] {
     const names = this.pacientes()
@@ -38,9 +41,40 @@ export class AdminPacientesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  private load(): void {
     this.adminSvc.getPacientes().subscribe({
       next: list => { this.pacientes.set(list); this.loading.set(false); },
       error: err => { this.error.set(err.error?.error ?? 'Erro ao carregar.'); this.loading.set(false); },
+    });
+  }
+
+  askDelete(id: string): void {
+    this.confirmDeleteId.set(id);
+  }
+
+  cancelDelete(): void {
+    this.confirmDeleteId.set(null);
+  }
+
+  confirmDelete(): void {
+    const id = this.confirmDeleteId();
+    if (!id) return;
+    this.error.set(null);
+    this.success.set(null);
+
+    this.adminSvc.deletePaciente(id).subscribe({
+      next: () => {
+        this.pacientes.update(list => list.filter(p => p._id !== id));
+        this.confirmDeleteId.set(null);
+        this.success.set('Paciente eliminado com sucesso.');
+      },
+      error: err => {
+        this.confirmDeleteId.set(null);
+        this.error.set(err.error?.error ?? 'Erro ao eliminar paciente.');
+      },
     });
   }
 }

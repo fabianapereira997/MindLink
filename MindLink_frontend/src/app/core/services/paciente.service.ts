@@ -13,6 +13,7 @@ export interface PacienteProfile {
     historicoMedico: { comorbilidades: string[] };
     estiloDeVida: { exercicioRegular: boolean | null; fumador: boolean | null };
   };
+  ativo?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -55,5 +56,10 @@ export class PacienteService {
   /** Psicólogo: exporta a lista resumida dos seus pacientes em XML. */
   exportarListaPacientes(): Observable<Blob> {
     return this.http.get(`${API}/pacientes/export/lista`, { responseType: 'blob' });
+  }
+
+  /** Psicólogo: termina o percurso de monitorização do paciente (torna-o inativo). */
+  terminarMonitorizacao(id: string): Observable<PacienteProfile> {
+    return this.http.put<PacienteProfile>(`${API}/pacientes/${id}`, { ativo: false });
   }
 }

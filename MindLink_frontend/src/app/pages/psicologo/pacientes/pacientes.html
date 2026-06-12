@@ -4,10 +4,10 @@
     <div class="psi-header">
       <h1>Pacientes</h1>
       <div class="agenda-nav">
-        <button class="btn-secondary" (click)="exportarLista()" [disabled]="exportingLista()">
+        <button class="btn-secondary btn--sm" (click)="exportarLista()" [disabled]="exportingLista()">
           {{ exportingLista() ? 'A exportar...' : 'Exportar lista (XML)' }}
         </button>
-        <button class="btn-primary" (click)="openModal()">+ Novo paciente</button>
+        <button class="btn-primary btn--sm" (click)="openModal()">+ Novo paciente</button>
       </div>
     </div>
 

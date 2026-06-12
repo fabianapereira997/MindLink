@@ -25,9 +25,9 @@
         <div class="auth-error">{{ error() }}</div>
       }
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal__form">
 
-        <mat-form-field appearance="fill" class="auth-field">
+        <mat-form-field appearance="fill" class="form-field">
           <mat-label>Nome completo</mat-label>
           <input matInput type="text" formControlName="nome" autocomplete="name" />
           <mat-icon matSuffix>person_outline</mat-icon>
@@ -36,7 +36,7 @@
           }
         </mat-form-field>
 
-        <mat-form-field appearance="fill" class="auth-field">
+        <mat-form-field appearance="fill" class="form-field">
           <mat-label>Email</mat-label>
           <input matInput type="email" formControlName="email" autocomplete="email" />
           <mat-icon matSuffix>mail_outline</mat-icon>
@@ -45,8 +45,8 @@
           }
         </mat-form-field>
 
-        <div class="auth-row">
-          <mat-form-field appearance="fill" class="auth-field">
+        <div class="form-row">
+          <mat-form-field appearance="fill" class="form-field">
             <mat-label>Género</mat-label>
             <mat-select formControlName="genero">
               <mat-option value="masculino">Masculino</mat-option>
@@ -55,7 +55,7 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="fill" class="auth-field">
+          <mat-form-field appearance="fill" class="form-field">
             <mat-label>Data de nascimento</mat-label>
             <input matInput type="date" formControlName="data_nascimento" [max]="maxBirthDate" />
             @if (form.get('data_nascimento')?.invalid && form.get('data_nascimento')?.touched) {
@@ -64,7 +64,7 @@
           </mat-form-field>
         </div>
 
-        <mat-form-field appearance="fill" class="auth-field">
+        <mat-form-field appearance="fill" class="form-field">
           <mat-label>Password</mat-label>
           <input matInput [type]="hidePassword ? 'password' : 'text'"
                  formControlName="password" autocomplete="new-password" />
@@ -76,7 +76,7 @@
           }
         </mat-form-field>
 
-        <mat-form-field appearance="fill" class="auth-field">
+        <mat-form-field appearance="fill" class="form-field">
           <mat-label>Token de validação</mat-label>
           <input matInput [type]="hideToken ? 'password' : 'text'"
                  formControlName="adminToken" placeholder="Token secreto de administrador" />

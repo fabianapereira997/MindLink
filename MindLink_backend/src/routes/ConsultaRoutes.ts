@@ -5,6 +5,7 @@ import {
     isPsicologoAssignedToPaciente,
     isValidObjectId,
     isTodayOrFuture,
+    isNowOrFuture,
 } from '../utils/helpers';
 
 const express  = require('express');
@@ -29,6 +30,10 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
 
         if (!isTodayOrFuture(data)) {
             return res.status(400).json({ error: 'Não é possível agendar uma consulta numa data que já passou' });
+        }
+
+        if (!isNowOrFuture(data)) {
+            return res.status(400).json({ error: 'Não é possível agendar uma consulta para uma hora que já passou' });
         }
 
         const assigned = await isPsicologoAssignedToPaciente(req.user!.id, paciente);
@@ -68,6 +73,10 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
 
         const consulta = new Consulta({ paciente, psicologo: psicologoProfile._id, data, duracao, estado, notas });
         await consulta.save();
+        await consulta.populate([
+            { path: 'paciente', populate: { path: 'user', select: 'nome email' } },
+            { path: 'psicologo', populate: { path: 'user', select: 'nome email' } },
+        ]);
         res.status(201).json(consulta);
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });
@@ -238,6 +247,10 @@ router.put('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (
 
         if (req.body.data !== undefined && !isTodayOrFuture(req.body.data)) {
             return res.status(400).json({ error: 'Não é possível reagendar uma consulta para uma data que já passou' });
+        }
+
+        if (req.body.data !== undefined && !isNowOrFuture(req.body.data)) {
+            return res.status(400).json({ error: 'Não é possível reagendar uma consulta para uma hora que já passou' });
         }
 
         const consulta = await Consulta.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })

@@ -13,19 +13,13 @@
         </div>
         @if (!editing()) {
           <div class="perfil-edit-btn" style="display:flex; gap: var(--space-sm);">
-            <button type="button" class="btn-secondary" (click)="exportarDados()" [disabled]="exporting()">
-              {{ exporting() ? 'A exportar...' : 'Exportar os meus dados (XML)' }}
-            </button>
-            <button type="button" class="btn-primary" (click)="startEditing()">Editar perfil</button>
+            <button type="button" class="btn-primary btn--sm" (click)="startEditing()">Editar perfil</button>
           </div>
         }
       </div>
 
       @if (success()) {
         <div class="banner banner--success">Perfil atualizado com sucesso!</div>
-      }
-      @if (exportError()) {
-        <div class="banner banner--error">{{ exportError() }}</div>
       }
 
       @if (editing()) {

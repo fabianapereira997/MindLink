@@ -59,6 +59,11 @@ export class PsicologoAgendaComponent implements OnInit {
   cancelandoConsulta = signal<Consulta | null>(null);
   cancelarSaving     = signal(false);
 
+  // ── Marcar como realizada (modal de observações) ────────────────────────────
+  realizandoConsulta = signal<Consulta | null>(null);
+  realizarNotas      = signal('');
+  realizarSaving     = signal(false);
+
   weekDays = computed<WeekDay[]>(() => {
     const start = this.weekStart();
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -166,6 +171,10 @@ export class PsicologoAgendaComponent implements OnInit {
       this.formError.set('Data ou hora inválida.');
       return;
     }
+    if (dataHora.getTime() < Date.now()) {
+      this.formError.set('Não é possível agendar uma consulta para uma data/hora que já passou.');
+      return;
+    }
 
     this.saving.set(true);
     this.consultaSvc.criarConsulta({
@@ -224,11 +233,32 @@ export class PsicologoAgendaComponent implements OnInit {
   }
 
   marcarRealizada(c: Consulta): void {
-    this.consultaSvc.updateConsulta(c._id, { estado: 'realizada' }).subscribe({
+    this.realizarNotas.set(c.notas ?? '');
+    this.realizandoConsulta.set(c);
+  }
+
+  fecharRealizarModal(): void {
+    if (this.realizarSaving()) return;
+    this.realizandoConsulta.set(null);
+    this.realizarNotas.set('');
+  }
+
+  confirmarRealizacao(): void {
+    const c = this.realizandoConsulta();
+    if (!c) return;
+
+    this.realizarSaving.set(true);
+    this.consultaSvc.updateConsulta(c._id, { estado: 'realizada', notas: this.realizarNotas() }).subscribe({
       next: updated => {
         this.allConsultas.update(list => list.map(x => x._id === updated._id ? updated : x));
+        this.realizarSaving.set(false);
+        this.realizandoConsulta.set(null);
+        this.realizarNotas.set('');
       },
-      error: err => alert(err.error?.error ?? 'Erro ao atualizar a consulta.'),
+      error: err => {
+        this.realizarSaving.set(false);
+        alert(err.error?.error ?? 'Erro ao atualizar a consulta.');
+      },
     });
   }
 
@@ -255,6 +285,10 @@ export class PsicologoAgendaComponent implements OnInit {
     const novaDataHora = new Date(`${this.reagendarData()}T${this.reagendarHora()}`);
     if (isNaN(novaDataHora.getTime())) {
       this.reagendarError.set('Data ou hora inválida.');
+      return;
+    }
+    if (novaDataHora.getTime() < Date.now()) {
+      this.reagendarError.set('Não é possível reagendar para uma data/hora que já passou.');
       return;
     }
 
