@@ -5,7 +5,7 @@ const consultaSchema = new mongoose.Schema({
     psicologo: { type: mongoose.Schema.Types.ObjectId, ref: 'Psicologo', required: true },
     data:      { type: Date, required: true },
     duracao:   { type: Number, required: true, min: 1 }, // duration in minutes
-    estado:    { type: String, required: true, enum: ['agendada', 'realizada', 'cancelada'], default: 'agendada' },
+    estado:    { type: String, required: true, enum: ['pendente', 'agendada', 'realizada', 'cancelada'], default: 'agendada' },
     notas:     { type: String },
 }, { timestamps: true });
 

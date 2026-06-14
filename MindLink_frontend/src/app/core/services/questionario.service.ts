@@ -11,6 +11,8 @@ export interface Questionario {
   humor: number;   // 1–5
   sintomas?: string[] | string;
   notas?: string;
+  /** Respostas adicionais (perguntas q1..q14), cada uma numa escala de 1-5 */
+  respostas?: Record<string, number>;
 }
 
 export interface QuestionarioCreate {
@@ -18,6 +20,7 @@ export interface QuestionarioCreate {
   humor: number;
   sintomas?: string[];
   notas?: string;
+  respostas?: Record<string, number>;
 }
 
 @Injectable({ providedIn: 'root' })

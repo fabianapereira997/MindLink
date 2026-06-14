@@ -6,11 +6,14 @@ import {
     isValidObjectId,
     isTodayOrFuture,
     isNowOrFuture,
+    isWithinClinicHours,
+    isWeekday,
 } from '../utils/helpers';
 
 const express  = require('express');
 const router   = express.Router();
 const Consulta = require('../models/consulta');
+const Mensagem = require('../models/mensagem');
 const { verifyToken }       = require('../middleware/VerifyToken');
 const { verifyTokenByRole } = require('../middleware/VerifyTokenByRole');
 
@@ -34,6 +37,14 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
 
         if (!isNowOrFuture(data)) {
             return res.status(400).json({ error: 'Não é possível agendar uma consulta para uma hora que já passou' });
+        }
+
+        if (!isWithinClinicHours(data, duracao)) {
+            return res.status(400).json({ error: 'A consulta deve ser agendada entre as 9:00 e as 19:00' });
+        }
+
+        if (!isWeekday(data)) {
+            return res.status(400).json({ error: 'Não é possível agendar consultas ao fim de semana' });
         }
 
         const assigned = await isPsicologoAssignedToPaciente(req.user!.id, paciente);
@@ -71,12 +82,32 @@ router.post('/', verifyToken, verifyTokenByRole('psicologo'), async (req: Reques
         }
         // ── End overlap check ──────────────────────────────────────────────────
 
-        const consulta = new Consulta({ paciente, psicologo: psicologoProfile._id, data, duracao, estado, notas });
+        const consulta = new Consulta({ paciente, psicologo: psicologoProfile._id, data, duracao, estado: 'pendente', notas });
         await consulta.save();
         await consulta.populate([
             { path: 'paciente', populate: { path: 'user', select: 'nome email' } },
             { path: 'psicologo', populate: { path: 'user', select: 'nome email' } },
         ]);
+
+        // ── Chat notification ───────────────────────────────────────────────────
+        // Post a popup-style message in the chat so the patient can confirm or
+        // reject the newly scheduled appointment.
+        const dataConsulta = new Date(consulta.data);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const anoCurto = String(dataConsulta.getFullYear()).slice(-2);
+        const dataFormatada = `${pad(dataConsulta.getDate())}/${pad(dataConsulta.getMonth() + 1)}/${anoCurto}, ${pad(dataConsulta.getHours())}:${pad(dataConsulta.getMinutes())}`;
+        await Mensagem.create({
+            paciente,
+            psicologo: psicologoProfile._id,
+            remetente: 'psicologo',
+            tipo: 'consulta_pedido',
+            consulta: consulta._id,
+            consultaData: consulta.data,
+            consultaDuracao: consulta.duracao,
+            mensagem: `Foi agendada uma consulta para ${dataFormatada}. Pode confirmar a sua presença?`,
+            resposta: 'pendente',
+        });
+
         res.status(201).json(consulta);
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });
@@ -253,9 +284,40 @@ router.put('/:id', verifyToken, verifyTokenByRole('psicologo', 'admin'), async (
             return res.status(400).json({ error: 'Não é possível reagendar uma consulta para uma hora que já passou' });
         }
 
+        if (req.body.data !== undefined) {
+            const duracao = req.body.duracao !== undefined ? req.body.duracao : existing.duracao;
+            if (!isWithinClinicHours(req.body.data, duracao)) {
+                return res.status(400).json({ error: 'A consulta deve ser agendada entre as 9:00 e as 19:00' });
+            }
+            if (!isWeekday(req.body.data)) {
+                return res.status(400).json({ error: 'Não é possível agendar consultas ao fim de semana' });
+            }
+        }
+
         const consulta = await Consulta.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
             .populate({ path: 'paciente', populate: { path: 'user', select: 'nome email' } })
             .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
+
+        // ── Chat notification ───────────────────────────────────────────────────
+        // If the consulta has just been cancelled, post an automatic message in
+        // the chat informing the patient.
+        if (req.body.estado === 'cancelada' && existing.estado !== 'cancelada') {
+            const dataConsulta = new Date(consulta.data);
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const anoCurto = String(dataConsulta.getFullYear()).slice(-2);
+            const dataFormatada = `${pad(dataConsulta.getDate())}/${pad(dataConsulta.getMonth() + 1)}/${anoCurto}, ${pad(dataConsulta.getHours())}:${pad(dataConsulta.getMinutes())}`;
+            await Mensagem.create({
+                paciente: consulta.paciente._id,
+                psicologo: consulta.psicologo._id,
+                remetente: 'psicologo',
+                tipo: 'consulta_cancelada',
+                consulta: consulta._id,
+                consultaData: consulta.data,
+                consultaDuracao: consulta.duracao,
+                mensagem: `A consulta de ${dataFormatada} foi cancelada.`,
+            });
+        }
+
         res.json(consulta);
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });

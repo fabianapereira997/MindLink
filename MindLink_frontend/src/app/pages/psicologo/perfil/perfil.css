@@ -29,24 +29,61 @@
 .perfil-header h1 { font-size: 1.75rem; margin-bottom: 4px; }
 .perfil-header p { color: var(--color-text-muted); }
 
-.perfil-edit-btn {
-  margin-left: auto;
-}
-
 .perfil-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: var(--space-lg);
 }
 
+.perfil-section { padding: var(--space-xl); }
+
 .perfil-section h2 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  letter-spacing: 0.01em;
   margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-sm);
+  border-bottom: 2px solid rgba(38,135,78,0.12);
 }
+
+.perfil-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.perfil-section__header h2 { flex: 1; }
+
+.edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: 0.35rem 0.8rem;
+  margin-bottom: var(--space-lg);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.edit-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+  background: rgba(38,135,78,0.06);
+}
+
+.clinico-form { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+.clinico-form__actions { border-top: none; padding-top: var(--space-sm); margin-top: var(--space-sm); }
+
+.info-value__extra { color: var(--color-text-muted); font-size: 0.85rem; margin-left: 4px; }
 
 .info-list {
   display: flex;
@@ -80,15 +117,16 @@
   color: var(--color-text-primary);
 }
 
-/* Edit form */
-.perfil-edit {
-  max-width: 720px;
-}
-
-.perfil-form {
+/* Mostrar/ocultar password — mesmo ícone da ficha de criação de paciente */
+.password-toggle {
+  border: none;
+  background: none;
+  cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+  align-items: center;
+  line-height: 1;
+  padding: 0 4px;
+  color: var(--color-text-muted);
 }
 
 .form-divider {
@@ -99,15 +137,4 @@
   letter-spacing: 0.05em;
   padding-top: var(--space-sm);
   border-top: 1px solid rgba(0,0,0,0.06);
-}
-
-.perfil-form__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-md);
-  padding-top: var(--space-md);
-}
-
-@media (max-width: 700px) {
-  .perfil-edit-btn { margin-left: 0; }
 }

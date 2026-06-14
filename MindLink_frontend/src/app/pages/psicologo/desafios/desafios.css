@@ -17,7 +17,8 @@
   margin-bottom: var(--space-xl);
 }
 
-.psi-header h1 { font-size: clamp(1.4rem, 3vw, 2rem); }
+.psi-header h1 { font-size: clamp(1.4rem, 3vw, 2rem); margin-bottom: 4px; }
+.psi-header p  { color: var(--color-text-muted); font-size: 0.95rem; }
 
 /* Toggle switch (resposta obrigatória) */
 .toggle-row {

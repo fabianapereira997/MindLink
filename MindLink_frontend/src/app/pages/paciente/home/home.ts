@@ -10,6 +10,7 @@ import { PacienteService, PacienteProfile } from '../../../core/services/pacient
 import { QuestionarioService } from '../../../core/services/questionario.service';
 import { ConsultaService, Consulta } from '../../../core/services/consulta.service';
 import { DesafioService, Desafio } from '../../../core/services/desafio.service';
+import { QUESTIONARIO_GRUPOS } from '../../../core/constants/questionario-perguntas';
 
 @Component({
   selector: 'app-paciente-home',
@@ -49,21 +50,29 @@ export class PacienteHomeComponent implements OnInit {
   respostaError     = signal<string | null>(null);
   completing        = signal(false);
 
-  // Mood slider (1–5)
+  // Mood slider (1–5) — obrigatório: só é considerado respondido após interação
   humorValue     = signal<number>(3);
-  // Symptom chips
-  selectedSintomas = signal<string[]>([]);
-  customSintoma    = signal('');
+  humorTouched   = signal(false);
 
   checkInForm = this.fb.group({
     notas: [''],
   });
 
-  readonly SINTOMAS_OPCOES = [
-    'Ansiedade', 'Stress', 'Fadiga', 'Insónia',
-    'Tristeza', 'Irritabilidade', 'Dores de cabeça',
-    'Falta de apetite', 'Pensamentos negativos', 'Isolamento',
-  ];
+  // Perguntas adicionais (grupos de questões com escala de 5 pontos, obrigatórias)
+  readonly QUESTIONARIO_GRUPOS = QUESTIONARIO_GRUPOS;
+  private readonly TOTAL_PERGUNTAS = QUESTIONARIO_GRUPOS.reduce((n, g) => n + g.perguntas.length, 0);
+
+  /** Respostas às perguntas adicionais: id da pergunta -> valor (1-5) */
+  respostasExtra = signal<Record<string, number>>({});
+
+  setResposta(id: string, valor: number): void {
+    this.respostasExtra.update(r => ({ ...r, [id]: valor }));
+  }
+
+  /** Todas as perguntas adicionais foram respondidas? */
+  allRespostasAnswered = computed(() =>
+    Object.keys(this.respostasExtra()).length === this.TOTAL_PERGUNTAS
+  );
 
   // Color ramp: 1=red, 2=orange, 3=amber, 4=light-green, 5=dark-green
   private readonly HUMOR_COLORS = ['', '#dc2626', '#f97316', '#eab308', '#73C883', '#26874E'];
@@ -175,26 +184,7 @@ export class PacienteHomeComponent implements OnInit {
 
   onHumorInput(event: Event): void {
     this.humorValue.set(Number((event.target as HTMLInputElement).value));
-  }
-
-  toggleSintoma(s: string): void {
-    this.selectedSintomas.update(list =>
-      list.includes(s) ? list.filter(x => x !== s) : [...list, s]
-    );
-  }
-
-  addCustomSintoma(): void {
-    const v = this.customSintoma().trim();
-    if (v && !this.selectedSintomas().includes(v)) {
-      this.selectedSintomas.update(l => [...l, v]);
-    }
-    this.customSintoma.set('');
-  }
-
-  removeCustomSintoma(s: string): void {
-    if (!this.SINTOMAS_OPCOES.includes(s)) {
-      this.selectedSintomas.update(l => l.filter(x => x !== s));
-    }
+    this.humorTouched.set(true);
   }
 
   /** Data/hora limite para cumprir o desafio. */
@@ -270,18 +260,30 @@ export class PacienteHomeComponent implements OnInit {
 
   submitCheckIn(): void {
     this.submitError.set(null);
+
+    if (!this.humorTouched()) {
+      this.submitError.set('Por favor indique como se sente hoje.');
+      return;
+    }
+
+    if (!this.allRespostasAnswered()) {
+      this.submitError.set('Por favor responda a todas as perguntas antes de submeter.');
+      return;
+    }
+
     const notas = this.checkInForm.get('notas')?.value ?? '';
-    const sintomasArr = this.selectedSintomas().length ? this.selectedSintomas() : undefined;
+    const respostas = this.respostasExtra();
     this.qSvc.create({
       data: new Date().toISOString(),
       humor: this.humorValue(),
-      sintomas: sintomasArr,
       notas: notas || undefined,
+      respostas,
     }).subscribe({
       next: () => {
         this.checkInForm.reset();
-        this.selectedSintomas.set([]);
         this.humorValue.set(3);
+        this.humorTouched.set(false);
+        this.respostasExtra.set({});
         this.showForm.set(false);
         this.submitDone.set(true);
         this.todayDone.set(true);

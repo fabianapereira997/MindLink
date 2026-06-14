@@ -27,15 +27,19 @@
               (click)="estadoFiltro.set('todas')">
         Todas <span class="estado-tab__count">{{ consultas().length }}</span>
       </button>
-      <button type="button" class="estado-tab" [class.estado-tab--active]="estadoFiltro() === 'agendada'"
+      <button type="button" class="estado-tab estado-tab--pendente" [class.estado-tab--active]="estadoFiltro() === 'pendente'"
+              (click)="estadoFiltro.set('pendente')">
+        Pendentes <span class="estado-tab__count">{{ countPendentes }}</span>
+      </button>
+      <button type="button" class="estado-tab estado-tab--agendada" [class.estado-tab--active]="estadoFiltro() === 'agendada'"
               (click)="estadoFiltro.set('agendada')">
         Agendadas <span class="estado-tab__count">{{ countAgendadas }}</span>
       </button>
-      <button type="button" class="estado-tab" [class.estado-tab--active]="estadoFiltro() === 'realizada'"
+      <button type="button" class="estado-tab estado-tab--realizada" [class.estado-tab--active]="estadoFiltro() === 'realizada'"
               (click)="estadoFiltro.set('realizada')">
         Realizadas <span class="estado-tab__count">{{ countRealizadas }}</span>
       </button>
-      <button type="button" class="estado-tab" [class.estado-tab--active]="estadoFiltro() === 'cancelada'"
+      <button type="button" class="estado-tab estado-tab--cancelada" [class.estado-tab--active]="estadoFiltro() === 'cancelada'"
               (click)="estadoFiltro.set('cancelada')">
         Canceladas <span class="estado-tab__count">{{ countCanceladas }}</span>
       </button>
@@ -57,7 +61,7 @@
         }
       </select>
 
-      <input class="filter-date" type="date" [value]="filterData()" [max]="maxFilterDate"
+      <input class="filter-date" type="date" [value]="filterData()"
              (change)="filterData.set($any($event.target).value)" />
 
       @if (filterPsi() || filterPac() || filterData() || estadoFiltro() !== 'todas') {
@@ -88,12 +92,14 @@
               <span class="list-row__spec">{{ c.duracao }} min</span>
               <span>
                 <select class="estado-select"
+                        [class.estado-select--pendente]="c.estado === 'pendente'"
                         [class.estado-select--agendada]="c.estado === 'agendada'"
                         [class.estado-select--realizada]="c.estado === 'realizada'"
                         [class.estado-select--cancelada]="c.estado === 'cancelada'"
                         [value]="c.estado"
                         [disabled]="savingId() === c._id"
                         (change)="changeEstado(c, $any($event.target).value)">
+                  <option value="pendente">Por confirmar</option>
                   <option value="agendada">Agendada</option>
                   <option value="realizada">Realizada</option>
                   <option value="cancelada">Cancelada</option>
@@ -128,9 +134,11 @@
               <div class="week-day__slots">
                 @for (c of consultasForDay(day.iso); track c._id) {
                   <div class="slot"
+                       [class.slot--pendente]="c.estado === 'pendente'"
                        [class.slot--agendada]="c.estado === 'agendada'"
                        [class.slot--realizada]="c.estado === 'realizada'"
-                       [class.slot--cancelada]="c.estado === 'cancelada'">
+                       [class.slot--cancelada]="c.estado === 'cancelada'"
+                       (click)="openDetalhe(c)">
                     <div class="slot__time">{{ c.data | date:'HH:mm' }}</div>
                     <div class="slot__name">{{ c.paciente?.user?.nome ?? 'Paciente' }}</div>
                     <div class="slot__psi">{{ c.psicologo?.user?.nome ?? 'Psicólogo' }}</div>
@@ -145,6 +153,53 @@
     }
 
   </div>
+
+  <!-- Detalhe da consulta -->
+  @if (detalheTarget(); as c) {
+    <div class="modal-backdrop" (click)="closeDetalhe()">
+      <div class="modal card" (click)="$event.stopPropagation()">
+        <div class="modal__header">
+          <h2>Detalhes da consulta</h2>
+          <button type="button" class="modal__close" (click)="closeDetalhe()">✕</button>
+        </div>
+        <div class="detalhe-grid">
+          <div class="detalhe-item">
+            <span class="detalhe-item__label">Paciente</span>
+            <span class="detalhe-item__value">{{ c.paciente?.user?.nome ?? '—' }}</span>
+          </div>
+          <div class="detalhe-item">
+            <span class="detalhe-item__label">Psicólogo</span>
+            <span class="detalhe-item__value">{{ c.psicologo?.user?.nome ?? '—' }}</span>
+          </div>
+          <div class="detalhe-item">
+            <span class="detalhe-item__label">Especialidade</span>
+            <span class="detalhe-item__value">{{ c.psicologo?.especialidade || '—' }}</span>
+          </div>
+          <div class="detalhe-item">
+            <span class="detalhe-item__label">Data / Hora</span>
+            <span class="detalhe-item__value">{{ c.data | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="detalhe-item">
+            <span class="detalhe-item__label">Duração</span>
+            <span class="detalhe-item__value">{{ c.duracao }} min</span>
+          </div>
+          <div class="detalhe-item">
+            <span class="detalhe-item__label">Estado</span>
+            <span class="badge" [class]="'badge--' + c.estado">{{ estadoLabel(c.estado) }}</span>
+          </div>
+        </div>
+        @if (c.notas) {
+          <div class="detalhe-notas">
+            <span class="detalhe-item__label">Notas</span>
+            <p>{{ c.notas }}</p>
+          </div>
+        }
+        <div class="modal__actions">
+          <button type="button" class="btn-secondary" (click)="closeDetalhe()">Fechar</button>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- Confirm delete modal -->
   @if (confirmDeleteId()) {

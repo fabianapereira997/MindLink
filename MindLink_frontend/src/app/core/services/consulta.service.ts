@@ -10,7 +10,7 @@ export interface Consulta {
   psicologo: { _id: string; especialidade: string; user: { nome: string } };
   data: string;
   duracao: number;
-  estado: 'agendada' | 'realizada' | 'cancelada';
+  estado: 'pendente' | 'agendada' | 'realizada' | 'cancelada';
   notas?: string;
 }
 
@@ -47,7 +47,7 @@ export class ConsultaService {
   updateConsulta(id: string, payload: Partial<{
     data: string;
     duracao: number;
-    estado: 'agendada' | 'realizada' | 'cancelada';
+    estado: 'pendente' | 'agendada' | 'realizada' | 'cancelada';
     notas: string;
   }>): Observable<Consulta> {
     return this.http.put<Consulta>(`${API}/consultas/${id}`, payload);

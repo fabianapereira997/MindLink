@@ -33,6 +33,7 @@ export interface AdminPsicologo {
 export interface AdminPaciente {
   _id: string;
   doenca?: string;
+  ativo?: boolean;
   user: { _id: string; nome: string; email: string; genero: string; data_nascimento: string };
   psicologo?: { _id: string; especialidade: string; user: { nome: string; email: string } };
 }
@@ -69,12 +70,14 @@ export class AdminService {
     return this.http.put<AdminPsicologo>(`${API}/psicologos/${id}/ativo`, { ativo });
   }
 
-  exportPacientesXml(psicologoId: string): Observable<Blob> {
-    return this.http.get(`${API}/psicologos/${psicologoId}/export-pacientes`, { responseType: 'blob' });
+  /** Exporta a lista de pacientes de um psicólogo em XML. Se `ids` for fornecido, exporta apenas esses pacientes. */
+  exportPacientesXml(psicologoId: string, ids?: string[]): Observable<Blob> {
+    const params: Record<string, string> = ids?.length ? { ids: ids.join(',') } : {};
+    return this.http.get(`${API}/psicologos/${psicologoId}/export-pacientes`, { responseType: 'blob', params });
   }
 
-  importPacientesXml(psicologoId: string, xml: string): Observable<{ message: string; total: number; atualizados: number }> {
-    return this.http.post<{ message: string; total: number; atualizados: number }>(
+  importPacientesXml(psicologoId: string, xml: string): Observable<{ message: string; total: number; atualizados: number; ignorados?: number }> {
+    return this.http.post<{ message: string; total: number; atualizados: number; ignorados?: number }>(
       `${API}/psicologos/${psicologoId}/import-pacientes`, { xml }
     );
   }
@@ -90,5 +93,9 @@ export class AdminService {
 
   deletePaciente(id: string): Observable<any> {
     return this.http.delete(`${API}/pacientes/${id}`);
+  }
+
+  setPacienteAtivo(id: string, ativo: boolean): Observable<AdminPaciente> {
+    return this.http.put<AdminPaciente>(`${API}/pacientes/${id}/ativo`, { ativo });
   }
 }

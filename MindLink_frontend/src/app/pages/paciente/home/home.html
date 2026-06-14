@@ -10,12 +10,15 @@
     } @else {
 
       <!-- Greeting -->
-      <div class="home-header">
+      <div class="home-header psi-header">
         <div>
           <h1>Olá, {{ auth.firstName() }}</h1>
           <p>Como está hoje?</p>
+          <span class="psi-header__accent"></span>
         </div>
-        <a routerLink="/paciente/dashboard" class="btn-secondary btn--sm">Ver evolução</a>
+        <a routerLink="/paciente/dashboard" class="ver-evolucao-link">
+          Ver evolução <span class="ver-evolucao-link__arrow">→</span>
+        </a>
       </div>
 
       @if (submitDone()) {
@@ -23,20 +26,22 @@
       }
 
       <!-- Daily check-in -->
-      <div class="card checkin-card">
+      <div class="card checkin-card" [class.checkin-card--pendente]="!todayDone()">
         <div class="checkin-card__top">
           <div>
             <h2>Registo diário de humor</h2>
             <p>@if (todayDone()) { Já registou o seu humor hoje. } @else { Ainda não fez o registo de hoje. }</p>
           </div>
-          @if (!todayDone()) {
-            <button class="btn-primary" (click)="showForm.set(!showForm())">
-              {{ showForm() ? 'Cancelar' : 'Registar agora' }}
-            </button>
-          } @else {
+          @if (todayDone()) {
             <span class="badge badge--done">Concluído hoje</span>
           }
         </div>
+
+        @if (!todayDone()) {
+          <button type="button" class="checkin-cta btn-arrow" (click)="showForm.set(!showForm())">
+            {{ showForm() ? 'Cancelar registo' : 'Registe já' }} <span class="btn-arrow__icon">→</span>
+          </button>
+        }
 
         @if (showForm()) {
           @if (submitError()) { <div class="banner banner--error">{{ submitError() }}</div> }
@@ -44,7 +49,7 @@
 
             <!-- Mood slider -->
             <div class="mood-slider-block">
-              <label class="mood-slider-label">Como se sente hoje?</label>
+              <label class="mood-slider-label">Como se sente hoje? <span class="perguntas-label__required">*</span></label>
               <div class="mood-slider-wrap">
                 <span class="mood-face mood-face--sad">☹</span>
                 <div class="mood-slider-track">
@@ -65,39 +70,32 @@
               </div>
             </div>
 
-            <!-- Symptom chips -->
-            <div class="sintomas-block">
-              <label class="sintomas-label">Sintomas (opcional)</label>
-              <div class="sintomas-chips">
-                @for (s of SINTOMAS_OPCOES; track s) {
-                  <button type="button"
-                    class="sintoma-chip"
-                    [class.sintoma-chip--selected]="selectedSintomas().includes(s)"
-                    (click)="toggleSintoma(s)">
-                    {{ s }}
-                  </button>
-                }
-                <!-- Custom chips added by user -->
-                @for (s of selectedSintomas(); track s) {
-                  @if (!SINTOMAS_OPCOES.includes(s)) {
-                    <button type="button"
-                      class="sintoma-chip sintoma-chip--selected sintoma-chip--custom"
-                      (click)="removeCustomSintoma(s)">
-                      {{ s }} ✕
-                    </button>
+            <!-- Perguntas adicionais (escala de 5 pontos) -->
+            <div class="perguntas-block">
+              <label class="perguntas-label">Nos últimos dias... <span class="perguntas-label__required">*</span></label>
+              @for (grupo of QUESTIONARIO_GRUPOS; track grupo.titulo) {
+                <h4 class="perguntas-grupo__titulo">{{ grupo.titulo }}</h4>
+                <div class="perguntas-grid">
+                  @for (p of grupo.perguntas; track p.id) {
+                    <div class="pergunta-card">
+                      <p class="pergunta-card__texto">{{ p.texto }}</p>
+                      <div class="pergunta-scale">
+                        @for (label of p.escala; track $index) {
+                          <label class="pergunta-scale__opt">
+                            <input
+                              type="radio"
+                              [name]="'pergunta-' + p.id"
+                              [checked]="respostasExtra()[p.id] === ($index + 1)"
+                              (change)="setResposta(p.id, $index + 1)"
+                            />
+                            <span class="pergunta-scale__label">{{ label }}</span>
+                          </label>
+                        }
+                      </div>
+                    </div>
                   }
-                }
-              </div>
-              <div class="sintoma-custom-row">
-                <input
-                  class="sintoma-custom-input"
-                  placeholder="Outro sintoma..."
-                  [value]="customSintoma()"
-                  (input)="customSintoma.set($any($event.target).value)"
-                  (keydown.enter)="$event.preventDefault(); addCustomSintoma()"
-                />
-                <button type="button" class="sintoma-add-btn" (click)="addCustomSintoma()">Adicionar</button>
-              </div>
+                </div>
+              }
             </div>
 
             <!-- Notes -->
@@ -157,7 +155,7 @@
 
               <!-- Today pending -->
               @for (d of daily_today_pending(); track d._id) {
-                <div class="desafio-card card">
+                <div class="desafio-card desafio-card--pendente card">
                   <div class="desafio-card__body">
                     <div class="desafio-card__title">{{ d.titulo }}</div>
                     <p class="desafio-card__desc">{{ d.descricao }}</p>
@@ -221,7 +219,7 @@
               }
 
               @for (d of weekly_pending(); track d._id) {
-                <div class="desafio-card card">
+                <div class="desafio-card desafio-card--pendente card">
                   <div class="desafio-card__body">
                     <div class="desafio-card__title">{{ d.titulo }}</div>
                     <p class="desafio-card__desc">{{ d.descricao }}</p>
@@ -259,7 +257,12 @@
 
       <!-- Consultas -->
       <div class="home-section">
-        <h2>Consultas agendadas</h2>
+        <div class="dash-section__header">
+          <h2>Consultas agendadas</h2>
+          <a routerLink="/paciente/agenda" class="btn-primary btn--sm btn-arrow">
+            Ver agenda <span class="btn-arrow__icon">→</span>
+          </a>
+        </div>
         @if (consultaError()) {
           <div class="banner banner--error">{{ consultaError() }}</div>
         } @else if (consultas().length === 0) {

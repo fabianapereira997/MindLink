@@ -1,9 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ConsultaService, Consulta } from '../../../core/services/consulta.service';
-import { todayDateString } from '../../../core/utils/date.utils';
 
-type EstadoFiltro = 'todas' | 'agendada' | 'realizada' | 'cancelada';
+type EstadoFiltro = 'todas' | 'pendente' | 'agendada' | 'realizada' | 'cancelada';
 type ViewMode = 'lista' | 'agenda';
 
 interface WeekDay {
@@ -40,8 +39,8 @@ export class AdminConsultasComponent implements OnInit {
   confirmDeleteId = signal<string | null>(null);
   savingId        = signal<string | null>(null);
 
-  /** Today's date ('YYYY-MM-DD'); the date filter cannot go beyond this. */
-  readonly maxFilterDate = todayDateString();
+  /** Consulta selecionada para visualização de detalhes (vista agenda). */
+  detalheTarget = signal<Consulta | null>(null);
 
   get psicologoOptions(): string[] {
     const names = this.consultas()
@@ -141,6 +140,10 @@ export class AdminConsultasComponent implements OnInit {
     return d;
   }
 
+  get countPendentes(): number {
+    return this.consultas().filter(c => c.estado === 'pendente').length;
+  }
+
   get countAgendadas(): number {
     return this.consultas().filter(c => c.estado === 'agendada').length;
   }
@@ -166,6 +169,7 @@ export class AdminConsultasComponent implements OnInit {
   }
 
   estadoLabel(estado: string): string {
+    if (estado === 'pendente') return 'Por confirmar';
     if (estado === 'realizada') return 'Realizada';
     if (estado === 'cancelada') return 'Cancelada';
     return 'Agendada';
@@ -195,6 +199,15 @@ export class AdminConsultasComponent implements OnInit {
         this.error.set(err.error?.error ?? 'Erro ao atualizar estado.');
       },
     });
+  }
+
+  // ── Detalhe da consulta (vista agenda) ──────────────────────────────────────
+  openDetalhe(c: Consulta): void {
+    this.detalheTarget.set(c);
+  }
+
+  closeDetalhe(): void {
+    this.detalheTarget.set(null);
   }
 
   askDelete(id: string): void {

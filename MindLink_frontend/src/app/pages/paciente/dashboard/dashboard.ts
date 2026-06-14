@@ -1,9 +1,7 @@
 import { Component, inject, OnInit, signal, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
-import { PacienteService } from '../../../core/services/paciente.service';
 import { QuestionarioService, Questionario } from '../../../core/services/questionario.service';
-import { ConsultaService, Consulta } from '../../../core/services/consulta.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -21,12 +19,9 @@ export class PacienteDashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('moodChart') chartRef!: ElementRef<HTMLCanvasElement>;
 
   auth           = inject(AuthService);
-  private pacSvc = inject(PacienteService);
   private qSvc   = inject(QuestionarioService);
-  private cSvc   = inject(ConsultaService);
 
   allQuestionarios  = signal<Questionario[]>([]);
-  pastConsultas     = signal<Consulta[]>([]);
   loading           = signal(true);
   period            = signal<Period>('semanal');
   private chart: Chart | null = null;
@@ -47,22 +42,6 @@ export class PacienteDashboardComponent implements OnInit, AfterViewInit {
         if (this.viewReady) setTimeout(() => this.renderChart(), 0);
       },
       error: () => this.loading.set(false),
-    });
-
-    // Load past consultas via the patient profile
-    this.pacSvc.getMyProfile().subscribe({
-      next: profiles => {
-        if (!profiles.length) return;
-        this.cSvc.getConsultasForPaciente(profiles[0]._id).subscribe({
-          next: cs => {
-            const now = new Date();
-            const past = cs
-              .filter(c => new Date(c.data) < now)
-              .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()); // most recent first
-            this.pastConsultas.set(past);
-          },
-        });
-      },
     });
   }
 
@@ -96,29 +75,16 @@ export class PacienteDashboardComponent implements OnInit, AfterViewInit {
     return (qs.reduce((s, q) => s + q.humor, 0) / qs.length).toFixed(1);
   }
 
-  streak(): number {
-    const qs = [...this.allQuestionarios()].reverse();
-    let count = 0;
-    let day = new Date(); day.setHours(0, 0, 0, 0);
-    for (const q of qs) {
-      const qDay = new Date(q.data); qDay.setHours(0, 0, 0, 0);
-      if ((day.getTime() - qDay.getTime()) / 86400000 > 1) break;
-      count++;
-      day = qDay;
-    }
-    return count;
-  }
+  // Color ramp: 1=red, 2=orange, 3=amber, 4=light-green, 5=dark-green
+  private readonly HUMOR_COLORS = ['', '#dc2626', '#f97316', '#eab308', '#73C883', '#26874E'];
 
-  estadoLabel(estado: string): string {
-    if (estado === 'realizada')  return 'Realizada';
-    if (estado === 'cancelada')  return 'Cancelada';
-    return 'Agendada';
-  }
-
-  estadoClass(estado: string): string {
-    if (estado === 'realizada')  return 'badge--realizada';
-    if (estado === 'cancelada')  return 'badge--cancelada';
-    return 'badge--agendada';
+  /** Cor associada ao humor médio do período, para destacar o bloco de estatística. */
+  avgColor(): string {
+    const qs = this.filtered();
+    if (!qs.length) return '';
+    const avgNum = qs.reduce((s, q) => s + q.humor, 0) / qs.length;
+    const rounded = Math.min(5, Math.max(1, Math.round(avgNum)));
+    return this.HUMOR_COLORS[rounded];
   }
 
   private renderChart(): void {

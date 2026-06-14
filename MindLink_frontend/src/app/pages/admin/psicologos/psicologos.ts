@@ -1,21 +1,19 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { AdminService, AdminPsicologo } from '../../../core/services/admin.service';
-import { todayDateString } from '../../../core/utils/date.utils';
+import { todayDateString, minBirthDateString } from '../../../core/utils/date.utils';
 
 @Component({
   selector: 'app-admin-psicologos',
   standalone: true,
   imports: [
     CommonModule, RouterLink, ReactiveFormsModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
+    MatFormFieldModule, MatInputModule, MatSelectModule,
   ],
   templateUrl: './psicologos.html',
   styleUrl: './psicologos.css',
@@ -37,8 +35,13 @@ export class AdminPsicologosComponent implements OnInit {
 
   confirmInativarTarget = signal<AdminPsicologo | null>(null);
 
+  /** Id do psicólogo cujo menu de ações (⋯) está aberto, ou null se nenhum estiver. */
+  menuAbertoId = signal<string | null>(null);
+
   /** Today's date ('YYYY-MM-DD'); data de nascimento cannot be later than this. */
   readonly maxBirthDate = todayDateString();
+  /** Earliest allowed birth date ('YYYY-MM-DD'); age cannot exceed 120 years. */
+  readonly minBirthDate = minBirthDateString();
 
   get especialidadeOptions(): string[] {
     const vals = this.psicologos()
@@ -54,7 +57,7 @@ export class AdminPsicologosComponent implements OnInit {
   form = this.fb.group({
     nome:            ['', [Validators.required, Validators.minLength(2)]],
     email:           ['', [Validators.required, Validators.email]],
-    password:        ['', [Validators.required, Validators.minLength(6)]],
+    password:        ['', [Validators.required, Validators.minLength(6), Validators.pattern(/.*[0-9].*/)]],
     genero:          ['outro', Validators.required],
     data_nascimento: ['', Validators.required],
     especialidade:   [''],
@@ -93,8 +96,27 @@ export class AdminPsicologosComponent implements OnInit {
     this.showModal.set(false);
   }
 
+  /** Gera uma password aleatória (mín. 8 caracteres, incluindo um número) e
+   *  preenche o campo, tornando-a visível para o administrador a transmitir. */
+  gerarPassword(): void {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let pwd = '';
+    for (let i = 0; i < 10; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    if (!/[0-9]/.test(pwd)) {
+      pwd = pwd.slice(0, -1) + Math.floor(Math.random() * 10);
+    }
+    this.form.patchValue({ password: pwd });
+    this.hidePassword = false;
+  }
+
   submit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.createError.set('Existem campos inválidos ou em falta. Verifique os campos assinalados.');
+      return;
+    }
     this.creating.set(true);
     this.createError.set(null);
     const { nome, email, password, genero, data_nascimento, especialidade } = this.form.value;
@@ -150,6 +172,18 @@ export class AdminPsicologosComponent implements OnInit {
       },
       error: err => this.error.set(err.error?.error ?? 'Erro ao atualizar o estado do psicólogo.'),
     });
+  }
+
+  // ── Menu de ações (⋯) ────────────────────────────────────────────────────────
+  toggleMenu(id: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.menuAbertoId.set(this.menuAbertoId() === id ? null : id);
+  }
+
+  @HostListener('document:click')
+  fecharMenu(): void {
+    this.menuAbertoId.set(null);
   }
 
 }

@@ -15,6 +15,7 @@ interface PacienteComentario {
   user?: { nome?: string };
   comentario?: string | null;
   resposta?: string | null;
+  desafioTitulo?: string;
 }
 
 @Component({
@@ -55,9 +56,9 @@ export class PsicologoDesafiosComponent implements OnInit {
     });
   }
 
-  abrirComentario(p: PacienteComentario): void {
+  abrirComentario(p: PacienteComentario, desafioTitulo?: string): void {
     if (!p.comentario && !p.resposta) return;
-    this.comentarioModal.set(p);
+    this.comentarioModal.set({ ...p, desafioTitulo });
   }
 
   toggleRespostaObrigatoria(): void {
@@ -71,7 +72,9 @@ export class PsicologoDesafiosComponent implements OnInit {
   enviarMensagem(): void {
     const p = this.comentarioModal();
     if (!p) return;
-    this.chatSvc.openChatWithPaciente(p._id);
+    const texto = p.comentario ?? p.resposta ?? '';
+    const replyTo = p.desafioTitulo ? `Desafio: ${p.desafioTitulo}\n${texto}` : texto;
+    this.chatSvc.openChatWithPaciente(p._id, replyTo);
     this.fecharComentario();
   }
 

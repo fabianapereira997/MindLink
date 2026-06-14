@@ -37,7 +37,7 @@ export class ChangePasswordComponent {
   isForced = this.auth.mustChangePassword();
 
   form = this.fb.group({
-    newPassword:     ['', [Validators.required, Validators.minLength(6)]],
+    newPassword:     ['', [Validators.required, Validators.minLength(6), Validators.pattern(/.*[0-9].*/)]],
     confirmPassword: ['', Validators.required],
   }, { validators: passwordsMatch });
 

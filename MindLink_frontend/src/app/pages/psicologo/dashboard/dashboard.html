@@ -9,35 +9,72 @@
       <div class="psi-header">
         <div>
           <h1>Olá, Dr. {{ auth.firstName() }}</h1>
-          <p>Resumo da sua atividade clínica</p>
+          <p>Visão geral da sua atividade clínica</p>
+          <span class="psi-header__accent"></span>
         </div>
       </div>
 
       <!-- Stats strip -->
       <div class="stats-grid">
-        <div class="stat-card card">
-          <div class="stat-card__value">{{ pacientes().length }}</div>
-          <div class="stat-card__label">Pacientes ativos</div>
+        <a routerLink="/psicologo/pacientes" class="card stat-card stat-card--primary stat-card--lg">
+          <div class="stat-card__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="stat-card__body">
+            <div class="stat-card__value">{{ pacientes().length }}</div>
+            <div class="stat-card__label">Pacientes ativos</div>
+            @if (novosPacientesEsteMes() > 0) {
+              <div class="stat-card__sub">+{{ novosPacientesEsteMes() }} este mês</div>
+            }
+            <span class="stat-card__cta">Ver todos os pacientes <span class="stat-card__arrow">→</span></span>
+          </div>
+        </a>
+
+        <div class="card stat-card stat-card--danger stat-card--lg">
+          <div class="stat-card__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="stat-card__body">
+            <div class="stat-card__value">{{ pacientesCriticos().length }}</div>
+            <div class="stat-card__label">Pacientes em monitorização prioritária</div>
+            @if (pacientesCriticos().length > 0) {
+              <div class="stat-card__sub">Requerem acompanhamento</div>
+            } @else {
+              <div class="stat-card__sub">Tudo sob controlo</div>
+            }
+          </div>
         </div>
-        <div class="stat-card card">
-          <div class="stat-card__value">{{ desafiosPendentesDetalhe().length }}</div>
-          <div class="stat-card__label">Desafios por cumprir</div>
-        </div>
-        <div class="stat-card card">
-          <div class="stat-card__value">{{ proximasConsultas().length }}</div>
-          <div class="stat-card__label">Próximas consultas</div>
-        </div>
-        <div class="stat-card card">
-          <div class="stat-card__value">{{ pacientesCriticos().length }}</div>
-          <div class="stat-card__label">Pacientes em atenção</div>
-        </div>
+
+        <a routerLink="/psicologo/desafios" class="card stat-card stat-card--warning">
+          <div class="stat-card__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h6"/></svg>
+          </div>
+          <div class="stat-card__body">
+            <div class="stat-card__value">{{ desafiosPendentesDetalhe().length }}</div>
+            <div class="stat-card__label">Desafios por cumprir</div>
+            <span class="stat-card__cta">Ver desafios <span class="stat-card__arrow">→</span></span>
+          </div>
+        </a>
+
+        <a routerLink="/psicologo/agenda" class="card stat-card stat-card--info">
+          <div class="stat-card__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="stat-card__body">
+            <div class="stat-card__value">{{ proximasConsultas().length }}</div>
+            <div class="stat-card__label">Próximas consultas</div>
+            <span class="stat-card__cta">Ver agenda <span class="stat-card__arrow">→</span></span>
+          </div>
+        </a>
       </div>
 
-      <!-- Pacientes preocupantes -->
-      <div class="dash-section">
+      <!-- Pacientes em monitorização prioritária -->
+      <div class="dash-section dash-section--prioritaria" id="pacientes-criticos">
         <div class="dash-section__header">
-          <h2>Pacientes com historial preocupante</h2>
-          <a routerLink="/psicologo/pacientes" class="btn-secondary btn--sm">Ver todos</a>
+          <h2>Pacientes em monitorização prioritária</h2>
+          <a routerLink="/psicologo/pacientes" class="btn-primary btn--sm btn-arrow">
+            Ver todos os pacientes <span class="btn-arrow__icon">→</span>
+          </a>
         </div>
 
         @if (pacientesCriticos().length === 0) {
@@ -49,10 +86,63 @@
                 <div class="paciente-card__avatar">{{ p.user?.nome?.charAt(0) ?? 'P' }}</div>
                 <div class="paciente-card__info">
                   <div class="paciente-card__name">{{ p.user?.nome }}</div>
-                  <div class="paciente-card__meta">Humor médio recente: {{ p.avgHumor ?? '—' }}/5</div>
+                  @if (p.avgHumor) {
+                    <div class="paciente-card__meta">
+                      Humor médio recente: {{ p.avgHumor }}/5
+                      @if (tendenciaHumorTexto(p); as tendencia) {
+                        <span class="paciente-card__tendencia">{{ tendenciaHumorSeta(p) }} {{ tendencia }}</span>
+                      }
+                    </div>
+                  } @else {
+                    <div class="paciente-card__meta">Sem registos recentes</div>
+                  }
+                  @if (motivoAtencao(p); as motivo) {
+                    <div class="paciente-card__motivo">{{ motivo }}</div>
+                  }
                 </div>
-                <div class="humor-pill humor-pill--low">{{ p.avgHumor ?? '—' }}/5</div>
+                @if (p.avgHumor) {
+                  <div class="humor-pill humor-pill--low">{{ p.avgHumor }}/5</div>
+                } @else {
+                  <div class="humor-pill humor-pill--sem-dados">Sem registos recentes</div>
+                }
               </a>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Registos de humor dos pacientes -->
+      <div class="dash-section">
+        <div class="dash-section__header">
+          <h2>Registos de humor dos pacientes</h2>
+        </div>
+
+        @if (pacientes().length === 0) {
+          <div class="card empty-card"><p>Ainda não tem pacientes associados.</p></div>
+        } @else {
+          <div class="humor-registo-list">
+            @for (p of pacientes(); track p._id) {
+              @if (p.respondidoHoje) {
+                <button type="button" class="card humor-registo-card humor-registo-card--respondido"
+                        [style.--humor-color]="humorCorFor(p)"
+                        (click)="abrirHumorModal(p)">
+                  <div class="paciente-card__avatar">{{ p.user?.nome?.charAt(0) ?? 'P' }}</div>
+                  <div class="humor-registo-card__info">
+                    <div class="paciente-card__name">{{ p.user?.nome }}</div>
+                    <div class="paciente-card__meta">Questionário de hoje respondido</div>
+                  </div>
+                  <span class="badge badge--realizada">Respondido</span>
+                </button>
+              } @else {
+                <div class="card humor-registo-card humor-registo-card--pendente">
+                  <div class="paciente-card__avatar">{{ p.user?.nome?.charAt(0) ?? 'P' }}</div>
+                  <div class="humor-registo-card__info">
+                    <div class="paciente-card__name">{{ p.user?.nome }}</div>
+                    <div class="paciente-card__meta">Ainda não respondeu ao registo de humor de hoje</div>
+                  </div>
+                  <span class="badge badge--pendente">Resposta em espera</span>
+                </div>
+              }
             }
           </div>
         }
@@ -62,7 +152,9 @@
       <div class="dash-section">
         <div class="dash-section__header">
           <h2>Desafios por cumprir</h2>
-          <a routerLink="/psicologo/desafios" class="btn-secondary btn--sm">Ver todos</a>
+          <a routerLink="/psicologo/desafios" class="btn-primary btn--sm btn-arrow">
+            Ver todos os desafios <span class="btn-arrow__icon">→</span>
+          </a>
         </div>
 
         @if (desafiosPendentesDetalhe().length === 0) {
@@ -70,44 +162,60 @@
         } @else {
           <div class="desafio-list">
             @for (item of desafiosPendentesDetalhe().slice(0, 5); track item.desafioId + item.paciente._id) {
-              <div class="card desafio-alerta" [class.desafio-alerta--overdue]="item.diasAtraso > 0">
-                <div class="desafio-alerta__main">
-                  <div class="desafio-alerta__title-row">
-                    <span class="desafio-alerta__title">{{ item.titulo }}</span>
-                    @if (item.duracao) {
-                      <span class="badge badge--duracao">{{ item.duracao }}</span>
-                    }
-                  </div>
-                  <div class="desafio-alerta__paciente">
-                    Paciente: <strong>{{ item.paciente.user?.nome ?? 'Desconhecido' }}</strong>
-                  </div>
-                  <div class="desafio-alerta__meta">
-                    @if (item.data_fim) {
-                      @if (item.diasAtraso > 0) {
-                        <span>Devia ter sido cumprido em: {{ item.data_fim | date:'dd/MM/yyyy' }}</span>
-                      } @else {
-                        <span>Prazo até: {{ item.data_fim | date:'dd/MM/yyyy' }}</span>
+              @let key = item.desafioId + '-' + item.paciente._id;
+              @let expandido = desafiosExpandidos().has(key);
+              <div class="card desafio-alerta"
+                   [class.desafio-alerta--overdue]="item.diasAtraso > 0"
+                   [class.desafio-alerta--pendente]="item.diasAtraso === 0">
+                <div class="desafio-alerta__row">
+                  <div class="desafio-alerta__main">
+                    <div class="desafio-alerta__title-row">
+                      <span class="desafio-alerta__title">{{ item.titulo }}</span>
+                      @if (item.duracao) {
+                        <span class="badge badge--duracao">{{ item.duracao }}</span>
                       }
-                    }
+                    </div>
+                    <div class="desafio-alerta__paciente">
+                      Paciente: <strong>{{ item.paciente.user?.nome ?? 'Desconhecido' }}</strong>
+                    </div>
+                    <div class="desafio-alerta__meta">
+                      @if (item.data_fim) {
+                        @if (item.diasAtraso > 0) {
+                          <span>Devia ter sido cumprido em: {{ item.data_fim | date:'dd/MM/yyyy' }}</span>
+                        } @else {
+                          <span>Prazo até: {{ item.data_fim | date:'dd/MM/yyyy' }}</span>
+                        }
+                      }
+                      @if (item.diasAtraso > 0) {
+                        <span class="badge badge--atraso">
+                          {{ item.diasAtraso }} {{ item.diasAtraso === 1 ? 'dia' : 'dias' }} em atraso
+                        </span>
+                      } @else {
+                        <span class="badge badge--pendente">Pendente</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="desafio-alerta__actions">
+                    <button type="button" class="btn-secondary btn--sm btn-arrow" (click)="toggleDesafioExpandido(key)">
+                      Detalhes <span class="btn-arrow__icon" [class.btn-arrow__icon--down]="expandido">{{ expandido ? '▲' : '▼' }}</span>
+                    </button>
                     @if (item.diasAtraso > 0) {
-                      <span class="badge badge--atraso">
-                        {{ item.diasAtraso }} {{ item.diasAtraso === 1 ? 'dia' : 'dias' }} em atraso
-                      </span>
-                    } @else {
-                      <span class="badge badge--pendente">Pendente</span>
+                      <button type="button" class="btn-primary btn--sm" (click)="abrirChat(item.paciente._id)">
+                        Conversar
+                      </button>
                     }
                   </div>
                 </div>
-                <div class="desafio-alerta__actions">
-                  <a [routerLink]="['/psicologo/pacientes', item.paciente._id]" class="btn-secondary btn--sm">
-                    Ver detalhes
-                  </a>
-                  @if (item.diasAtraso > 0) {
-                    <button type="button" class="btn-primary btn--sm" (click)="abrirChat(item.paciente._id)">
-                      Conversar
-                    </button>
-                  }
-                </div>
+                @if (expandido) {
+                  <div class="desafio-alerta__descricao">
+                    @if (item.descricao) {
+                      <p class="form-label">Descrição do desafio</p>
+                      <p>{{ item.descricao }}</p>
+                    } @else {
+                      <p class="text-muted">Este desafio não tem descrição adicional.</p>
+                    }
+                  </div>
+                }
               </div>
             }
           </div>
@@ -118,7 +226,9 @@
       <div class="dash-section">
         <div class="dash-section__header">
           <h2>Próximas consultas</h2>
-          <a routerLink="/psicologo/agenda" class="btn-secondary btn--sm">Ver agenda</a>
+          <a routerLink="/psicologo/agenda" class="btn-primary btn--sm btn-arrow">
+            Ver agenda <span class="btn-arrow__icon">→</span>
+          </a>
         </div>
 
         @if (proximasConsultas().length === 0) {
@@ -156,3 +266,82 @@
     }
   </div>
 </div>
+
+<!-- Modal: registo de humor respondido pelo paciente -->
+@if (humorModal(); as p) {
+  <div class="modal-backdrop" (click)="fecharHumorModal()">
+    <div class="modal card modal--questionario" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2>Registo de humor — {{ p.user?.nome }}</h2>
+        <button class="modal__close" (click)="fecharHumorModal()">✕</button>
+      </div>
+
+      @if (p.ultimoQuestionario; as q) {
+        <p class="questionario-modal__data">{{ q.data | date:'dd/MM/yyyy' }}</p>
+
+        <!-- Mood slider (read-only) -->
+        <div class="mood-slider-block">
+          <label class="mood-slider-label">Como se sentiu nesse dia?</label>
+          <div class="mood-slider-wrap">
+            <span class="mood-face mood-face--sad">☹</span>
+            <div class="mood-slider-track">
+              <input
+                type="range" min="1" max="5" step="1"
+                [value]="q.humor"
+                disabled
+                class="mood-range"
+                [style.--thumb-color]="humorModalColor()"
+                [style.--fill-pct]="((q.humor - 1) / 4 * 100) + '%'"
+              />
+            </div>
+            <span class="mood-face mood-face--happy">☺</span>
+          </div>
+          <div class="mood-value" [style.color]="humorModalColor()">
+            <span class="mood-value__num">{{ q.humor }}/5</span>
+            <span class="mood-value__label">{{ humorModalLabel() }}</span>
+          </div>
+        </div>
+
+        <!-- Perguntas adicionais (read-only) -->
+        <div class="perguntas-block">
+          <label class="perguntas-label">Nos últimos dias...</label>
+          @for (grupo of QUESTIONARIO_GRUPOS; track grupo.titulo) {
+            <h4 class="perguntas-grupo__titulo">{{ grupo.titulo }}</h4>
+            <div class="perguntas-grid">
+              @for (pq of grupo.perguntas; track pq.id) {
+                <div class="pergunta-card">
+                  <p class="pergunta-card__texto">{{ pq.texto }}</p>
+                  <div class="pergunta-scale">
+                    @for (label of pq.escala; track $index) {
+                      <label class="pergunta-scale__opt" [class.pergunta-scale__opt--selected]="(q.respostas?.[pq.id]) === ($index + 1)">
+                        <input
+                          type="radio"
+                          [name]="'view-pergunta-' + pq.id"
+                          [checked]="(q.respostas?.[pq.id]) === ($index + 1)"
+                          disabled
+                        />
+                        <span class="pergunta-scale__label">{{ label }}</span>
+                      </label>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        @if (q.notas) {
+          <div class="questionario-modal__notas">
+            <p class="form-label">Notas do paciente</p>
+            <p class="comentario-text">"{{ q.notas }}"</p>
+          </div>
+        }
+      }
+
+      <div class="modal__actions">
+        <button type="button" class="btn-secondary btn--sm" (click)="fecharHumorModal()">Fechar</button>
+        <button type="button" class="btn-primary btn--sm" (click)="enviarMensagemHumor()">Enviar mensagem</button>
+      </div>
+    </div>
+  </div>
+}

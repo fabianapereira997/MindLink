@@ -1,12 +1,12 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { AdminService, AdminPsicologo } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-admin-psicologo-detalhe',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe],
+  imports: [CommonModule, RouterLink],
   templateUrl: './psicologo-detalhe.html',
   styleUrl: './psicologo-detalhe.css',
 })
@@ -28,28 +28,77 @@ export class AdminPsicologoDetalheComponent implements OnInit {
   transferError    = signal<string | null>(null);
   transferring     = signal(false);
 
+  // ── Exportar pacientes (seleção) ────────────────────────────────────────────
+  showExportModal     = signal(false);
+  selectedExportIds   = signal<string[]>([]);
+
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id')!;
-    this.adminSvc.getPsicologoDetalhe(id).subscribe({
-      next: d => { this.data.set(d); this.loading.set(false); },
-      error: err => { this.error.set(err.error?.error ?? 'Erro ao carregar.'); this.loading.set(false); },
-    });
+    this.loadData();
     this.adminSvc.getPsicologos().subscribe({
       next: list => this.allPsicologos.set(list),
     });
   }
 
-  /** Outros psicólogos disponíveis como destino de transferência. */
-  get otherPsicologos(): AdminPsicologo[] {
-    const id = this.data()?.psicologo?._id;
-    return this.allPsicologos().filter(o => o._id !== id);
+  private loadData(): void {
+    const id = this.route.snapshot.paramMap.get('id')!;
+    this.adminSvc.getPsicologoDetalhe(id).subscribe({
+      next: d => { this.data.set(d); this.loading.set(false); },
+      error: err => { this.error.set(err.error?.error ?? 'Erro ao carregar.'); this.loading.set(false); },
+    });
   }
 
-  exportPacientes(): void {
+  /** Outros psicólogos disponíveis como destino de transferência (apenas ativos). */
+  get otherPsicologos(): AdminPsicologo[] {
+    const id = this.data()?.psicologo?._id;
+    return this.allPsicologos().filter(o => o._id !== id && o.ativo !== false);
+  }
+
+  // ── Exportar pacientes (seleção) ────────────────────────────────────────────
+
+  openExportModal(): void {
     const d = this.data();
     if (!d) return;
+    // Por defeito, todos os pacientes ficam selecionados.
+    this.selectedExportIds.set(d.pacientes.map(p => p._id));
     this.error.set(null);
-    this.adminSvc.exportPacientesXml(d.psicologo._id).subscribe({
+    this.showExportModal.set(true);
+  }
+
+  closeExportModal(): void {
+    this.showExportModal.set(false);
+  }
+
+  toggleExportPaciente(id: string): void {
+    const curr = this.selectedExportIds();
+    this.selectedExportIds.set(
+      curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id]
+    );
+  }
+
+  isExportSelected(id: string): boolean {
+    return this.selectedExportIds().includes(id);
+  }
+
+  get allExportSelected(): boolean {
+    const d = this.data();
+    if (!d || !d.pacientes.length) return false;
+    return d.pacientes.every(p => this.isExportSelected(p._id));
+  }
+
+  toggleSelectAllExport(): void {
+    const d = this.data();
+    if (!d) return;
+    this.selectedExportIds.set(this.allExportSelected ? [] : d.pacientes.map(p => p._id));
+  }
+
+  confirmExportPacientes(): void {
+    const d = this.data();
+    if (!d) return;
+    const ids = this.selectedExportIds();
+    if (!ids.length) return;
+
+    this.error.set(null);
+    this.adminSvc.exportPacientesXml(d.psicologo._id, ids).subscribe({
       next: blob => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -57,6 +106,7 @@ export class AdminPsicologoDetalheComponent implements OnInit {
         a.download = `pacientes-${(d.psicologo.user?.nome ?? 'psicologo').replace(/\s+/g, '_')}.xml`;
         a.click();
         window.URL.revokeObjectURL(url);
+        this.showExportModal.set(false);
       },
       error: err => this.error.set(err.error?.error ?? 'Erro ao exportar lista de pacientes.'),
     });
@@ -105,7 +155,12 @@ export class AdminPsicologoDetalheComponent implements OnInit {
         next: res => {
           this.transferring.set(false);
           this.showTransfer.set(false);
-          this.success.set(`${res.atualizados} paciente(s) transferido(s) com sucesso.`);
+          let msg = `${res.atualizados} paciente(s) transferido(s) com sucesso.`;
+          if (res.ignorados) {
+            msg += ` ${res.ignorados} paciente(s) inativo(s) foram ignorados.`;
+          }
+          this.success.set(msg);
+          this.loadData();
         },
         error: err => {
           this.transferring.set(false);
@@ -120,15 +175,4 @@ export class AdminPsicologoDetalheComponent implements OnInit {
     reader.readAsText(file);
   }
 
-  estadoLabel(e: string): string {
-    return e === 'realizada' ? 'Realizada' : e === 'cancelada' ? 'Cancelada' : 'Agendada';
-  }
-
-  estadoClass(e: string): string {
-    return e === 'realizada' ? 'badge--green' : e === 'cancelada' ? 'badge--red' : 'badge--amber';
-  }
-
-  countEstado(consultas: any[], estado: string): number {
-    return consultas.filter(c => c.estado === estado).length;
-  }
 }

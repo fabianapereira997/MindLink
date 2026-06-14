@@ -14,8 +14,8 @@
         @if (auth.role() === 'paciente') {
           <a [routerLink]="auth.homeRoute()" routerLinkActive="active"
              [routerLinkActiveOptions]="{exact: true}">Início</a>
-          <a routerLink="/paciente/dashboard" routerLinkActive="active">Histórico</a>
           <a routerLink="/paciente/agenda" routerLinkActive="active">Agenda</a>
+          <a routerLink="/paciente/dashboard" routerLinkActive="active">Evolução</a>
         }
         @if (auth.role() === 'psicologo') {
           <a routerLink="/psicologo/dashboard" routerLinkActive="active">Início</a>

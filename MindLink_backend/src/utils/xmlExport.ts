@@ -24,12 +24,6 @@ function el(tag: string, value: unknown, opts: { selfCloseIfEmpty?: boolean } = 
   return `<${tag}>${escapeXml(value)}</${tag}>`;
 }
 
-/** Elemento booleano nillable: <Tag>true|false</Tag> ou <Tag xsi:nil="true"/> se null/undefined. */
-function elNillableBool(tag: string, value: boolean | null | undefined): string {
-  if (value === null || value === undefined) return `<${tag} xsi:nil="true"/>`;
-  return `<${tag}>${value ? 'true' : 'false'}</${tag}>`;
-}
-
 /** Formata uma data (Date ou string) como 'yyyy-MM-dd'. */
 export function formatDate(value: unknown): string {
   if (!value) return '';
@@ -47,103 +41,6 @@ export function formatDateTime(value: unknown): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Export individual de paciente (perfil + formulário + registos de humor +
-// desafios + consultas)
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function buildPacienteCompletoXml(
-  paciente: any,
-  questionarios: any[],
-  desafios: any[],
-  consultas: any[],
-): string {
-  const user = paciente.user ?? {};
-  const psicologo = paciente.psicologo ?? {};
-  const psicologoUser = psicologo.user ?? {};
-  const formulario = paciente.formulario ?? {};
-  const historicoMedico = formulario.historicoMedico ?? {};
-  const estiloDeVida = formulario.estiloDeVida ?? {};
-  const comorbilidades: string[] = Array.isArray(historicoMedico.comorbilidades)
-    ? historicoMedico.comorbilidades
-    : [];
-
-  const registosHumorXml = questionarios
-    .map((q) => `      <RegistoHumor>
-        ${el('Id', q._id)}
-        ${el('Data', formatDateTime(q.data))}
-        ${el('Humor', q.humor)}
-        <Sintomas>
-${(Array.isArray(q.sintomas) ? q.sintomas : []).map((s: string) => `          ${el('Sintoma', s)}`).join('\n')}
-        </Sintomas>
-        ${el('Notas', q.notas, { selfCloseIfEmpty: true })}
-      </RegistoHumor>`)
-    .join('\n');
-
-  const desafiosXml = desafios
-    .map((d) => `      <Desafio>
-        ${el('Id', d._id)}
-        ${el('Titulo', d.titulo)}
-        ${el('Descricao', d.descricao)}
-        ${el('Tipo', d.tipo)}
-        ${el('DataInicio', formatDate(d.data_inicio))}
-        ${el('DataFim', formatDate(d.data_fim))}
-        ${el('Estado', d.estado)}
-        ${el('Sugestao', d.sugestao, { selfCloseIfEmpty: true })}
-        ${el('RespostaObrigatoria', d.respostaObrigatoria ? 'true' : 'false', { selfCloseIfEmpty: false })}
-        ${el('Resposta', d.resposta, { selfCloseIfEmpty: true })}
-        ${el('Comentario', d.comentario, { selfCloseIfEmpty: true })}
-      </Desafio>`)
-    .join('\n');
-
-  const consultasXml = consultas
-    .map((c) => `      <Consulta>
-        ${el('Id', c._id)}
-        ${el('Data', formatDateTime(c.data))}
-        ${el('DuracaoMinutos', c.duracao)}
-        ${el('Estado', c.estado)}
-        ${el('Notas', c.notas, { selfCloseIfEmpty: true })}
-      </Consulta>`)
-    .join('\n');
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<PacienteExport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  ${el('GeradoEm', formatDateTime(new Date()))}
-  <Paciente>
-    ${el('Id', paciente._id)}
-    ${el('Nome', user.nome)}
-    ${el('Email', user.email)}
-    ${el('Genero', user.genero)}
-    ${el('DataNascimento', formatDate(user.data_nascimento))}
-    ${el('Doenca', paciente.doenca)}
-    <Formulario>
-      <HistoricoMedico>
-${comorbilidades.map((c) => `        ${el('Comorbilidade', c)}`).join('\n')}
-      </HistoricoMedico>
-      <EstiloDeVida>
-        ${elNillableBool('ExercicioRegular', estiloDeVida.exercicioRegular ?? null)}
-        ${elNillableBool('Fumador', estiloDeVida.fumador ?? null)}
-      </EstiloDeVida>
-    </Formulario>
-    <Psicologo>
-      ${el('Id', psicologo._id)}
-      ${el('Nome', psicologoUser.nome)}
-      ${el('Especialidade', psicologo.especialidade)}
-    </Psicologo>
-  </Paciente>
-  <RegistosHumor>
-${registosHumorXml}
-  </RegistosHumor>
-  <Desafios>
-${desafiosXml}
-  </Desafios>
-  <Consultas>
-${consultasXml}
-  </Consultas>
-</PacienteExport>
-`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Export da lista de pacientes de um psicólogo (resumo)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -157,6 +54,7 @@ export function buildPacientesListaXml(psicologo: any, pacientes: any[]): string
         ${el('Id', p._id)}
         ${el('Nome', user.nome)}
         ${el('Email', user.email)}
+        ${el('DataNascimento', formatDate(user.data_nascimento))}
         ${el('Doenca', p.doenca)}
       </Paciente>`;
     })
@@ -218,4 +116,88 @@ export async function validateXmlAgainstXsd(xml: string, xsdFileName: string): P
     xmlDoc.dispose();
     xsdDoc.dispose();
   }
+}
+
+/**
+ * Traduz uma mensagem de erro técnica de validação XSD (libxml2) numa
+ * mensagem simples e percetível para o utilizador final, com indicação de
+ * como resolver o problema.
+ */
+export function friendlyXmlValidationError(message: string): string {
+  // Nomes legíveis para os campos mais comuns dos XML exportados.
+  const fieldLabels: Record<string, string> = {
+    Email: 'email',
+    GeradoEm: 'data de geração',
+    Id: 'identificador',
+    Nome: 'nome',
+    Doenca: 'doença',
+    DataNascimento: 'data de nascimento',
+    Data: 'data',
+    DataInicio: 'data de início',
+    DataFim: 'data de fim',
+    Genero: 'género',
+  };
+  const labelFor = (field: string) => fieldLabels[field] ?? `campo "${field}"`;
+
+  // 1) Campo com formato/padrão inválido (ex.: Email fora do formato xxxx@xxxx.xxx).
+  const patternMatch = message.match(/Element '([^']+)':.*?\[facet '[^']+'\] The value '([^']*)' is not accepted/);
+  if (patternMatch) {
+    const [, field, value] = patternMatch;
+    return `O ${labelFor(field)} "${value}" não está num formato válido. Verifique se segue o formato correto (ex.: para o email, "nome@dominio.com") e tente novamente.`;
+  }
+
+  // 2) Valor que não corresponde ao tipo de dados esperado (data, data/hora, número, booleano).
+  const typeMatch = message.match(/Element '([^']+)':\s*'([^']*)' is not a valid value of the atomic type '([^']+)'/);
+  if (typeMatch) {
+    const [, field, value, type] = typeMatch;
+    const label = labelFor(field);
+
+    if (type === 'xs:date') {
+      return `O ${label} "${value}" tem um formato de data inválido. Use o formato AAAA-MM-DD (ex.: 2000-05-31).`;
+    }
+    if (type === 'xs:dateTime') {
+      return `O ${label} "${value}" tem um formato de data/hora inválido. Use o formato AAAA-MM-DDTHH:MM:SS (ex.: 2024-06-13T10:30:00).`;
+    }
+    if (type === 'xs:boolean') {
+      return `O ${label} "${value}" deve ser "true" ou "false".`;
+    }
+    if (/integer/i.test(type)) {
+      return `O ${label} "${value}" deve ser um número inteiro válido.`;
+    }
+    return `O ${label} "${value}" não tem um valor válido para este campo.`;
+  }
+
+  // 3) Falta um elemento obrigatório.
+  const missingMatch = message.match(/Element '([^']+)':\s*Missing child element\(s\)\. Expected is(?: one of)? (.+?)\.?$/);
+  if (missingMatch) {
+    const [, parent, expected] = missingMatch;
+    const expectedNames = expected.match(/'([^']+)'/g)?.map(s => s.replace(/'/g, '')).join(', ');
+    return `Falta(m) campo(s) obrigatório(s) dentro de "${parent}"${expectedNames ? ` (esperado: ${expectedNames})` : ''}. Verifique se o ficheiro foi exportado corretamente e não foi editado manualmente.`;
+  }
+
+  // 4) Elemento inesperado / fora de ordem.
+  const unexpectedMatch = message.match(/Element '([^']+)':\s*This element is not expected\.(?: Expected is(?: one of)? (.+?)\.?)?$/);
+  if (unexpectedMatch) {
+    const [, field, expected] = unexpectedMatch;
+    const expectedNames = expected?.match(/'([^']+)'/g)?.map(s => s.replace(/'/g, '')).join(', ');
+    return `O elemento "${field}" não era esperado nesta posição do ficheiro${expectedNames ? ` (esperava-se: ${expectedNames})` : ''}. Verifique se o ficheiro não foi alterado e se corresponde ao tipo de exportação correto.`;
+  }
+
+  // 5) Ficheiro de outro tipo de exportação/estrutura não reconhecida.
+  if (/No matching global declaration available for the validation root|Did not expect element/i.test(message)) {
+    return 'Este ficheiro não corresponde ao tipo de exportação esperado. Confirme que selecionou o ficheiro XML correto, exportado a partir desta funcionalidade.';
+  }
+
+  // 6) Conteúdo de texto onde não é permitido.
+  if (/Character content other than whitespace is not allowed/i.test(message)) {
+    return 'O ficheiro contém texto num local onde não é permitido. Verifique se o ficheiro não foi editado manualmente e tente exportá-lo novamente.';
+  }
+
+  // 7) XML mal formado / corrompido / vazio.
+  if (/parser error|not well-formed|Premature end|Document is empty|Start tag expected/i.test(message)) {
+    return 'O ficheiro não é um XML válido (está corrompido, vazio ou mal formado). Tente exportá-lo novamente a partir da plataforma.';
+  }
+
+  // Fallback genérico.
+  return 'O ficheiro XML não é válido. Verifique se foi exportado corretamente a partir da plataforma e não foi alterado manualmente.';
 }

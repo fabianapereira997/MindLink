@@ -1,6 +1,10 @@
-<app-navbar />
-<main class="main-content">
+@if (!isAuthPage()) {
+  <app-navbar />
+}
+<main class="main-content" [class.main-content--with-navbar]="!isAuthPage()">
   <router-outlet />
 </main>
 <app-footer />
-<app-chat />
+@if (!isAuthPage()) {
+  <app-chat />
+}

@@ -31,7 +31,14 @@
     <xs:sequence>
       <xs:element name="Id" type="xs:string"/>
       <xs:element name="Nome" type="xs:string"/>
-      <xs:element name="Email" type="xs:string"/>
+      <xs:element name="Email">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[^@\s]+@[^@\s]+\.[^@\s]+"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="DataNascimento" type="xs:date"/>
       <xs:element name="Doenca" type="xs:string"/>
     </xs:sequence>
   </xs:complexType>

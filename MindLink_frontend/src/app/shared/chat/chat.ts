@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { PacienteService, PacienteProfile } from '../../core/services/paciente.service';
 import { MensagemService, Mensagem } from '../../core/services/mensagem.service';
@@ -23,6 +24,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private pacSvc  = inject(PacienteService);
   private msgSvc  = inject(MensagemService);
   private chatSvc = inject(ChatService);
+  private router  = inject(Router);
 
   isOpen      = signal(false);
   fabBottom   = signal(24);
@@ -41,6 +43,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   mensagens    = signal<Mensagem[]>([]);
   sendError    = signal<string | null>(null);
   input        = new FormControl('', [Validators.required, Validators.minLength(1)]);
+  /** Text of the comment/answer being replied to (shown as a preview above the input) */
+  replyContext = signal<string | null>(null);
 
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private unreadPollTimer: ReturnType<typeof setInterval> | null = null;
@@ -62,6 +66,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.isOpen.set(true);
         this.hasUnread.set(false);
         this.selectPaciente(found);
+        this.replyContext.set(this.chatSvc.requestedReplyText());
         this.chatSvc.clearRequest();
       }
     });
@@ -140,6 +145,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.isOpen.update(v => !v);
     if (this.isOpen()) {
       if (this.role() === 'paciente') this.hasUnread.set(false);
+      this.shouldScrollBottom = true;
       this.openConversation();
     } else {
       this.stopPolling();
@@ -165,10 +171,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   selectPaciente(p: PacienteProfile): void {
     this.selectedPaciente.set(p);
     this.mensagens.set([]);
+    this.replyContext.set(null);
     this.stopPolling();
     // Clear unread for this patient
     this.unreadMap.set(p._id, 0);
     this.refreshUnreadDot();
+    this.shouldScrollBottom = true;
     this.loadAndPoll(p._id, p.psicologo._id);
     this.markConversationRead(p._id, p.psicologo._id);
   }
@@ -275,21 +283,24 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     const text = (this.input.value ?? '').trim();
     if (!text) return;
     this.sendError.set(null);
+    const replyTo = this.replyContext() ?? undefined;
 
     if (this.role() === 'paciente') {
-      this.msgSvc.sendAsPaciente(text).subscribe({
+      this.msgSvc.sendAsPaciente(text, replyTo).subscribe({
         next: msg => {
           this.mensagens.update(m => [...m, msg]);
           this.input.reset();
+          this.replyContext.set(null);
           this.shouldScrollBottom = true;
         },
         error: err => this.sendError.set(err.error?.error ?? 'Erro ao enviar.'),
       });
     } else if (this.role() === 'psicologo' && this.selectedPaciente()) {
-      this.msgSvc.sendAsPsicologo(text, this.selectedPaciente()!._id).subscribe({
+      this.msgSvc.sendAsPsicologo(text, this.selectedPaciente()!._id, replyTo).subscribe({
         next: msg => {
           this.mensagens.update(m => [...m, msg]);
           this.input.reset();
+          this.replyContext.set(null);
           this.shouldScrollBottom = true;
         },
         error: err => this.sendError.set(err.error?.error ?? 'Erro ao enviar.'),
@@ -297,15 +308,57 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
+  cancelReply(): void {
+    this.replyContext.set(null);
+  }
+
   onKeydown(e: KeyboardEvent): void {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.send(); }
+  }
+
+  // ── Consulta popup responses ───────────────────────────────────────────────
+
+  // Patient confirms/rejects a "consulta_pedido" popup.
+  responderConsultaPedido(msg: Mensagem, resposta: 'confirmada' | 'rejeitada'): void {
+    this.msgSvc.responderMensagem(msg._id, resposta).subscribe({
+      next: updated => {
+        this.mensagens.update(list => list.map(m => m._id === updated._id ? updated : m));
+        this.shouldScrollBottom = true;
+        this.refreshCurrentConversation();
+      },
+      error: err => this.sendError.set(err.error?.error ?? 'Erro ao responder.'),
+    });
+  }
+
+  private refreshCurrentConversation(): void {
+    if (this.role() === 'paciente') {
+      const p = this.pacienteProfile();
+      if (p) this.loadMessages(p._id, p.psicologo._id, true);
+    } else if (this.role() === 'psicologo' && this.selectedPaciente()) {
+      const sel = this.selectedPaciente()!;
+      this.loadMessages(sel._id, sel.psicologo._id, true);
+    }
+  }
+
+  // ── Navigate to agenda showing the consulta's date ─────────────────────────
+
+  verNaAgenda(msg: Mensagem): void {
+    if (!msg.consultaData) return;
+    const target = this.role() === 'paciente' ? '/paciente/agenda' : '/psicologo/agenda';
+    this.router.navigate([target], { queryParams: { data: msg.consultaData } });
+    this.isOpen.set(false);
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   private scrollToBottom(): void {
     const el = this.messagesEl?.nativeElement;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (!el) return;
+    // Wait for layout to settle (new message rows may not have their final
+    // height yet at the point ngAfterViewChecked fires) before measuring.
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
   }
 
   isMine(msg: Mensagem): boolean {

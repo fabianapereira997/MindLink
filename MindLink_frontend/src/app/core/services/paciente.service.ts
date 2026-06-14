@@ -48,18 +48,19 @@ export class PacienteService {
     return this.http.put<PacienteProfile>(`${API}/pacientes/${id}`, { formulario: { estiloDeVida } });
   }
 
-  /** Exporta os dados completos de um paciente (perfil, formulário, registos, desafios, consultas) em XML. */
-  exportarPaciente(id: string): Observable<Blob> {
-    return this.http.get(`${API}/pacientes/${id}/export`, { responseType: 'blob' });
-  }
-
-  /** Psicólogo: exporta a lista resumida dos seus pacientes em XML. */
-  exportarListaPacientes(): Observable<Blob> {
-    return this.http.get(`${API}/pacientes/export/lista`, { responseType: 'blob' });
-  }
-
   /** Psicólogo: termina o percurso de monitorização do paciente (torna-o inativo). */
   terminarMonitorizacao(id: string): Observable<PacienteProfile> {
     return this.http.put<PacienteProfile>(`${API}/pacientes/${id}`, { ativo: false });
+  }
+
+  /** Psicólogo: atualiza os dados clínicos do paciente (diagnóstico, comorbilidades, estilo de vida). */
+  updateDadosClinicos(id: string, payload: {
+    doenca?: string;
+    formulario?: {
+      historicoMedico?: { comorbilidades?: string[] };
+      estiloDeVida?: { exercicioRegular?: boolean | null; fumador?: boolean | null };
+    };
+  }): Observable<PacienteProfile> {
+    return this.http.put<PacienteProfile>(`${API}/pacientes/${id}`, payload);
   }
 }

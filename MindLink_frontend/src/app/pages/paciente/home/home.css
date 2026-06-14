@@ -2,6 +2,43 @@
   padding: var(--space-2xl) 0 var(--space-4xl);
 }
 
+/* ── Campo "Notas" com o mesmo estilo dos campos das fichas de criação ── */
+.checkin-form ::ng-deep .mat-mdc-text-field-wrapper {
+  background-color: #fff;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-md);
+  transition: border-color var(--transition-fast);
+}
+
+.checkin-form ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border-color: var(--color-primary);
+}
+
+.checkin-form ::ng-deep .mdc-line-ripple,
+.checkin-form ::ng-deep .mdc-line-ripple::before,
+.checkin-form ::ng-deep .mdc-line-ripple::after {
+  display: none;
+}
+
+.checkin-form ::ng-deep .mat-mdc-form-field-flex {
+  align-items: center;
+}
+
+.checkin-form ::ng-deep .mat-mdc-floating-label {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.checkin-form ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-floating-label {
+  color: var(--color-primary);
+}
+
+.checkin-form ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  font-size: 0.78rem;
+}
+
 .loading {
   text-align: center;
   padding: var(--space-4xl);
@@ -18,7 +55,55 @@
   margin-bottom: var(--space-2xl);
 }
 
-.home-header h1 { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 4px; }
+.home-header h1 {
+  font-size: clamp(2rem, 3.2vw, 3.375rem);
+  font-weight: 600;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.home-header p {
+  color: var(--color-text-muted);
+  font-size: clamp(1.25rem, 1.6vw, 1.375rem);
+  font-weight: 400;
+}
+
+/* Linha verde a sublinhar "Ver evolução", terminando numa seta para a direita */
+.ver-evolucao-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 4px;
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: color var(--transition-fast);
+}
+
+.ver-evolucao-link:hover {
+  color: var(--color-primary);
+}
+
+.ver-evolucao-link__arrow {
+  display: inline-block;
+  line-height: 1;
+  transition: transform var(--transition-fast);
+}
+
+.ver-evolucao-link:hover .ver-evolucao-link__arrow {
+  transform: translateX(3px);
+}
+
+.psi-header__accent {
+  display: block;
+  width: 40px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  margin-top: var(--space-sm);
+}
 
 /* Banners */
 .banner {
@@ -45,6 +130,54 @@
 /* Check-in card */
 .checkin-card {
   margin-bottom: var(--space-2xl);
+}
+
+/* Destacar o cartão quando o registo de hoje ainda não foi feito */
+.checkin-card--pendente {
+  background: linear-gradient(135deg, rgba(38,135,78,0.05), rgba(38,135,78,0.1));
+  border: 1px solid rgba(38,135,78,0.18);
+}
+
+/* Botões com seta (ações de navegação) */
+.btn-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-arrow__icon {
+  display: inline-block;
+  transition: transform var(--transition-fast);
+  font-size: 0.85em;
+}
+
+.btn-arrow:hover .btn-arrow__icon {
+  transform: translateX(3px);
+}
+
+/* Linha verde "Registe já →" que substitui o botão de registo */
+.checkin-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(38,135,78,0.15);
+  width: 100%;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.checkin-cta:hover {
+  color: var(--color-primary);
 }
 
 .checkin-card__top {
@@ -170,95 +303,6 @@
   opacity: 0.85;
 }
 
-/* ── Symptom Chips ── */
-.sintomas-block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.sintomas-label {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--color-text-primary);
-}
-
-.sintomas-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.sintoma-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1.5px solid rgba(0,0,0,0.12);
-  background: white;
-  color: var(--color-text-secondary);
-  transition: all var(--transition-fast);
-  user-select: none;
-}
-
-.sintoma-chip:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary-dark);
-  background: rgba(38,135,78,0.04);
-}
-
-.sintoma-chip--selected {
-  background: rgba(38,135,78,0.1);
-  border-color: var(--color-primary);
-  color: var(--color-primary-dark);
-  font-weight: 600;
-}
-
-.sintoma-chip--custom {
-  background: rgba(38,135,78,0.15);
-}
-
-.sintoma-custom-row {
-  display: flex;
-  gap: var(--space-sm);
-  margin-top: var(--space-xs);
-}
-
-.sintoma-custom-input {
-  flex: 1;
-  padding: 8px 14px;
-  border-radius: var(--radius-full);
-  border: 1.5px solid rgba(0,0,0,0.12);
-  font-family: inherit;
-  font-size: 0.875rem;
-  background: white;
-  outline: none;
-  transition: border-color var(--transition-fast);
-}
-
-.sintoma-custom-input:focus {
-  border-color: var(--color-primary);
-}
-
-.sintoma-add-btn {
-  padding: 8px 18px;
-  border-radius: var(--radius-full);
-  border: none;
-  background: var(--color-primary);
-  color: white;
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.sintoma-add-btn:hover { background: var(--color-primary-dark); }
-
 /* Badges */
 .badge {
   display: inline-flex;
@@ -275,14 +319,23 @@
 }
 
 .badge--agendada {
-  background: rgba(38,135,78,0.1);
-  color: var(--color-primary);
+  background: rgba(37,99,235,0.08);
+  color: #2563eb;
   flex-shrink: 0;
 }
 
 /* Section */
 .home-section { margin-bottom: var(--space-2xl); }
 .home-section > h2 { font-size: 1.2rem; margin-bottom: var(--space-md); }
+
+.dash-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.dash-section__header h2 { font-size: 1.2rem; margin-bottom: 0; }
 
 .section-sub {
   font-size: 0.8rem;
@@ -356,10 +409,16 @@
 
 .btn-overdue:hover { background: #b91c1c; }
 
+/* Pendente — leve tonalidade amarela */
+.desafio-card--pendente {
+  background: rgba(234,179,8,0.06);
+  border: 1.5px solid rgba(234,179,8,0.18);
+}
+
 .desafio-card--done {
   opacity: 0.72;
-  background: rgba(38,135,78,0.03);
-  border-color: rgba(38,135,78,0.15);
+  background: rgba(38,135,78,0.05);
+  border-color: rgba(38,135,78,0.18);
 }
 
 .desafio-card--done .desafio-card__title {
@@ -466,6 +525,43 @@
 }
 .modal__close:hover { color: var(--color-text-primary); }
 
+/* ── Campos do modal "Marcar desafio como feito" com o mesmo estilo dos campos de login/check-in ── */
+.modal ::ng-deep .mat-mdc-text-field-wrapper {
+  background-color: #fff;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-md);
+  transition: border-color var(--transition-fast);
+}
+
+.modal ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border-color: var(--color-primary);
+}
+
+.modal ::ng-deep .mdc-line-ripple,
+.modal ::ng-deep .mdc-line-ripple::before,
+.modal ::ng-deep .mdc-line-ripple::after {
+  display: none;
+}
+
+.modal ::ng-deep .mat-mdc-form-field-flex {
+  align-items: center;
+}
+
+.modal ::ng-deep .mat-mdc-floating-label {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.modal ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-floating-label {
+  color: var(--color-primary);
+}
+
+.modal ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  font-size: 0.78rem;
+}
+
 .modal__actions {
   display: flex;
   justify-content: flex-end;
@@ -520,6 +616,88 @@
   font-size: 0.85rem;
   color: var(--color-text-muted);
   margin-top: 4px;
+}
+
+/* ── Perguntas adicionais (escala de 5 pontos) ── */
+.perguntas-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.perguntas-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.perguntas-label__required {
+  color: var(--color-primary);
+}
+
+.perguntas-grupo__titulo {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary-dark);
+  margin: var(--space-md) 0 var(--space-xs);
+}
+
+.perguntas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+.pergunta-card {
+  border: 1.5px solid rgba(0,0,0,0.08);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  background: var(--color-off-white);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.pergunta-card__texto {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.pergunta-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.pergunta-scale__opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+}
+
+.pergunta-scale__opt input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.pergunta-scale__label {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  line-height: 1.2;
+}
+
+@media (max-width: 700px) {
+  .perguntas-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 500px) {

@@ -2,7 +2,10 @@
   <div class="container">
 
     <div class="psi-header">
-      <h1>Desafios</h1>
+      <div>
+        <h1>Desafios</h1>
+        <p>Crie e acompanhe os desafios atribuídos aos seus pacientes.</p>
+      </div>
       <button class="btn-primary btn--sm" (click)="showForm.set(!showForm())">
         {{ showForm() ? 'Cancelar' : '+ Novo desafio' }}
       </button>
@@ -88,7 +91,7 @@
         </div>
 
         <div class="form-actions">
-          <button class="btn-primary" (click)="criarDesafio()" [disabled]="saving()">
+          <button class="btn-primary btn--sm" (click)="criarDesafio()" [disabled]="saving()">
             {{ saving() ? 'A guardar...' : 'Criar desafio' }}
           </button>
         </div>
@@ -124,7 +127,7 @@
                   <div class="chip-row">
                     @for (p of d.pacientesCumpriram; track p._id) {
                       @if (p.comentario || p.resposta) {
-                        <button type="button" class="chip chip--ok chip--commented" (click)="abrirComentario(p)">
+                        <button type="button" class="chip chip--ok chip--commented" (click)="abrirComentario(p, d.titulo)">
                           {{ p.user?.nome }} 💬
                         </button>
                       } @else {
@@ -174,6 +177,10 @@
         <h2>Comentário de {{ p.user?.nome }}</h2>
         <button class="modal__close" (click)="fecharComentario()">✕</button>
       </div>
+      @if (p.desafioTitulo) {
+        <p class="form-label">Desafio</p>
+        <p class="comentario-text">{{ p.desafioTitulo }}</p>
+      }
       @if (p.resposta) {
         <p class="form-label">Resposta ao desafio</p>
         <p class="comentario-text">"{{ p.resposta }}"</p>
@@ -183,8 +190,8 @@
         <p class="comentario-text">"{{ p.comentario }}"</p>
       }
       <div class="modal__actions">
-        <button type="button" class="btn-secondary" (click)="fecharComentario()">Fechar</button>
-        <button type="button" class="btn-primary" (click)="enviarMensagem()">Enviar mensagem</button>
+        <button type="button" class="btn-secondary btn--sm" (click)="fecharComentario()">Fechar</button>
+        <button type="button" class="btn-primary btn--sm" (click)="enviarMensagem()">Enviar mensagem</button>
       </div>
     </div>
   </div>

@@ -2,7 +2,10 @@
   <div class="container">
 
     <div class="psi-header">
-      <h1>Agenda</h1>
+      <div>
+        <h1>Agenda</h1>
+        <p>Consulte as suas consultas agendadas e navegue entre semanas.</p>
+      </div>
       <div class="agenda-nav">
         <button class="btn-secondary btn--sm" (click)="prevWeek()">&#8249;</button>
         <span class="agenda-week-label">{{ weekLabel() }}</span>
@@ -25,6 +28,47 @@
       }
       @if (desafioError()) {
         <div class="banner banner--error">{{ desafioError() }}</div>
+      }
+
+      <!-- Consultas por confirmar -->
+      @if (pendingConsultas().length > 0) {
+        <div class="agenda-list-section">
+          <h2>Consultas por confirmar</h2>
+          @if (confirmError()) {
+            <div class="banner banner--error">{{ confirmError() }}</div>
+          }
+          <div class="consulta-list">
+            @for (c of pendingConsultas(); track c._id) {
+              <div class="card consulta-card-wrap">
+                <div class="consulta-card">
+                  <div class="consulta-card__date">
+                    <span class="consulta-card__day">{{ c.data | date:'d' }}</span>
+                    <span class="consulta-card__month">{{ c.data | date:'MMM' }}</span>
+                  </div>
+                  <div class="consulta-card__info">
+                    <div class="consulta-card__title">Dr(a). {{ c.psicologo?.user?.nome ?? 'Psicólogo' }}</div>
+                    <div class="consulta-card__meta">
+                      {{ c.data | date:'HH:mm' }} &middot; {{ c.duracao }} min
+                      @if (c.psicologo?.especialidade) { &middot; {{ c.psicologo.especialidade }} }
+                      @if (c.notas) { &middot; <em>{{ c.notas }}</em> }
+                    </div>
+                  </div>
+                  <div class="consulta-card__right">
+                    <span class="badge" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
+                    <button
+                      type="button"
+                      class="btn-primary btn--sm"
+                      (click)="confirmarConsulta(c)"
+                      [disabled]="confirmingId() === c._id"
+                    >
+                      {{ confirmingId() === c._id ? 'A confirmar...' : 'Confirmar' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
       }
       @if (!consultaError()) {
         <div class="week-grid card">

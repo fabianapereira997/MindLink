@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AdminService, AdminPaciente } from '../../../core/services/admin.service';
@@ -21,6 +21,11 @@ export class AdminPacientesComponent implements OnInit {
   filterPsi  = signal('');
 
   confirmDeleteId = signal<string | null>(null);
+
+  confirmInativarTarget = signal<AdminPaciente | null>(null);
+
+  /** Id do paciente cujo menu de ações (⋯) está aberto, ou null se nenhum estiver. */
+  menuAbertoId = signal<string | null>(null);
 
   get psicologoOptions(): string[] {
     const names = this.pacientes()
@@ -76,5 +81,52 @@ export class AdminPacientesComponent implements OnInit {
         this.error.set(err.error?.error ?? 'Erro ao eliminar paciente.');
       },
     });
+  }
+
+  // ── Ativar / inativar paciente ───────────────────────────────────────────────
+  toggleAtivo(p: AdminPaciente): void {
+    const novoEstado = !(p.ativo ?? true);
+    if (novoEstado === false) {
+      this.confirmInativarTarget.set(p);
+      return;
+    }
+    this.applyAtivo(p, novoEstado);
+  }
+
+  cancelInativar(): void {
+    this.confirmInativarTarget.set(null);
+  }
+
+  confirmInativar(): void {
+    const p = this.confirmInativarTarget();
+    if (!p) return;
+    this.confirmInativarTarget.set(null);
+    this.applyAtivo(p, false);
+  }
+
+  private applyAtivo(p: AdminPaciente, novoEstado: boolean): void {
+    this.error.set(null);
+    this.success.set(null);
+    this.adminSvc.setPacienteAtivo(p._id, novoEstado).subscribe({
+      next: updated => {
+        this.pacientes.update(list => list.map(x => x._id === updated._id ? { ...x, ativo: updated.ativo } : x));
+        this.success.set(novoEstado ? 'Paciente ativado com sucesso.' : 'Paciente inativado com sucesso.');
+      },
+      error: err => {
+        this.error.set(err.error?.error ?? 'Erro ao alterar o estado do paciente.');
+      },
+    });
+  }
+
+  // ── Menu de ações (⋯) ────────────────────────────────────────────────────────
+  toggleMenu(id: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.menuAbertoId.set(this.menuAbertoId() === id ? null : id);
+  }
+
+  @HostListener('document:click')
+  fecharMenu(): void {
+    this.menuAbertoId.set(null);
   }
 }

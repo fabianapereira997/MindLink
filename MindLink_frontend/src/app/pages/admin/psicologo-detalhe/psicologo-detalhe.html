@@ -1,8 +1,6 @@
 <div class="admin-page">
   <div class="container">
 
-    <a routerLink="/admin/psicologos" class="detail-back">← Psicólogos</a>
-
     @if (success()) {
       <div class="banner banner--success">{{ success() }}</div>
     }
@@ -22,30 +20,8 @@
           <div class="detail-hero__email">{{ d.psicologo.user?.email }}</div>
         </div>
         <div class="detail-hero__actions">
-          <button class="btn-secondary btn--sm" (click)="exportPacientes()">Exportar pacientes</button>
-          @if (d.psicologo.ativo === false) {
-            <button class="btn-secondary btn--sm" (click)="openTransferModal()">Transferir pacientes</button>
-          }
-        </div>
-      </div>
-
-      <!-- Stats -->
-      <div class="info-grid">
-        <div class="card info-box">
-          <div class="info-box__val">{{ d.pacientes.length }}</div>
-          <div class="info-box__label">Pacientes</div>
-        </div>
-        <div class="card info-box">
-          <div class="info-box__val">{{ d.consultas.length }}</div>
-          <div class="info-box__label">Total consultas</div>
-        </div>
-        <div class="card info-box">
-          <div class="info-box__val">{{ countEstado(d.consultas, 'realizada') }}</div>
-          <div class="info-box__label">Realizadas</div>
-        </div>
-        <div class="card info-box">
-          <div class="info-box__val">{{ countEstado(d.consultas, 'agendada') }}</div>
-          <div class="info-box__label">Agendadas</div>
+          <button class="btn-secondary btn--sm" (click)="openExportModal()">Exportar pacientes</button>
+          <button class="btn-secondary btn--sm" (click)="openTransferModal()">Transferir pacientes</button>
         </div>
       </div>
 
@@ -70,31 +46,53 @@
         }
       </div>
 
-      <!-- Consultations -->
-      <div class="card detail-section">
-        <h3>Consultas ({{ d.consultas.length }})</h3>
-        @if (d.consultas.length === 0) {
-          <p class="empty-text">Sem consultas registadas.</p>
+    }
+  </div>
+
+  <!-- Exportar pacientes (seleção) -->
+  @if (showExportModal()) {
+    <div class="modal-backdrop" (click)="closeExportModal()">
+      <div class="modal card" (click)="$event.stopPropagation()">
+        <div class="modal__header">
+          <h2>Exportar pacientes</h2>
+          <button class="modal__close" (click)="closeExportModal()">✕</button>
+        </div>
+
+        <p>
+          Selecione os pacientes de <strong>{{ data()?.psicologo?.user?.nome }}</strong>
+          a incluir no ficheiro XML.
+        </p>
+
+        @if (data() && data()!.pacientes.length === 0) {
+          <p class="empty-text">Sem pacientes associados.</p>
         } @else {
-          <div class="compact-list">
-            @for (c of d.consultas.slice(0, 20); track c._id) {
-              <div class="compact-item">
-                <div class="compact-item__info">
-                  <span class="compact-item__name">{{ c.paciente?.user?.nome ?? '—' }}</span>
-                  <span class="compact-item__sub">{{ c.data | date:'dd/MM/yyyy HH:mm' }} · {{ c.duracao }} min</span>
-                </div>
-                <span class="badge" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
-              </div>
-            }
-            @if (d.consultas.length > 20) {
-              <p class="more-note">+ {{ d.consultas.length - 20 }} consultas mais antigas não mostradas.</p>
+          <label class="export-paciente-row export-paciente-row--all">
+            <input type="checkbox" [checked]="allExportSelected" (change)="toggleSelectAllExport()" />
+            <span>Selecionar todos</span>
+          </label>
+
+          <div class="export-paciente-list">
+            @for (p of data()?.pacientes ?? []; track p._id) {
+              <label class="export-paciente-row">
+                <input type="checkbox" [checked]="isExportSelected(p._id)" (change)="toggleExportPaciente(p._id)" />
+                <span class="compact-item__info">
+                  <span class="compact-item__name">{{ p.user?.nome }}</span>
+                  <span class="compact-item__sub">{{ p.user?.email }}</span>
+                </span>
+              </label>
             }
           </div>
         }
-      </div>
 
-    }
-  </div>
+        <div class="modal__actions">
+          <button type="button" class="btn-secondary" (click)="closeExportModal()">Cancelar</button>
+          <button type="button" class="btn-primary" [disabled]="!selectedExportIds().length" (click)="confirmExportPacientes()">
+            Exportar ({{ selectedExportIds().length }})
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- Transferir pacientes (importar lista XML) -->
   @if (showTransfer()) {
@@ -125,6 +123,9 @@
                 <option [value]="o._id">{{ o.user.nome }}</option>
               }
             </select>
+            @if (otherPsicologos.length === 0) {
+              <span class="filter-count">Não existem psicólogos ativos disponíveis como destino.</span>
+            }
           </div>
 
           <div class="form-field">

@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { PacienteService } from '../../../core/services/paciente.service';
@@ -25,6 +25,7 @@ export class PacienteAgendaComponent implements OnInit {
   private pacSvc      = inject(PacienteService);
   private consultaSvc = inject(ConsultaService);
   private desafioSvc  = inject(DesafioService);
+  private route       = inject(ActivatedRoute);
 
   loading       = signal(true);
   profileError  = signal<string | null>(null);
@@ -34,6 +35,10 @@ export class PacienteAgendaComponent implements OnInit {
   allConsultas  = signal<Consulta[]>([]);
   allDesafios   = signal<Desafio[]>([]);
   weekStart     = signal<Date>(this.getMonday(new Date()));
+
+  // ── Confirmar consulta ──────────────────────────────────────────────────────
+  confirmingId  = signal<string | null>(null);
+  confirmError  = signal<string | null>(null);
 
   // "Marcar como feito" modal — comentário opcional + resposta obrigatória (se aplicável)
   desafioToComplete = signal<Desafio | null>(null);
@@ -72,7 +77,15 @@ export class PacienteAgendaComponent implements OnInit {
   weekConsultas = computed(() => {
     const isos = new Set(this.weekDays().map(d => d.iso));
     return this.allConsultas()
+      .filter(c => c.estado !== 'pendente')
       .filter(c => isos.has(this.toLocalISODate(new Date(c.data))))
+      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+  });
+
+  /** Consultas propostas pelo psicólogo que aguardam confirmação do paciente. */
+  pendingConsultas = computed(() => {
+    return this.allConsultas()
+      .filter(c => c.estado === 'pendente')
       .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
   });
 
@@ -129,6 +142,14 @@ export class PacienteAgendaComponent implements OnInit {
   // ── Lifecycle ───────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe(params => {
+      const dataParam = params.get('data');
+      if (dataParam) {
+        const d = new Date(dataParam);
+        if (!isNaN(d.getTime())) this.weekStart.set(this.getMonday(d));
+      }
+    });
+
     this.pacSvc.getMyProfile().subscribe({
       next: profiles => {
         this.loading.set(false);
@@ -177,6 +198,7 @@ export class PacienteAgendaComponent implements OnInit {
 
   consultasForDay(iso: string): Consulta[] {
     return this.allConsultas()
+      .filter(c => c.estado !== 'pendente')
       .filter(c => this.toLocalISODate(new Date(c.data)) === iso)
       .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
   }
@@ -188,13 +210,32 @@ export class PacienteAgendaComponent implements OnInit {
       .sort((a, b) => this.prazoData(a).getTime() - this.prazoData(b).getTime());
   }
 
+  /** Paciente confirma uma consulta proposta ("pendente" -> "agendada"). Atualiza a agenda sem refresh. */
+  confirmarConsulta(c: Consulta): void {
+    if (this.confirmingId()) return;
+    this.confirmingId.set(c._id);
+    this.confirmError.set(null);
+    this.consultaSvc.updateConsulta(c._id, { estado: 'agendada' }).subscribe({
+      next: updated => {
+        this.allConsultas.update(list => list.map(x => x._id === updated._id ? updated : x));
+        this.confirmingId.set(null);
+      },
+      error: err => {
+        this.confirmingId.set(null);
+        this.confirmError.set(err.error?.error ?? `Erro ${err.status ?? ''} ao confirmar consulta.`);
+      },
+    });
+  }
+
   estadoLabel(estado: string): string {
+    if (estado === 'pendente') return 'Por confirmar';
     if (estado === 'realizada') return 'Realizada';
     if (estado === 'cancelada') return 'Cancelada';
     return 'Agendada';
   }
 
   estadoClass(estado: string): string {
+    if (estado === 'pendente') return 'badge--pendente';
     if (estado === 'realizada') return 'badge--realizada';
     if (estado === 'cancelada') return 'badge--cancelada';
     return 'badge--agendada';

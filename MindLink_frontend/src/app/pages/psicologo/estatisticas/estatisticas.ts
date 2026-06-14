@@ -21,7 +21,7 @@ interface PacienteStats {
   desafiosPendentes: number;
   humorBaixo: boolean;
   semRegistoHumor3Dias: boolean;
-  monitorizadoUmMes: boolean;
+  monitorizado4Dias: boolean;
 }
 
 @Component({
@@ -79,11 +79,11 @@ export class PsicologoEstatisticasComponent implements OnInit, AfterViewInit {
       .sort((a, b) => a.avgRecente - b.avgRecente);
   });
 
-  /** Pacientes com humor positivo (4 ou 5) e bom desempenho durante um mês
-   *  completo de monitorização, sem desafios pendentes. */
+  /** Pacientes com humor positivo (4 ou 5) e bom desempenho durante 4 dias
+   *  completos de monitorização, sem desafios pendentes. */
   pacientesRecuperados = computed(() =>
     this.pacientesStats()
-      .filter(p => p.monitorizadoUmMes && p.avgMes >= 4 && p.desafiosPendentes === 0)
+      .filter(p => p.monitorizado4Dias && p.avgMes >= 4 && p.desafiosPendentes === 0)
       .sort((a, b) => b.avgMes - a.avgMes)
   );
 
@@ -130,7 +130,7 @@ export class PsicologoEstatisticasComponent implements OnInit, AfterViewInit {
           desafiosPendentes: 0,
           humorBaixo: false,
           semRegistoHumor3Dias: false,
-          monitorizadoUmMes: false,
+          monitorizado4Dias: false,
         }));
 
         const allQs: Questionario[] = [];
@@ -161,16 +161,16 @@ export class PsicologoEstatisticasComponent implements OnInit, AfterViewInit {
               statsArr[i].streak = this.calcStreak(sorted);
               statsArr[i].desafiosPendentes = this.desafiosPendentesMap()[ps._id] ?? 0;
 
-              // Média de humor no último mês e se a monitorização já dura há
-              // pelo menos um mês completo (usado para "boa recuperação").
-              const cutoff30 = new Date(); cutoff30.setDate(cutoff30.getDate() - 30);
-              const ultimoMes = sorted.filter(q => new Date(q.data) >= cutoff30);
-              statsArr[i].avgMes = ultimoMes.length
-                ? ultimoMes.reduce((s, q) => s + q.humor, 0) / ultimoMes.length
+              // Média de humor nos últimos 4 dias e se a monitorização já dura há
+              // pelo menos 4 dias completos (usado para "boa recuperação").
+              const cutoff4 = new Date(); cutoff4.setDate(cutoff4.getDate() - 4);
+              const ultimosDias = sorted.filter(q => new Date(q.data) >= cutoff4);
+              statsArr[i].avgMes = ultimosDias.length
+                ? ultimosDias.reduce((s, q) => s + q.humor, 0) / ultimosDias.length
                 : 0;
               const primeiroRegisto = sorted.length ? new Date(sorted[sorted.length - 1].data) : null;
-              statsArr[i].monitorizadoUmMes = !!primeiroRegisto
-                && (Date.now() - primeiroRegisto.getTime()) / (1000 * 60 * 60 * 24) >= 30;
+              statsArr[i].monitorizado4Dias = !!primeiroRegisto
+                && (Date.now() - primeiroRegisto.getTime()) / (1000 * 60 * 60 * 24) >= 4;
             },
             complete: () => {
               remaining--;

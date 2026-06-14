@@ -7,10 +7,9 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PacienteService, PacienteProfile } from '../../../core/services/paciente.service';
-import { todayDateString } from '../../../core/utils/date.utils';
+import { todayDateString, minBirthDateString, calcularIdade } from '../../../core/utils/date.utils';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   const pw  = control.get('newPassword')?.value;
@@ -24,7 +23,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   standalone: true,
   imports: [
     CommonModule, DatePipe, ReactiveFormsModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule,
+    MatFormFieldModule, MatInputModule, MatSelectModule,
   ],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css',
@@ -36,25 +35,27 @@ export class PacientePerfilComponent implements OnInit {
 
   profile = signal<PacienteProfile | null>(null);
   loading = signal(true);
-  editing = signal(false);
-  saving  = signal(false);
-  error   = signal<string | null>(null);
   success = signal(false);
   hideNew     = true;
   hideConfirm = true;
 
   /** Today's date ('YYYY-MM-DD'); data de nascimento cannot be later than this. */
   readonly maxBirthDate = todayDateString();
+  /** Earliest allowed birth date ('YYYY-MM-DD'); age cannot exceed 120 years. */
+  readonly minBirthDate = minBirthDateString();
 
-  form = this.fb.group({
-    nome:             ['', Validators.required],
-    email:            ['', [Validators.required, Validators.email]],
-    genero:           ['', Validators.required],
-    data_nascimento:  ['', Validators.required],
-    exercicioRegular: [''],
-    fumador:          [''],
-    newPassword:      [''],
-    confirmPassword:  [''],
+  // ── Editar dados pessoais ───────────────────────────────────────────────
+  editandoPessoais = signal(false);
+  savingPessoais   = signal(false);
+  pessoaisError    = signal<string | null>(null);
+
+  pessoaisForm = this.fb.group({
+    nome:            ['', Validators.required],
+    email:           ['', [Validators.required, Validators.email]],
+    genero:          ['', Validators.required],
+    data_nascimento: ['', Validators.required],
+    newPassword:     ['', [Validators.minLength(6), Validators.pattern(/.*[0-9].*/)]],
+    confirmPassword: [''],
   }, { validators: passwordsMatch });
 
   ngOnInit(): void {
@@ -72,47 +73,48 @@ export class PacientePerfilComponent implements OnInit {
     return nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   }
 
-  startEditing(): void {
+  generoLabel(): string {
+    const g = this.auth.user()?.genero;
+    if (!g) return '—';
+    return g.charAt(0).toUpperCase() + g.slice(1);
+  }
+
+  idade(): number | null {
+    const data = this.auth.user()?.data_nascimento;
+    return data ? calcularIdade(data) : null;
+  }
+
+  // ── Dados pessoais ───────────────────────────────────────────────────────
+  startEditPessoais(): void {
     const user = this.auth.user();
-    const estilo = this.profile()?.formulario?.estiloDeVida;
-    this.form.reset({
-      nome:             user?.nome ?? '',
-      email:            user?.email ?? '',
-      genero:           user?.genero ?? '',
-      data_nascimento:  user?.data_nascimento ? user.data_nascimento.substring(0, 10) : '',
-      exercicioRegular: this.fromBool(estilo?.exercicioRegular),
-      fumador:          this.fromBool(estilo?.fumador),
-      newPassword:      '',
-      confirmPassword:  '',
+    this.pessoaisForm.reset({
+      nome:            user?.nome ?? '',
+      email:           user?.email ?? '',
+      genero:          user?.genero ?? '',
+      data_nascimento: user?.data_nascimento ? user.data_nascimento.substring(0, 10) : '',
+      newPassword:     '',
+      confirmPassword: '',
     });
-    this.error.set(null);
+    this.pessoaisError.set(null);
     this.success.set(false);
-    this.editing.set(true);
+    this.editandoPessoais.set(true);
   }
 
-  private fromBool(v: boolean | null | undefined): string {
-    if (v === true) return 'sim';
-    if (v === false) return 'nao';
-    return '';
+  cancelEditPessoais(): void {
+    if (this.savingPessoais()) return;
+    this.editandoPessoais.set(false);
   }
 
-  private toBool(v: string | null | undefined): boolean | null {
-    if (v === 'sim') return true;
-    if (v === 'nao') return false;
-    return null;
-  }
+  savePessoais(): void {
+    if (this.pessoaisForm.invalid) {
+      this.pessoaisForm.markAllAsTouched();
+      this.pessoaisError.set('Existem campos inválidos ou em falta. Verifique os campos assinalados.');
+      return;
+    }
+    this.savingPessoais.set(true);
+    this.pessoaisError.set(null);
 
-  cancelEditing(): void {
-    this.editing.set(false);
-    this.error.set(null);
-  }
-
-  submit(): void {
-    if (this.form.invalid) return;
-    this.saving.set(true);
-    this.error.set(null);
-
-    const v = this.form.value;
+    const v = this.pessoaisForm.value;
     const payload: Record<string, unknown> = {
       nome: v.nome,
       email: v.email,
@@ -123,36 +125,15 @@ export class PacientePerfilComponent implements OnInit {
       payload['password'] = v.newPassword;
     }
 
-    const estiloDeVida = {
-      exercicioRegular: this.toBool(v.exercicioRegular),
-      fumador: this.toBool(v.fumador),
-    };
-    const profile = this.profile();
-
     this.auth.updateUser(payload).subscribe({
       next: () => {
-        if (!profile) {
-          this.saving.set(false);
-          this.editing.set(false);
-          this.success.set(true);
-          return;
-        }
-        this.pacSvc.updateEstiloVida(profile._id, estiloDeVida).subscribe({
-          next: updated => {
-            this.profile.set(updated);
-            this.saving.set(false);
-            this.editing.set(false);
-            this.success.set(true);
-          },
-          error: err => {
-            this.saving.set(false);
-            this.error.set(err.error?.error ?? 'Erro ao atualizar estilo de vida.');
-          },
-        });
+        this.savingPessoais.set(false);
+        this.editandoPessoais.set(false);
+        this.success.set(true);
       },
       error: err => {
-        this.saving.set(false);
-        this.error.set(err.error?.error ?? 'Erro ao atualizar perfil.');
+        this.savingPessoais.set(false);
+        this.pessoaisError.set(err.error?.error ?? 'Erro ao atualizar dados pessoais.');
       },
     });
   }

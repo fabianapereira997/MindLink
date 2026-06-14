@@ -10,9 +10,17 @@ export interface Mensagem {
   psicologo: string;
   remetente: 'paciente' | 'psicologo';
   mensagem: string;
+  replyTo?: string;
   data: string;
   createdAt: string;
   lida?: boolean;
+
+  // Special popup message types (consulta scheduling)
+  tipo?: 'texto' | 'consulta_pedido' | 'consulta_cancelada';
+  consulta?: string;
+  consultaData?: string;
+  consultaDuracao?: number;
+  resposta?: 'pendente' | 'confirmada' | 'rejeitada';
 }
 
 /** Paciente: { count }. Psicólogo: { [pacienteId]: count }. */
@@ -27,13 +35,13 @@ export class MensagemService {
   }
 
   // Patient: just send {mensagem} — paciente/psicologo auto-filled from JWT
-  sendAsPaciente(mensagem: string): Observable<Mensagem> {
-    return this.http.post<Mensagem>(`${API}/mensagens`, { mensagem });
+  sendAsPaciente(mensagem: string, replyTo?: string): Observable<Mensagem> {
+    return this.http.post<Mensagem>(`${API}/mensagens`, { mensagem, ...(replyTo ? { replyTo } : {}) });
   }
 
   // Psychologist: must include paciente ID
-  sendAsPsicologo(mensagem: string, pacienteId: string): Observable<Mensagem> {
-    return this.http.post<Mensagem>(`${API}/mensagens`, { mensagem, paciente: pacienteId });
+  sendAsPsicologo(mensagem: string, pacienteId: string, replyTo?: string): Observable<Mensagem> {
+    return this.http.post<Mensagem>(`${API}/mensagens`, { mensagem, paciente: pacienteId, ...(replyTo ? { replyTo } : {}) });
   }
 
   // Returns { count } for paciente, or { [pacienteId]: count } for psicólogo.
@@ -44,5 +52,10 @@ export class MensagemService {
   // Marks all messages from the other party in this conversation as read.
   markAsRead(pacienteId: string, psicologoId: string): Observable<{ message: string }> {
     return this.http.patch<{ message: string }>(`${API}/mensagens/conversa/${pacienteId}/${psicologoId}/ler`, {});
+  }
+
+  // Patient: confirms/rejects a "consulta_pedido" popup.
+  responderMensagem(id: string, resposta: 'confirmada' | 'rejeitada'): Observable<Mensagem> {
+    return this.http.patch<Mensagem>(`${API}/mensagens/${id}/responder`, { resposta });
   }
 }

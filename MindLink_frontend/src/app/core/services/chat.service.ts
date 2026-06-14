@@ -10,11 +10,16 @@ export class ChatService {
   /** pacienteId the chat panel should open/select, or null when idle */
   requestedPacienteId = signal<string | null>(null);
 
-  openChatWithPaciente(pacienteId: string): void {
+  /** Text of a comment/answer the psicólogo wants to reply to, if any */
+  requestedReplyText = signal<string | null>(null);
+
+  openChatWithPaciente(pacienteId: string, replyTo?: string): void {
     this.requestedPacienteId.set(pacienteId);
+    this.requestedReplyText.set(replyTo ?? null);
   }
 
   clearRequest(): void {
     this.requestedPacienteId.set(null);
+    this.requestedReplyText.set(null);
   }
 }

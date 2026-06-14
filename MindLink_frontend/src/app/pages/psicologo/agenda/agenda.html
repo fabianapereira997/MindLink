@@ -2,13 +2,19 @@
   <div class="container">
 
     <div class="psi-header">
-      <h1>Agenda</h1>
+      <div>
+        <h1>Agenda</h1>
+        <p>Consulte e organize as suas consultas semanais.</p>
+      </div>
       <div class="agenda-nav">
         <button class="btn-secondary btn--sm" (click)="prevWeek()">&#8249;</button>
         <span class="agenda-week-label">{{ weekLabel() }}</span>
         <button class="btn-secondary btn--sm" (click)="nextWeek()">&#8250;</button>
         <button class="btn-secondary btn--sm" (click)="goToToday()">Hoje</button>
-        <button class="btn-primary btn--sm" (click)="toggleForm()">
+        <button class="btn-secondary btn--sm" (click)="toggleExpandido()">
+          {{ expandido() ? 'Recolher' : 'Expandir' }}
+        </button>
+        <button class="btn--sm" [class.btn-primary]="!showForm()" [class.btn-secondary]="showForm()" (click)="toggleForm()">
           {{ showForm() ? 'Cancelar' : '+ Nova consulta' }}
         </button>
       </div>
@@ -38,18 +44,6 @@
           </div>
 
           <div class="form-field">
-            <label class="form-label">Duração (minutos)</label>
-            <input
-              type="number"
-              class="form-input"
-              min="0"
-              step="5"
-              [value]="novaDuracao()"
-              (input)="novaDuracao.set(+$any($event.target).value)"
-            />
-          </div>
-
-          <div class="form-field">
             <label class="form-label">Data</label>
             <input
               type="date"
@@ -65,8 +59,22 @@
             <input
               type="time"
               class="form-input"
+              min="09:00"
+              max="19:00"
               [value]="novaHora()"
               (input)="novaHora.set($any($event.target).value)"
+            />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Duração (minutos)</label>
+            <input
+              type="number"
+              class="form-input"
+              min="0"
+              step="5"
+              [value]="novaDuracao()"
+              (input)="novaDuracao.set(+$any($event.target).value)"
             />
           </div>
 
@@ -94,27 +102,78 @@
     } @else {
 
       <!-- Week grid -->
-      <div class="week-grid card">
-        @for (day of weekDays(); track day.iso) {
-          <div class="week-day" [class.week-day--today]="day.isToday">
-            <div class="week-day__header">
-              <span class="week-day__weekday">{{ day.weekday }}</span>
-              <span class="week-day__num" [class.week-day__num--today]="day.isToday">{{ day.num }}</span>
-            </div>
-            <div class="week-day__slots">
-              @for (c of consultasForDay(day.iso); track c._id) {
-                <div class="slot" [class.slot--cancelada]="c.estado === 'cancelada'">
-                  <div class="slot__time">{{ c.data | date:'HH:mm' }}</div>
-                  <a [routerLink]="['/psicologo/pacientes', c.paciente?._id]" class="slot__name">
-                    {{ c.paciente?.user?.nome ?? 'Paciente' }}
-                  </a>
-                  <span class="slot__dur">{{ c.duracao }}min</span>
-                </div>
+      @if (expandido()) {
+        <div class="week-grid-wrap card">
+          <div class="week-grid-times">
+            <div class="week-grid-times__header"></div>
+            <div class="week-grid-times__body" [style.height.px]="gridHeight">
+              @for (h of hourMarks(); track h.hour) {
+                <span class="week-grid-times__mark" [style.top.px]="(h.hour - START_HOUR) * HOUR_HEIGHT">{{ h.label }}</span>
               }
             </div>
           </div>
-        }
-      </div>
+          <div class="week-grid">
+            @for (day of weekDays(); track day.iso) {
+              <div class="week-day" [class.week-day--today]="day.isToday">
+                <div class="week-day__header">
+                  <span class="week-day__weekday">{{ day.weekday }}</span>
+                  <span class="week-day__num" [class.week-day__num--today]="day.isToday">{{ day.num }}</span>
+                </div>
+                <div class="week-day__body" [style.height.px]="gridHeight">
+                  @for (h of hourMarks(); track h.hour) {
+                    <div class="hour-line" [style.top.px]="(h.hour - START_HOUR) * HOUR_HEIGHT"></div>
+                  }
+                  @for (c of consultasForDay(day.iso); track c._id) {
+                    <button
+                      type="button"
+                      class="slot"
+                      [class.slot--pendente]="c.estado === 'pendente'"
+                      [class.slot--realizada]="c.estado === 'realizada'"
+                      [class.slot--cancelada]="c.estado === 'cancelada'"
+                      [style.top]="slotStyle(c).top"
+                      [style.height]="slotStyle(c).height"
+                      (click)="abrirDetalhe(c)"
+                    >
+                      <div class="slot__time">{{ c.data | date:'HH:mm' }}</div>
+                      <div class="slot__name">{{ c.paciente?.user?.nome ?? 'Paciente' }}</div>
+                      <span class="slot__dur">{{ c.duracao }}min</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="week-grid-wrap week-grid-wrap--compact card">
+          <div class="week-grid">
+            @for (day of weekDays(); track day.iso) {
+              <div class="week-day" [class.week-day--today]="day.isToday">
+                <div class="week-day__header">
+                  <span class="week-day__weekday">{{ day.weekday }}</span>
+                  <span class="week-day__num" [class.week-day__num--today]="day.isToday">{{ day.num }}</span>
+                </div>
+                <div class="week-day__slots">
+                  @for (c of consultasForDay(day.iso); track c._id) {
+                    <button
+                      type="button"
+                      class="slot slot--compact"
+                      [class.slot--pendente]="c.estado === 'pendente'"
+                      [class.slot--realizada]="c.estado === 'realizada'"
+                      [class.slot--cancelada]="c.estado === 'cancelada'"
+                      (click)="abrirDetalhe(c)"
+                    >
+                      <div class="slot__time">{{ c.data | date:'HH:mm' }}</div>
+                      <div class="slot__name">{{ c.paciente?.user?.nome ?? 'Paciente' }}</div>
+                      <span class="slot__dur">{{ c.duracao }}min</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
 
       <!-- Full list below grid -->
       <div class="agenda-list-section">
@@ -174,6 +233,8 @@
                         <input
                           type="time"
                           class="form-input"
+                          min="09:00"
+                          max="19:00"
                           [value]="reagendarHora()"
                           (input)="reagendarHora.set($any($event.target).value)"
                         />
@@ -242,6 +303,95 @@
             <button type="button" class="btn-primary btn--sm" (click)="confirmarRealizacao()" [disabled]="realizarSaving()">
               {{ realizarSaving() ? 'A guardar...' : 'Confirmar' }}
             </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Modal: detalhe da consulta -->
+    @if (detalheConsulta(); as c) {
+      <div class="modal-overlay" (click)="fecharDetalhe()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+          <h2>Detalhes da consulta</h2>
+
+          <div class="detalhe-info">
+            <div class="detalhe-row">
+              <span class="detalhe-label">Paciente</span>
+              <a [routerLink]="['/psicologo/pacientes', c.paciente?._id]" class="link-hover">
+                {{ c.paciente?.user?.nome ?? 'Paciente' }}
+              </a>
+            </div>
+            <div class="detalhe-row">
+              <span class="detalhe-label">Data</span>
+              <span>{{ c.data | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="detalhe-row">
+              <span class="detalhe-label">Hora</span>
+              <span>{{ c.data | date:'HH:mm' }}</span>
+            </div>
+            <div class="detalhe-row">
+              <span class="detalhe-label">Duração</span>
+              <span>{{ c.duracao }} min</span>
+            </div>
+            <div class="detalhe-row">
+              <span class="detalhe-label">Estado</span>
+              <span class="badge" [class]="estadoClass(c.estado)">{{ estadoLabel(c.estado) }}</span>
+            </div>
+            @if (c.notas) {
+              <div class="detalhe-row detalhe-row--notas">
+                <span class="detalhe-label">Notas</span>
+                <p>{{ c.notas }}</p>
+              </div>
+            }
+          </div>
+
+          @if (editandoDetalhe()) {
+            @if (reagendarError()) {
+              <div class="banner banner--error">{{ reagendarError() }}</div>
+            }
+            <div class="reagendar-form__fields">
+              <div class="form-field">
+                <label class="form-label">Nova data</label>
+                <input
+                  type="date"
+                  class="form-input"
+                  [value]="reagendarData()"
+                  [min]="minConsultaDate"
+                  (input)="reagendarData.set($any($event.target).value)"
+                />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Nova hora</label>
+                <input
+                  type="time"
+                  class="form-input"
+                  min="09:00"
+                  max="19:00"
+                  [value]="reagendarHora()"
+                  (input)="reagendarHora.set($any($event.target).value)"
+                />
+              </div>
+            </div>
+          }
+
+          <div class="modal-actions">
+            @if (editandoDetalhe()) {
+              <button type="button" class="btn-secondary btn--sm" (click)="cancelarEdicaoDetalhe()" [disabled]="reagendarSaving()">
+                Cancelar edição
+              </button>
+              <button type="button" class="btn-primary btn--sm" (click)="confirmarEdicaoDetalhe()" [disabled]="reagendarSaving()">
+                {{ reagendarSaving() ? 'A guardar...' : 'Guardar' }}
+              </button>
+            } @else {
+              <button type="button" class="btn-secondary btn--sm" (click)="fecharDetalhe()">Fechar</button>
+              @if (c.estado === 'agendada') {
+                <button type="button" class="btn-secondary btn--sm" (click)="editarDetalhe()">Editar</button>
+                @if (isHoje(c)) {
+                  <button type="button" class="btn-primary btn--sm" (click)="marcarRealizadaDaDetalhe()">Marcar como realizada</button>
+                }
+                <button type="button" class="btn-danger btn--sm" (click)="cancelarDaDetalhe()">Cancelar</button>
+              }
+            }
           </div>
         </div>
       </div>

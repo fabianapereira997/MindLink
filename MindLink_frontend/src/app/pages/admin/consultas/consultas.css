@@ -65,6 +65,36 @@
   color: white;
 }
 
+/* Cores de acordo com o esquema de tipo/estado de consulta */
+.estado-tab--pendente:hover  { border-color: #d97706; color: #92660a; }
+.estado-tab--agendada:hover  { border-color: #2563eb; color: #2563eb; }
+.estado-tab--realizada:hover { border-color: var(--color-primary-dark); color: var(--color-primary-dark); }
+.estado-tab--cancelada:hover { border-color: #dc2626; color: #dc2626; }
+
+.estado-tab--pendente.estado-tab--active {
+  background: rgba(234,179,8,0.12);
+  border-color: #d97706;
+  color: #92660a;
+}
+
+.estado-tab--agendada.estado-tab--active {
+  background: rgba(37,99,235,0.08);
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.estado-tab--realizada.estado-tab--active {
+  background: rgba(38,135,78,0.1);
+  border-color: var(--color-primary-dark);
+  color: var(--color-primary-dark);
+}
+
+.estado-tab--cancelada.estado-tab--active {
+  background: rgba(220,38,38,0.08);
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
 .estado-tab__count {
   font-size: 0.75rem;
   font-weight: 700;
@@ -117,6 +147,12 @@
   outline: none;
   background: rgba(0,0,0,0.04);
   color: var(--color-text-secondary);
+}
+
+.estado-select--pendente {
+  background: rgba(234,179,8,0.12);
+  color: #92660a;
+  border-color: rgba(234,179,8,0.25);
 }
 
 .estado-select--agendada {
@@ -237,6 +273,59 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  cursor: pointer;
+  transition: filter var(--transition-fast);
+}
+
+.slot:hover {
+  filter: brightness(0.97);
+}
+
+/* ── Modal de detalhes da consulta ───────────────────────────────────────── */
+.detalhe-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin: var(--space-md) 0;
+}
+
+.detalhe-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detalhe-item__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.detalhe-item__value {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.detalhe-item .badge { align-self: flex-start; }
+
+.detalhe-notas {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-md);
+}
+
+.detalhe-notas p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.slot--pendente {
+  background: rgba(234,179,8,0.12);
+  border-left-color: #d97706;
 }
 
 .slot--agendada {
@@ -261,6 +350,7 @@
   color: var(--color-text-primary);
 }
 
+.slot--pendente .slot__time  { color: #92660a; }
 .slot--agendada .slot__time  { color: #2563eb; }
 .slot--realizada .slot__time { color: var(--color-primary-dark); }
 .slot--cancelada .slot__time { color: #dc2626; }
@@ -289,6 +379,7 @@
   font-size: 0.65rem;
 }
 
+.badge--pendente  { background: rgba(234,179,8,0.12);   color: #92660a; }
 .badge--agendada  { background: rgba(37,99,235,0.08);  color: #2563eb; }
 .badge--realizada { background: rgba(38,135,78,0.1);   color: var(--color-primary-dark); }
 .badge--cancelada { background: rgba(220,38,38,0.08);  color: #dc2626; }

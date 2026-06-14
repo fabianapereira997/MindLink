@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { isValidObjectId, isTodayOrPast } from '../utils/helpers';
-import { buildPacientesListaXml, validateXmlAgainstXsd } from '../utils/xmlExport';
+import { isValidObjectId, isTodayOrPast, isWithinMaxAge, isValidEmail, isValidDate, isValidPassword } from '../utils/helpers';
+import { buildPacientesListaXml, validateXmlAgainstXsd, friendlyXmlValidationError } from '../utils/xmlExport';
 
 const express    = require('express');
 const router     = express.Router();
@@ -20,7 +20,7 @@ const adminOnly = [verifyToken, verifyTokenByRole('admin')];
 // Returns a comprehensive stats object for the admin dashboard.
 router.get('/stats', adminOnly, async (_req: Request, res: Response) => {
     try {
-        const [psicologos, pacientes, consultas, questionarios] = await Promise.all([
+        const [psicologosAll, pacientes, consultas, questionarios] = await Promise.all([
             Psicologo.find().populate('user', 'nome email').lean(),
             Paciente.find()
                 .populate('user', 'nome email createdAt')
@@ -32,6 +32,9 @@ router.get('/stats', adminOnly, async (_req: Request, res: Response) => {
                 .lean(),
             Questionario.find().lean(),
         ]);
+
+        // Psicólogos inativos não devem aparecer nas estatísticas do admin.
+        const psicologos = psicologosAll.filter((ps: any) => ps.ativo !== false);
 
         // ── Patients per psychologist ──────────────────────────────────────────
         const patientsByPsicologo = psicologos.map((ps: any) => {
@@ -122,8 +125,24 @@ router.post('/psicologos', adminOnly, async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'nome, email e password são obrigatórios' });
         }
 
+        if (!isValidPassword(password)) {
+            return res.status(400).json({ error: 'A password deve ter pelo menos 6 caracteres e incluir um número' });
+        }
+
+        if (!isValidEmail(email)) {
+            return res.status(400).json({ error: 'Formato de email inválido' });
+        }
+
+        if (data_nascimento && !isValidDate(data_nascimento)) {
+            return res.status(400).json({ error: 'Data de nascimento inválida' });
+        }
+
         if (data_nascimento && !isTodayOrPast(data_nascimento)) {
             return res.status(400).json({ error: 'A data de nascimento não pode ser uma data futura' });
+        }
+
+        if (data_nascimento && !isWithinMaxAge(data_nascimento)) {
+            return res.status(400).json({ error: 'A idade não pode exceder 120 anos' });
         }
 
         const exists = await User.findOne({ email });
@@ -215,6 +234,8 @@ router.put('/psicologos/:id/ativo', adminOnly, async (req: Request, res: Respons
 // ─── GET /api/admin/psicologos/:id/export-pacientes — exporta lista XML ───────
 // Exporta a lista de pacientes (resumo) de um psicólogo qualquer, para que o
 // admin possa importá-la noutro psicólogo (transferência de pacientes).
+// Query opcional `ids`: lista de IDs de pacientes separados por vírgula —
+// quando presente, apenas esses pacientes são incluídos no XML.
 router.get('/psicologos/:id/export-pacientes', adminOnly, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -223,7 +244,17 @@ router.get('/psicologos/:id/export-pacientes', adminOnly, async (req: Request, r
         const psicologo = await Psicologo.findById(id).populate('user', '-password');
         if (!psicologo) return res.status(404).json({ error: 'Psicólogo não encontrado' });
 
-        const pacientes = await Paciente.find({ psicologo: id }).populate('user', '-password');
+        const idsParam = typeof req.query.ids === 'string' ? req.query.ids : '';
+        const selectedIds = idsParam.split(',').map(s => s.trim()).filter(Boolean);
+
+        if (selectedIds.length && !selectedIds.every(isValidObjectId)) {
+            return res.status(400).json({ error: 'IDs de pacientes inválidos' });
+        }
+
+        const filter: Record<string, unknown> = { psicologo: id };
+        if (selectedIds.length) filter._id = { $in: selectedIds };
+
+        const pacientes = await Paciente.find(filter).populate('user', '-password');
 
         const xml = buildPacientesListaXml(psicologo, pacientes);
         await validateXmlAgainstXsd(xml, 'pacientes-lista.xsd');
@@ -252,10 +283,15 @@ router.post('/psicologos/:id/import-pacientes', adminOnly, async (req: Request, 
         const psicologo = await Psicologo.findById(id);
         if (!psicologo) return res.status(404).json({ error: 'Psicólogo não encontrado' });
 
+        // O destino da transferência tem de ser um psicólogo ativo.
+        if (psicologo.ativo === false) {
+            return res.status(400).json({ error: 'Não é possível transferir pacientes para um psicólogo inativo' });
+        }
+
         try {
             await validateXmlAgainstXsd(xml, 'pacientes-lista.xsd');
         } catch (validationError) {
-            return res.status(400).json({ error: `XML inválido: ${(validationError as Error).message}` });
+            return res.status(400).json({ error: friendlyXmlValidationError((validationError as Error).message) });
         }
 
         // Extrai os <Id> dentro de cada <Paciente> da secção <Pacientes>.
@@ -269,8 +305,16 @@ router.post('/psicologos/:id/import-pacientes', adminOnly, async (req: Request, 
             return res.status(400).json({ error: 'Nenhum paciente válido encontrado no XML' });
         }
 
+        // Pacientes inativos não podem ter o seu psicólogo alterado.
+        const pacientesAtivos = await Paciente.find({ _id: { $in: ids }, ativo: { $ne: false } }).select('_id');
+        const idsAtivos = pacientesAtivos.map((p: { _id: unknown }) => String(p._id));
+
+        if (idsAtivos.length === 0) {
+            return res.status(400).json({ error: 'Os pacientes selecionados estão inativos e não podem ser transferidos' });
+        }
+
         const result = await Paciente.updateMany(
-            { _id: { $in: ids } },
+            { _id: { $in: idsAtivos } },
             { psicologo: id },
         );
 
@@ -278,6 +322,7 @@ router.post('/psicologos/:id/import-pacientes', adminOnly, async (req: Request, 
             message: 'Pacientes transferidos com sucesso',
             total: ids.length,
             atualizados: result.modifiedCount,
+            ignorados: ids.length - idsAtivos.length,
         });
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
@@ -318,6 +363,31 @@ router.get('/pacientes/:id', adminOnly, async (req: Request, res: Response) => {
         res.json({ paciente, consultas, questionarios });
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
+    }
+});
+
+// ─── PUT /api/admin/pacientes/:id/ativo — ativar/inativar paciente ────────────
+// Body: { ativo: boolean }. Pacientes inativos deixam de aparecer nas listas
+// do psicólogo (ex.: terminaram o percurso de monitorização), mas mantêm-se
+// visíveis ao admin.
+router.put('/pacientes/:id/ativo', adminOnly, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) return res.status(400).json({ error: 'ID inválido' });
+
+        const { ativo } = req.body;
+        if (typeof ativo !== 'boolean') {
+            return res.status(400).json({ error: 'O campo "ativo" deve ser um booleano' });
+        }
+
+        const paciente = await Paciente.findByIdAndUpdate(id, { ativo }, { new: true, runValidators: true })
+            .populate('user', '-password')
+            .populate({ path: 'psicologo', populate: { path: 'user', select: 'nome email' } });
+        if (!paciente) return res.status(404).json({ error: 'Paciente não encontrado' });
+
+        res.json(paciente);
+    } catch (error) {
+        res.status(400).json({ error: (error as Error).message });
     }
 });
 

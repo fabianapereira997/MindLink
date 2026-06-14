@@ -17,7 +17,8 @@
   margin-bottom: var(--space-xl);
 }
 
-.psi-header h1 { font-size: clamp(1.4rem, 3vw, 2rem); }
+.psi-header h1 { font-size: clamp(1.4rem, 3vw, 2rem); margin-bottom: 4px; }
+.psi-header p  { color: var(--color-text-muted); font-size: 0.95rem; }
 
 .agenda-nav {
   display: flex;
@@ -284,6 +285,7 @@
   flex-shrink: 0;
 }
 
+.badge--pendente  { background: rgba(148,163,184,0.18); color: #64748b; }
 .badge--realizada { background: rgba(38,135,78,0.1);   color: var(--color-primary-dark); }
 .badge--cancelada { background: rgba(220,38,38,0.08);  color: #dc2626; }
 .badge--agendada  { background: rgba(234,179,8,0.1);   color: #854d0e; }

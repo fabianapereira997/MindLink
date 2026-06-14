@@ -23,13 +23,14 @@ router.post('/', verifyToken, verifyTokenByRole('paciente'), async (req: Request
             return res.status(404).json({ error: 'Perfil de paciente não encontrado' });
         }
 
-        const { data, humor, sintomas, notas } = req.body;
+        const { data, humor, sintomas, notas, respostas } = req.body;
         const questionario = new Questionario({
             paciente: pacienteProfile._id,   // always auto-filled; body value ignored
             data,
             humor,
             sintomas,
             notas,
+            respostas,
         });
         await questionario.save();
         res.status(201).json(questionario);

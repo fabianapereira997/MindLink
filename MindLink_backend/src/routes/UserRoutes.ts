@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
-import { isValidObjectId, isTodayOrPast } from '../utils/helpers';
+import { isValidObjectId, isTodayOrPast, isWithinMaxAge, isValidEmail, isValidDate, isValidPassword } from '../utils/helpers';
 
-const express = require('express');
-const router  = express.Router();
-const User    = require('../models/user');
-const bcrypt  = require('bcryptjs');
-const jwt     = require('jsonwebtoken');
+const express   = require('express');
+const router    = express.Router();
+const User      = require('../models/user');
+const Paciente  = require('../models/paciente');
+const Psicologo = require('../models/psicologo');
+const bcrypt    = require('bcryptjs');
+const jwt       = require('jsonwebtoken');
 const { verifyToken } = require('../middleware/VerifyToken');
 
 // ─── POST /api/users/register — admin self-registration only ──────────────────
@@ -25,8 +27,28 @@ router.post('/register', async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Token de validação inválido' });
         }
 
+        if (!nome || !genero || !email || !password || !data_nascimento) {
+            return res.status(400).json({ error: 'Nome, género, email, password e data de nascimento são obrigatórios' });
+        }
+
+        if (!isValidPassword(password)) {
+            return res.status(400).json({ error: 'A password deve ter pelo menos 6 caracteres e incluir um número' });
+        }
+
+        if (!isValidEmail(email)) {
+            return res.status(400).json({ error: 'Formato de email inválido' });
+        }
+
+        if (!isValidDate(data_nascimento)) {
+            return res.status(400).json({ error: 'Data de nascimento inválida' });
+        }
+
         if (!isTodayOrPast(data_nascimento)) {
             return res.status(400).json({ error: 'A data de nascimento não pode ser uma data futura' });
+        }
+
+        if (!isWithinMaxAge(data_nascimento)) {
+            return res.status(400).json({ error: 'A idade não pode exceder 120 anos' });
         }
 
         const exists = await User.findOne({ email });
@@ -59,6 +81,25 @@ router.post('/login', async (req: Request, res: Response) => {
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
             return res.status(401).json({ error: 'Email ou password incorretos' });
+        }
+
+        // Pacientes e psicólogos inativos não podem entrar na plataforma.
+        if (user.tipo === 'paciente') {
+            const paciente = await Paciente.findOne({ user: user._id });
+            if (paciente && paciente.ativo === false) {
+                return res.status(403).json({
+                    error: 'A sua conta encontra-se atualmente desativada. Por favor contacte a sua clínica associada.',
+                });
+            }
+        }
+
+        if (user.tipo === 'psicologo') {
+            const psicologo = await Psicologo.findOne({ user: user._id });
+            if (psicologo && psicologo.ativo === false) {
+                return res.status(403).json({
+                    error: 'A sua conta encontra-se atualmente desativada. Por favor contacte a sua clínica associada.',
+                });
+            }
         }
 
         const token = jwt.sign(
@@ -125,12 +166,27 @@ router.put('/:id', verifyToken, async (req: Request, res: Response) => {
         const { password: _pw, tipo: _tipo, ...safeBody } = req.body;
         void _pw; void _tipo;
 
+        if (safeBody.email !== undefined && !isValidEmail(safeBody.email)) {
+            return res.status(400).json({ error: 'Formato de email inválido' });
+        }
+
+        if (safeBody.data_nascimento !== undefined && !isValidDate(safeBody.data_nascimento)) {
+            return res.status(400).json({ error: 'Data de nascimento inválida' });
+        }
+
         if (safeBody.data_nascimento !== undefined && !isTodayOrPast(safeBody.data_nascimento)) {
             return res.status(400).json({ error: 'A data de nascimento não pode ser uma data futura' });
         }
 
+        if (safeBody.data_nascimento !== undefined && !isWithinMaxAge(safeBody.data_nascimento)) {
+            return res.status(400).json({ error: 'A idade não pode exceder 120 anos' });
+        }
+
         // Hash new password if provided
         if (req.body.password) {
+            if (!isValidPassword(req.body.password)) {
+                return res.status(400).json({ error: 'A password deve ter pelo menos 6 caracteres e incluir um número' });
+            }
             safeBody.password = await bcrypt.hash(req.body.password, 12);
         }
 
@@ -149,8 +205,8 @@ router.put('/:id', verifyToken, async (req: Request, res: Response) => {
 router.post('/change-password', verifyToken, async (req: Request, res: Response) => {
     try {
         const { newPassword } = req.body;
-        if (!newPassword || newPassword.length < 6) {
-            return res.status(400).json({ error: 'A nova password deve ter pelo menos 6 caracteres' });
+        if (!isValidPassword(newPassword)) {
+            return res.status(400).json({ error: 'A nova password deve ter pelo menos 6 caracteres e incluir um número' });
         }
         const hashed = await bcrypt.hash(newPassword, 12);
         const user = await User.findByIdAndUpdate(

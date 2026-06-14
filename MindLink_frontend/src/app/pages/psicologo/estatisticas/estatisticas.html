@@ -2,7 +2,10 @@
   <div class="container">
 
     <div class="psi-header">
-      <h1>Estatísticas</h1>
+      <div>
+        <h1>Estatísticas</h1>
+        <p>Analise a evolução e o progresso dos seus pacientes.</p>
+      </div>
     </div>
 
     @if (loading()) {
@@ -11,19 +14,19 @@
 
       <!-- Overview cards -->
       <div class="stats-grid">
-        <div class="stat-card card">
+        <div class="stat-card card stat-card--melhorar">
           <div class="stat-card__value" style="color: var(--color-primary)">{{ pctMelhorando() }}%</div>
           <div class="stat-card__label">A melhorar</div>
         </div>
-        <div class="stat-card card">
+        <div class="stat-card card stat-card--regredir">
           <div class="stat-card__value" style="color: #dc2626">{{ pctRegredir() }}%</div>
           <div class="stat-card__label">A regredir</div>
         </div>
-        <div class="stat-card card">
+        <div class="stat-card card stat-card--atencao">
           <div class="stat-card__value" style="color: #ca8a04">{{ pacientesAtencao().length }}</div>
           <div class="stat-card__label">Atenção especial</div>
         </div>
-        <div class="stat-card card">
+        <div class="stat-card card stat-card--recuperacao">
           <div class="stat-card__value" style="color: var(--color-primary)">{{ pacientesRecuperados().length }}</div>
           <div class="stat-card__label">Boa recuperação</div>
         </div>
@@ -64,8 +67,8 @@
 
       <!-- Atenção especial -->
       <div class="stats-section">
-        <h2>Atenção especial</h2>
-        <p class="stats-section__sub">Humor 1 ou 2 recente, sem registo de humor ou desafios há 3+ dias</p>
+        <h2>Pacientes com monitorização prioritária</h2>
+        <p class="stats-section__sub">Pacientes que requerem atenção especial: Registos de humor baixos ou falta de registos e cumprimento de desafios.</p>
         @if (pacientesAtencao().length === 0) {
           <div class="card empty-card"><p>Nenhum paciente em atenção especial.</p></div>
         } @else {
@@ -76,10 +79,20 @@
                 <div class="paciente-row__info">
                   <div class="paciente-row__name">{{ p.user?.nome }}</div>
                   <div class="paciente-row__meta">
-                    Humor médio recente: {{ p.avgHumor }}/5
+                    @if (p.avgRecente > 0) {
+                      Humor médio recente: {{ p.avgHumor }}/5
+                    } @else {
+                      Sem registos de humor recentes
+                    }
                   </div>
                 </div>
-                <div class="humor-pill humor-pill--low">{{ p.avgHumor }}/5</div>
+                <div class="humor-pill humor-pill--low">
+                  @if (p.avgRecente > 0) {
+                    {{ p.avgHumor }}/5
+                  } @else {
+                    Sem registos
+                  }
+                </div>
               </a>
             }
           </div>
@@ -89,7 +102,7 @@
       <!-- Boa recuperação -->
       <div class="stats-section">
         <h2>Pacientes com boa recuperação</h2>
-        <p class="stats-section__sub">Humor positivo (4 ou 5), desafios cumpridos e boas estatísticas durante um mês completo</p>
+        <p class="stats-section__sub">Humor positivo (4 ou 5), desafios cumpridos e boas estatísticas durante 4 dias completos</p>
         @if (terminarError()) {
           <div class="banner banner--error">{{ terminarError() }}</div>
         }
@@ -104,7 +117,7 @@
                   <div class="paciente-row__info">
                     <div class="paciente-row__name">{{ p.user?.nome }}</div>
                     <div class="paciente-row__meta">
-                      Humor (último mês): {{ p.avgMes.toFixed(1) }}/5
+                      Humor (últimos 4 dias): {{ p.avgMes.toFixed(1) }}/5
                     </div>
                   </div>
                 </a>

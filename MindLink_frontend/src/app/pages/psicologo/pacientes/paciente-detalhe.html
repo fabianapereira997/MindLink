@@ -1,33 +1,45 @@
 <div class="psi-page">
   <div class="container">
 
-    <div class="back-link" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: var(--space-sm);">
-      <a routerLink="/psicologo/pacientes" class="btn-secondary btn--sm">
-        ← Todos os pacientes
-      </a>
-      @if (paciente()) {
-        <button class="btn-secondary btn--sm" (click)="exportarPaciente()" [disabled]="exporting()">
-          {{ exporting() ? 'A exportar...' : 'Exportar dados (XML)' }}
-        </button>
-      }
-    </div>
-    @if (exportError()) {
-      <div class="banner banner--error">{{ exportError() }}</div>
-    }
-
     @if (loading()) {
       <div class="loading">A carregar...</div>
     } @else if (!paciente()) {
       <div class="card empty-card"><p>Paciente não encontrado.</p></div>
     } @else {
 
+      @if (inativarError()) {
+        <div class="banner banner--error">{{ inativarError() }}</div>
+      }
+
       <!-- Header paciente -->
       <div class="perfil-header">
         <div class="perfil-avatar">{{ initials() }}</div>
-        <div>
+        <div class="perfil-header__info">
           <h1>{{ paciente()?.user?.nome }}</h1>
-          <p>{{ paciente()?.user?.email }}</p>
+          <p class="perfil-subtitle">
+            @if (pacienteDesdeTexto()) {
+              <span>{{ pacienteDesdeTexto() }}</span>
+              <span class="dot">·</span>
+            }
+            <span>{{ ultimoRegistoTexto() }}</span>
+          </p>
         </div>
+
+        <div class="row-menu perfil-header__menu">
+          <button type="button" class="row-menu__btn" aria-label="Mais ações" (click)="toggleMenu($event)">⋯</button>
+          @if (menuAberto()) {
+            <div class="row-menu__dropdown" (click)="$event.preventDefault(); $event.stopPropagation()">
+              <button type="button" class="row-menu__item" (click)="abrirChat()">Enviar mensagem</button>
+              <button type="button" class="row-menu__item row-menu__item--danger" (click)="confirmInativar()">Inativar paciente</button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="back-link">
+        <a routerLink="/psicologo/pacientes" class="link-cta">
+          Ver todos os pacientes <span class="link-cta__arrow">→</span>
+        </a>
       </div>
 
       <!-- Dados grid -->
@@ -47,38 +59,96 @@
             </div>
             <div class="info-item">
               <span class="info-label">Género</span>
-              <span class="info-value">{{ paciente()?.user?.genero ?? '—' }}</span>
+              <span class="info-value">{{ generoLabel() }}</span>
             </div>
             <div class="info-item">
               <span class="info-label">Data de nascimento</span>
-              <span class="info-value">{{ paciente()?.user?.data_nascimento | date:'dd/MM/yyyy' }}</span>
+              <span class="info-value">
+                {{ paciente()?.user?.data_nascimento | date:'dd/MM/yyyy' }}
+                @if (idade() !== null) { <span class="info-value__extra">({{ idade() }} anos)</span> }
+              </span>
             </div>
           </div>
         </div>
 
         <!-- Dados clínicos -->
         <div class="card perfil-section">
-          <h2>Dados clínicos</h2>
-          <div class="info-list">
-            <div class="info-item">
-              <span class="info-label">Diagnóstico</span>
-              <span class="info-value">{{ paciente()?.doenca ?? '—' }}</span>
-            </div>
-            @if (paciente()?.formulario?.historicoMedico?.comorbilidades?.length) {
-              <div class="info-item">
-                <span class="info-label">Comorbilidades</span>
-                <span class="info-value">{{ paciente()?.formulario?.historicoMedico?.comorbilidades?.join(', ') }}</span>
-              </div>
+          <div class="perfil-section__header">
+            <h2>Dados clínicos</h2>
+            @if (!editandoClinico()) {
+              <button type="button" class="edit-btn" aria-label="Editar dados clínicos" (click)="startEditClinico()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                </svg>
+                Editar
+              </button>
             }
-            <div class="info-item">
-              <span class="info-label">Exercício regular</span>
-              <span class="info-value">{{ paciente()?.formulario?.estiloDeVida?.exercicioRegular === true ? 'Sim' : 'Não' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Fumador</span>
-              <span class="info-value">{{ paciente()?.formulario?.estiloDeVida?.fumador === true ? 'Sim' : 'Não' }}</span>
-            </div>
           </div>
+
+          @if (!editandoClinico()) {
+            <div class="info-list">
+              <div class="info-item">
+                <span class="info-label">Diagnóstico</span>
+                <span class="info-value">{{ paciente()?.doenca ?? '—' }}</span>
+              </div>
+              @if (paciente()?.formulario?.historicoMedico?.comorbilidades?.length) {
+                <div class="info-item">
+                  <span class="info-label">Comorbilidades</span>
+                  <span class="info-value">{{ paciente()?.formulario?.historicoMedico?.comorbilidades?.join(', ') }}</span>
+                </div>
+              }
+              <div class="info-item">
+                <span class="info-label">Exercício regular</span>
+                <span class="info-value">{{ paciente()?.formulario?.estiloDeVida?.exercicioRegular === true ? 'Sim' : 'Não' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Fumador</span>
+                <span class="info-value">{{ paciente()?.formulario?.estiloDeVida?.fumador === true ? 'Sim' : 'Não' }}</span>
+              </div>
+            </div>
+          } @else {
+            @if (clinicoError()) {
+              <div class="banner banner--error">{{ clinicoError() }}</div>
+            }
+            <form [formGroup]="clinicoForm" (ngSubmit)="saveClinico()" class="clinico-form modal__form">
+              <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                <mat-label>Diagnóstico / condição</mat-label>
+                <input matInput formControlName="doenca" />
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                <mat-label>Comorbilidades (separadas por vírgula)</mat-label>
+                <input matInput formControlName="comorbilidades" />
+              </mat-form-field>
+
+              <div class="form-row">
+                <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                  <mat-label>Pratica exercício regular?</mat-label>
+                  <mat-select formControlName="exercicioRegular">
+                    <mat-option value="">Não especificado</mat-option>
+                    <mat-option value="sim">Sim</mat-option>
+                    <mat-option value="nao">Não</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                  <mat-label>É fumador?</mat-label>
+                  <mat-select formControlName="fumador">
+                    <mat-option value="">Não especificado</mat-option>
+                    <mat-option value="sim">Sim</mat-option>
+                    <mat-option value="nao">Não</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <div class="modal__actions clinico-form__actions">
+                <button type="button" class="btn-secondary btn--sm" (click)="cancelEditClinico()" [disabled]="savingClinico()">Cancelar</button>
+                <button type="submit" class="btn-primary btn--sm" [disabled]="savingClinico()">
+                  {{ savingClinico() ? 'A guardar...' : 'Guardar alterações' }}
+                </button>
+              </div>
+            </form>
+          }
         </div>
 
         <!-- Estatísticas resumo -->
@@ -92,10 +162,6 @@
             <div class="stat-mini">
               <div class="stat-mini__value">{{ questionarios().length }}</div>
               <div class="stat-mini__label">Total de registos</div>
-            </div>
-            <div class="stat-mini">
-              <div class="stat-mini__value">{{ streak() }}</div>
-              <div class="stat-mini__label">Dias consecutivos</div>
             </div>
           </div>
 
@@ -115,28 +181,41 @@
         @if (questionarios().length === 0) {
           <div class="card empty-card"><p>Sem registos de humor.</p></div>
         } @else {
-          <div class="qlist">
-            @for (q of questionarios(); track q._id) {
-              <div class="card qcard">
-                <div class="qcard__date">
-                  <span class="qcard__day">{{ q.data | date:'d' }}</span>
-                  <span class="qcard__month">{{ q.data | date:'MMM' }}</span>
-                  <span class="qcard__year">{{ q.data | date:'yyyy' }}</span>
-                </div>
-                <div class="qcard__info">
-                  <div class="qcard__humor-row">
-                    <span class="qcard__label">Humor</span>
-                    <span class="humor-pill" [class]="humorPillClass(q.humor)">{{ q.humor }}/5</span>
+          <div class="semanas-list">
+            @for (semana of semanas(); track semana.key) {
+              <div class="card semana-card">
+                <button type="button" class="semana-header" (click)="toggleSemana(semana.key)">
+                  <span class="semana-header__label">{{ semana.label }}</span>
+                  <span class="semana-header__arrow" [class.semana-header__arrow--open]="semanaAberta(semana.key)">▼</span>
+                </button>
+
+                @if (semanaAberta(semana.key)) {
+                  <div class="qlist">
+                    @for (q of semana.questionarios; track q._id) {
+                      <button type="button" class="card qcard qcard--clickable" [style.background]="'color-mix(in srgb, ' + humorCor(q) + ' 10%, white)'" (click)="abrirQModal(q)">
+                        <div class="qcard__date">
+                          <span class="qcard__day">{{ q.data | date:'d' }}</span>
+                          <span class="qcard__month">{{ q.data | date:'MMM' }}</span>
+                          <span class="qcard__year">{{ q.data | date:'yyyy' }}</span>
+                        </div>
+                        <div class="qcard__info">
+                          <div class="qcard__humor-row">
+                            <span class="qcard__label">Humor</span>
+                            <span class="humor-pill" [class]="humorPillClass(q.humor)">{{ q.humor }}/5</span>
+                          </div>
+                          @if (hasSintomas(q.sintomas)) {
+                            <div class="qcard__sintomas">
+                              Sintomas: {{ sintomasText(q.sintomas) }}
+                            </div>
+                          }
+                          @if (q.notas) {
+                            <div class="qcard__notas">{{ q.notas }}</div>
+                          }
+                        </div>
+                      </button>
+                    }
                   </div>
-                  @if (hasSintomas(q.sintomas)) {
-                    <div class="qcard__sintomas">
-                      Sintomas: {{ sintomasText(q.sintomas) }}
-                    </div>
-                  }
-                  @if (q.notas) {
-                    <div class="qcard__notas">{{ q.notas }}</div>
-                  }
-                </div>
+                }
               </div>
             }
           </div>
@@ -146,3 +225,100 @@
     }
   </div>
 </div>
+
+<!-- Modal: confirmar inativação -->
+@if (confirmandoInativar()) {
+  <div class="modal-backdrop" (click)="cancelInativar()">
+    <div class="modal card modal--sm" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2>Inativar paciente</h2>
+        <button class="modal__close" (click)="cancelInativar()">✕</button>
+      </div>
+      <p>
+        Tem a certeza que pretende terminar o percurso de monitorização de
+        <strong>{{ paciente()?.user?.nome ?? 'este paciente' }}</strong>?
+        O paciente deixará de aparecer nas suas listas.
+      </p>
+      <div class="modal__actions">
+        <button type="button" class="btn-secondary" (click)="cancelInativar()" [disabled]="inativarSaving()">Voltar</button>
+        <button type="button" class="btn-danger" (click)="inativarConfirmed()" [disabled]="inativarSaving()">
+          {{ inativarSaving() ? 'A inativar...' : 'Sim, inativar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: registo de humor -->
+@if (selectedQuestionario(); as q) {
+  <div class="modal-backdrop" (click)="fecharQModal()">
+    <div class="modal card modal--questionario" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <h2>Registo de humor — {{ paciente()?.user?.nome }}</h2>
+        <button class="modal__close" (click)="fecharQModal()">✕</button>
+      </div>
+
+      <p class="questionario-modal__data">{{ q.data | date:'dd/MM/yyyy' }}</p>
+
+      <div class="mood-slider-block">
+        <label class="mood-slider-label">Como se sentiu nesse dia?</label>
+        <div class="mood-slider-wrap">
+          <span class="mood-face mood-face--sad">☹</span>
+          <div class="mood-slider-track">
+            <input
+              type="range" min="1" max="5" step="1"
+              [value]="q.humor" disabled class="mood-range"
+              [style.--thumb-color]="humorCor(q)"
+              [style.--fill-pct]="((q.humor - 1) / 4 * 100) + '%'"
+            />
+          </div>
+          <span class="mood-face mood-face--happy">☺</span>
+        </div>
+        <div class="mood-value" [style.color]="humorCor(q)">
+          <span class="mood-value__num">{{ q.humor }}/5</span>
+          <span class="mood-value__label">{{ humorLabel(q) }}</span>
+        </div>
+      </div>
+
+      <!-- Perguntas adicionais (read-only) -->
+      <div class="perguntas-block">
+        <label class="perguntas-label">Nos últimos dias...</label>
+        @for (grupo of QUESTIONARIO_GRUPOS; track grupo.titulo) {
+          <h4 class="perguntas-grupo__titulo">{{ grupo.titulo }}</h4>
+          <div class="perguntas-grid">
+            @for (pq of grupo.perguntas; track pq.id) {
+              <div class="pergunta-card">
+                <p class="pergunta-card__texto">{{ pq.texto }}</p>
+                <div class="pergunta-scale">
+                  @for (label of pq.escala; track $index) {
+                    <label class="pergunta-scale__opt" [class.pergunta-scale__opt--selected]="(q.respostas?.[pq.id]) === ($index + 1)">
+                      <input
+                        type="radio"
+                        [name]="'view-pergunta-' + pq.id + '-' + q._id"
+                        [checked]="(q.respostas?.[pq.id]) === ($index + 1)"
+                        disabled
+                      />
+                      <span class="pergunta-scale__label">{{ label }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      @if (q.notas) {
+        <div class="questionario-modal__notas">
+          <p class="form-label">Notas do paciente</p>
+          <p class="comentario-text">"{{ q.notas }}"</p>
+        </div>
+      }
+
+      <div class="modal__actions">
+        <button type="button" class="btn-secondary btn--sm" (click)="fecharQModal()">Fechar</button>
+        <button type="button" class="btn-primary btn--sm" (click)="enviarMensagemQuestionario()">Enviar mensagem</button>
+      </div>
+    </div>
+  </div>
+}

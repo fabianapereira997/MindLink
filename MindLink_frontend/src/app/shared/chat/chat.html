@@ -42,17 +42,70 @@
             <div class="chat-empty">Sem mensagens ainda. Diga olá!</div>
           }
           @for (m of mensagens(); track m._id) {
-            <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
-              <div class="bubble" [class.bubble--mine]="isMine(m)">
-                {{ m.mensagem }}
-                <span class="bubble__time">{{ m.data | date:'HH:mm' }}</span>
+            @if (m.tipo === 'consulta_pedido' && m.resposta === 'confirmada') {
+              <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+                <div class="consulta-card">
+                  <div class="consulta-card__date">
+                    <span class="consulta-card__day">{{ m.consultaData | date:'d' }}</span>
+                    <span class="consulta-card__month">{{ m.consultaData | date:'MMM' }}</span>
+                  </div>
+                  <div class="consulta-card__info">
+                    <div class="consulta-card__title">{{ role() === 'paciente' ? psicologoName() : patientName(selectedPaciente()!) }}</div>
+                    <div class="consulta-card__meta">{{ m.consultaData | date:'HH:mm' }} &middot; {{ m.consultaDuracao }} min</div>
+                    <button class="consulta-card__btn" (click)="verNaAgenda(m)">Ver na agenda</button>
+                  </div>
+                </div>
               </div>
-            </div>
+            } @else if (m.tipo === 'consulta_pedido') {
+              <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+                <div class="bubble bubble--card" [class.bubble--mine]="isMine(m)">
+                  <div class="bubble__card-title">📅 Consulta agendada</div>
+                  <div>{{ m.mensagem }}</div>
+                  <span class="bubble__time">{{ m.data | date:'HH:mm' }}</span>
+                  @if (role() === 'paciente' && m.resposta === 'pendente') {
+                    <div class="bubble__actions">
+                      <button class="bubble__btn bubble__btn--accept" (click)="responderConsultaPedido(m, 'confirmada')">Confirmar presença</button>
+                      <button class="bubble__btn bubble__btn--reject" (click)="responderConsultaPedido(m, 'rejeitada')">Rejeitar</button>
+                    </div>
+                  } @else if (m.resposta === 'rejeitada') {
+                    <div class="bubble__status bubble__status--no">✗ Rejeitada</div>
+                  }
+                </div>
+              </div>
+            } @else if (m.tipo === 'consulta_cancelada') {
+              <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+                <div class="bubble bubble--card bubble--card--cancelada" [class.bubble--mine]="isMine(m)">
+                  <div class="bubble__card-title bubble__card-title--cancelada">❌ Consulta cancelada</div>
+                  <div>{{ m.mensagem }}</div>
+                  <span class="bubble__time">{{ m.data | date:'HH:mm' }}</span>
+                </div>
+              </div>
+            } @else {
+              <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+                <div class="bubble" [class.bubble--mine]="isMine(m)">
+                  @if (m.replyTo) {
+                    <div class="bubble__reply">{{ m.replyTo }}</div>
+                  }
+                  {{ m.mensagem }}
+                  <span class="bubble__time">{{ m.data | date:'HH:mm' }}</span>
+                </div>
+              </div>
+            }
           }
         </div>
 
         @if (sendError()) {
           <div class="chat-error">{{ sendError() }}</div>
+        }
+
+        @if (replyContext()) {
+          <div class="chat-reply-preview">
+            <div class="chat-reply-preview__content">
+              <span class="chat-reply-preview__label">A responder a:</span>
+              <span class="chat-reply-preview__text">{{ replyContext() }}</span>
+            </div>
+            <button type="button" class="chat-reply-preview__close" (click)="cancelReply()">✕</button>
+          </div>
         }
 
         <div class="chat-window__input">
@@ -118,17 +171,67 @@
                 <div class="chat-empty">Sem mensagens ainda.</div>
               }
               @for (m of mensagens(); track m._id) {
-                <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
-                  <div class="bubble" [class.bubble--mine]="isMine(m)">
-                    {{ m.mensagem }}
-                    <span class="bubble__time">{{ m.data | date:'HH:mm' }}</span>
+                @if (m.tipo === 'consulta_pedido' && m.resposta === 'confirmada') {
+                  <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+                    <div class="consulta-card">
+                      <div class="consulta-card__date">
+                        <span class="consulta-card__day">{{ m.consultaData | date:'d' }}</span>
+                        <span class="consulta-card__month">{{ m.consultaData | date:'MMM' }}</span>
+                      </div>
+                      <div class="consulta-card__info">
+                        <div class="consulta-card__title">{{ patientName(selectedPaciente()!) }}</div>
+                        <div class="consulta-card__meta">{{ m.consultaData | date:'HH:mm' }} &middot; {{ m.consultaDuracao }} min</div>
+                        <button class="consulta-card__btn" (click)="verNaAgenda(m)">Ver na agenda</button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                } @else if (m.tipo === 'consulta_pedido') {
+                  <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+                    <div class="bubble bubble--card" [class.bubble--mine]="isMine(m)">
+                      <div class="bubble__card-title">📅 Consulta agendada</div>
+                      <div>{{ m.mensagem }}</div>
+                      <span class="bubble__time">{{ m.data | date:'HH:mm' }}</span>
+                      @if (m.resposta === 'pendente') {
+                        <div class="bubble__status">À espera de confirmação</div>
+                      } @else if (m.resposta === 'rejeitada') {
+                        <div class="bubble__status bubble__status--no">✗ Rejeitada</div>
+                      }
+                    </div>
+                  </div>
+                } @else if (m.tipo === 'consulta_cancelada') {
+                  <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+                    <div class="bubble bubble--card bubble--card--cancelada" [class.bubble--mine]="isMine(m)">
+                      <div class="bubble__card-title bubble__card-title--cancelada">❌ Consulta cancelada</div>
+                      <div>{{ m.mensagem }}</div>
+                      <span class="bubble__time">{{ m.data | date:'HH:mm' }}</span>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+                    <div class="bubble" [class.bubble--mine]="isMine(m)">
+                      @if (m.replyTo) {
+                        <div class="bubble__reply">{{ m.replyTo }}</div>
+                      }
+                      {{ m.mensagem }}
+                      <span class="bubble__time">{{ m.data | date:'HH:mm' }}</span>
+                    </div>
+                  </div>
+                }
               }
             </div>
 
             @if (sendError()) {
               <div class="chat-error">{{ sendError() }}</div>
+            }
+
+            @if (replyContext()) {
+              <div class="chat-reply-preview">
+                <div class="chat-reply-preview__content">
+                  <span class="chat-reply-preview__label">A responder a:</span>
+                  <span class="chat-reply-preview__text">{{ replyContext() }}</span>
+                </div>
+                <button type="button" class="chat-reply-preview__close" (click)="cancelReply()">✕</button>
+              </div>
             }
 
             <div class="chat-window__input">

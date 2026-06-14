@@ -2,64 +2,92 @@
   <div class="container">
 
     <div class="psi-header">
-      <h1>Pacientes</h1>
-      <div class="agenda-nav">
-        <button class="btn-secondary btn--sm" (click)="exportarLista()" [disabled]="exportingLista()">
-          {{ exportingLista() ? 'A exportar...' : 'Exportar lista (XML)' }}
-        </button>
-        <button class="btn-primary btn--sm" (click)="openModal()">+ Novo paciente</button>
+      <div>
+        <h1>Pacientes</h1>
+        <p>Consulte e acompanhe os seus pacientes.</p>
       </div>
     </div>
 
     @if (createDone()) {
       <div class="banner banner--success">Paciente criado com sucesso!</div>
     }
-    @if (deleteError()) {
-      <div class="banner banner--error">{{ deleteError() }}</div>
-    }
-    @if (exportError()) {
-      <div class="banner banner--error">{{ exportError() }}</div>
+    @if (inativarError()) {
+      <div class="banner banner--error">{{ inativarError() }}</div>
     }
 
     @if (loading()) {
       <div class="loading">A carregar...</div>
     } @else if (pacientes().length === 0) {
+      <div class="search-row">
+        <div class="agenda-nav">
+          <button class="btn-primary btn--sm" (click)="openModal()">+ Adicionar Paciente</button>
+        </div>
+      </div>
       <div class="card empty-card"><p>Não tem pacientes atribuídos.</p></div>
     } @else {
 
-      <!-- Search -->
-      <div class="search-bar card">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input
-          type="text"
-          placeholder="Pesquisar paciente..."
-          [value]="search()"
-          (input)="search.set($any($event.target).value)"
-          class="search-input"
-        />
+      <!-- Search & filters -->
+      <div class="search-row">
+        <div class="search-bar card">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Pesquisar por nome ou e-mail..."
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+            class="search-input"
+          />
+        </div>
+
+        <div class="filtros">
+          <button type="button" class="filtro-chip" [class.filtro-chip--active]="estadoFiltro() === 'todos'" (click)="estadoFiltro.set('todos')">Todos</button>
+          <button type="button" class="filtro-chip filtro-chip--atencao" [class.filtro-chip--active]="estadoFiltro() === 'atencao'" (click)="estadoFiltro.set('atencao')">Em monitorização prioritária</button>
+          <button type="button" class="filtro-chip filtro-chip--recuperacao" [class.filtro-chip--active]="estadoFiltro() === 'recuperacao'" (click)="estadoFiltro.set('recuperacao')">Com boa recuperação</button>
+        </div>
+
+        <div class="agenda-nav">
+          <button class="btn-primary btn--sm" (click)="openModal()">+ Adicionar Paciente</button>
+        </div>
       </div>
 
       <div class="paciente-list">
         @for (p of filtered(); track p._id) {
-          <a [routerLink]="['/psicologo/pacientes', p._id]" class="card paciente-row">
+          <a [routerLink]="['/psicologo/pacientes', p._id]" class="card paciente-row" [class.paciente-row--atencao]="estado(p) === 'atencao'">
             <div class="paciente-row__avatar">{{ p.user?.nome?.charAt(0) ?? 'P' }}</div>
             <div class="paciente-row__info">
               <div class="paciente-row__name">{{ p.user?.nome }}</div>
               <div class="paciente-row__meta">{{ p.user?.email }}</div>
+              <div class="paciente-row__status">
+                <span class="estado-pill" [class.estado-pill--atencao]="estado(p) === 'atencao'">{{ estadoLabel(p) }}</span>
+                <span class="paciente-row__dot">·</span>
+                <span>{{ ultimoRegistoTexto(p) }}</span>
+              </div>
             </div>
             <div class="paciente-row__right">
               @if (p.avgHumor) {
-                <div class="humor-pill" [class]="humorClass(p.avgHumor)">{{ p.avgHumor }}/5</div>
+                <div class="humor-pill" [class]="humorClass(p.avgHumor)" title="Média dos registos dos últimos 7 dias">
+                  Humor médio {{ formatHumor(p.avgHumor) }}/5
+                </div>
+              } @else {
+                <div class="humor-pill humor-pill--neutro">Sem dados recentes</div>
               }
-              <button
-                type="button"
-                class="btn-danger btn--sm"
-                (click)="$event.preventDefault(); $event.stopPropagation(); confirmDelete(p)"
-              >
-                Eliminar
-              </button>
+
+              <div class="row-menu">
+                <button
+                  type="button"
+                  class="row-menu__btn"
+                  aria-label="Mais ações"
+                  (click)="toggleMenu(p._id, $event)"
+                >⋯</button>
+                @if (menuAbertoId() === p._id) {
+                  <div class="row-menu__dropdown" (click)="$event.preventDefault(); $event.stopPropagation()">
+                    <button type="button" class="row-menu__item" (click)="confirmInativar(p)">Inativar paciente</button>
+                  </div>
+                }
+              </div>
+
               <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="m9 18 6-6-6-6"/>
               </svg>
@@ -90,49 +118,85 @@
       }
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
-        <mat-form-field appearance="fill" class="form-field">
+        <mat-form-field appearance="fill" class="form-field" floatLabel="always">
           <mat-label>Nome completo</mat-label>
-          <input matInput formControlName="nome" />
+          <input matInput formControlName="nome" placeholder="Introduza o nome completo" />
+          @if (form.get('nome')?.invalid && form.get('nome')?.touched) {
+            <mat-error>Introduza o nome (mínimo 2 caracteres).</mat-error>
+          }
         </mat-form-field>
 
-        <mat-form-field appearance="fill" class="form-field">
+        <mat-form-field appearance="fill" class="form-field" floatLabel="always">
           <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" />
+          <input matInput type="email" formControlName="email" placeholder="exemplo@email.com" />
+          @if (form.get('email')?.invalid && form.get('email')?.touched) {
+            <mat-error>Introduza um email válido.</mat-error>
+          }
         </mat-form-field>
 
         <div class="form-row">
-          <mat-form-field appearance="fill" class="form-field">
+          <mat-form-field appearance="fill" class="form-field" floatLabel="always">
             <mat-label>Género</mat-label>
             <mat-select formControlName="genero">
               <mat-option value="masculino">Masculino</mat-option>
               <mat-option value="feminino">Feminino</mat-option>
               <mat-option value="outro">Outro</mat-option>
             </mat-select>
+            @if (form.get('genero')?.invalid && form.get('genero')?.touched) {
+              <mat-error>Campo obrigatório.</mat-error>
+            }
           </mat-form-field>
 
-          <mat-form-field appearance="fill" class="form-field">
+          <mat-form-field appearance="fill" class="form-field" floatLabel="always">
             <mat-label>Data de nascimento</mat-label>
-            <input matInput type="date" formControlName="data_nascimento" [max]="maxBirthDate" />
+            <input matInput type="date" formControlName="data_nascimento" [min]="minBirthDate" [max]="maxBirthDate" />
+            @if (form.get('data_nascimento')?.invalid && form.get('data_nascimento')?.touched) {
+              <mat-error>Data de nascimento inválida ou em falta.</mat-error>
+            }
           </mat-form-field>
         </div>
 
-        <mat-form-field appearance="fill" class="form-field">
+        <mat-form-field appearance="fill" class="form-field" floatLabel="always">
           <mat-label>Password provisória</mat-label>
-          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" />
+          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" placeholder="Introduza uma password" />
+          <button type="button" matSuffix class="password-toggle" (click)="hidePassword = !hidePassword" [attr.aria-label]="hidePassword ? 'Mostrar password' : 'Ocultar password'">
+            @if (hidePassword) {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            } @else {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                <path d="M10.73 5.08A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                <path d="M6.61 6.61A13.526 13.526 0 0 0 1 12s4 7 11 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                <line x1="2" x2="22" y1="2" y2="22"/>
+              </svg>
+            }
+          </button>
+          @if (form.get('password')?.invalid && form.get('password')?.touched) {
+            <mat-error>Mínimo 6 caracteres, incluindo um número.</mat-error>
+          } @else {
+            <mat-hint>Mínimo de 6 caracteres, incluindo um número.</mat-hint>
+          }
         </mat-form-field>
+        <div class="password-helper">
+          <button type="button" class="btn-secondary btn--sm" (click)="gerarPassword()">Gerar password</button>
+          <p class="password-helper__text">O paciente poderá alterá-la após o primeiro acesso.</p>
+        </div>
 
-        <mat-form-field appearance="fill" class="form-field">
+        <mat-form-field appearance="fill" class="form-field" floatLabel="always">
           <mat-label>Diagnóstico / condição</mat-label>
           <input matInput formControlName="doenca" placeholder="Ex: Ansiedade generalizada" />
         </mat-form-field>
 
-        <mat-form-field appearance="fill" class="form-field">
+        <mat-form-field appearance="fill" class="form-field" floatLabel="always">
           <mat-label>Comorbilidades (separadas por vírgula)</mat-label>
           <input matInput formControlName="comorbilidades" placeholder="Ex: Insónia, Hipertensão" />
         </mat-form-field>
 
         <div class="form-row">
-          <mat-form-field appearance="fill" class="form-field">
+          <mat-form-field appearance="fill" class="form-field" floatLabel="always">
             <mat-label>Pratica exercício regular?</mat-label>
             <mat-select formControlName="exercicioRegular">
               <mat-option value="">Não especificado</mat-option>
@@ -141,7 +205,7 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="fill" class="form-field">
+          <mat-form-field appearance="fill" class="form-field" floatLabel="always">
             <mat-label>É fumador?</mat-label>
             <mat-select formControlName="fumador">
               <mat-option value="">Não especificado</mat-option>
@@ -151,9 +215,11 @@
           </mat-form-field>
         </div>
 
+        <p class="form-required-note">* Campos obrigatórios</p>
+
         <div class="modal__actions">
-          <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="form.invalid || creating()">
+          <button type="button" class="btn-secondary btn--sm" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn-primary btn--sm" [disabled]="creating()">
             {{ creating() ? 'A criar...' : 'Criar paciente' }}
           </button>
         </div>
@@ -162,23 +228,23 @@
   </div>
 }
 
-<!-- Modal: confirmar eliminação -->
-@if (deletingPaciente(); as p) {
-  <div class="modal-backdrop" (click)="cancelDelete()">
+<!-- Modal: confirmar inativação (terminar percurso de monitorização) -->
+@if (inativandoPaciente(); as p) {
+  <div class="modal-backdrop" (click)="cancelInativar()">
     <div class="modal card modal--sm" (click)="$event.stopPropagation()">
       <div class="modal__header">
-        <h2>Eliminar paciente</h2>
-        <button class="modal__close" (click)="cancelDelete()">✕</button>
+        <h2>Inativar paciente</h2>
+        <button class="modal__close" (click)="cancelInativar()">✕</button>
       </div>
       <p>
-        Tem a certeza que pretende eliminar o paciente
+        Tem a certeza que pretende terminar o percurso de monitorização de
         <strong>{{ p.user?.nome ?? 'este paciente' }}</strong>?
-        Esta ação é irreversível e remove todos os dados associados à conta.
+        O paciente deixará de aparecer nas suas listas.
       </p>
       <div class="modal__actions">
-        <button type="button" class="btn-secondary" (click)="cancelDelete()" [disabled]="deleteSaving()">Voltar</button>
-        <button type="button" class="btn-danger" (click)="deleteConfirmed()" [disabled]="deleteSaving()">
-          {{ deleteSaving() ? 'A eliminar...' : 'Sim, eliminar' }}
+        <button type="button" class="btn-secondary" (click)="cancelInativar()" [disabled]="inativarSaving()">Voltar</button>
+        <button type="button" class="btn-danger" (click)="inativarConfirmed()" [disabled]="inativarSaving()">
+          {{ inativarSaving() ? 'A inativar...' : 'Sim, inativar' }}
         </button>
       </div>
     </div>

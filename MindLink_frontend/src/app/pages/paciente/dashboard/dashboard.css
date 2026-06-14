@@ -17,7 +17,8 @@
   margin-bottom: var(--space-2xl);
 }
 
-.dashboard__header h1 { font-size: clamp(1.4rem, 3vw, 2rem); }
+.dashboard__header h1 { font-size: clamp(1.4rem, 3vw, 2rem); margin-bottom: 4px; }
+.dashboard__header p  { color: var(--color-text-muted); font-size: 0.95rem; }
 
 /* Period tabs */
 .period-tabs {
@@ -73,6 +74,16 @@
   font-size: 1rem;
   font-weight: 400;
   color: var(--color-text-muted);
+}
+
+/* Destaca o cartão de humor médio com a cor leve correspondente ao valor */
+.stat-card--humor {
+  background: color-mix(in srgb, var(--humor-color, var(--color-primary)) 10%, white);
+  border: 1px solid color-mix(in srgb, var(--humor-color, var(--color-primary)) 25%, white);
+}
+
+.stat-card--humor .stat-card__value {
+  color: var(--humor-color, var(--color-primary));
 }
 
 .stat-card__label {

@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConsultaService, Consulta } from '../../../core/services/consulta.service';
 import { PsicologoService } from '../../../core/services/psicologo.service';
 import { todayDateString } from '../../../core/utils/date.utils';
@@ -27,10 +27,18 @@ interface PacienteBasic {
 export class PsicologoAgendaComponent implements OnInit {
   private consultaSvc = inject(ConsultaService);
   private psiSvc      = inject(PsicologoService);
+  private route       = inject(ActivatedRoute);
 
   allConsultas = signal<Consulta[]>([]);
   loading      = signal(true);
   weekStart    = signal<Date>(this.getMonday(new Date()));
+
+  // ── Vista da grelha semanal: compacta (padrão) ou expandida (grelha horária) ──
+  expandido    = signal(false);
+
+  toggleExpandido(): void {
+    this.expandido.update(v => !v);
+  }
 
   /** Today's date ('YYYY-MM-DD'); novas/reagendadas consultas não podem ser no passado. */
   readonly minConsultaDate = todayDateString();
@@ -63,6 +71,35 @@ export class PsicologoAgendaComponent implements OnInit {
   realizandoConsulta = signal<Consulta | null>(null);
   realizarNotas      = signal('');
   realizarSaving     = signal(false);
+
+  // ── Detalhe da consulta (modal ao clicar num cartão da semana) ─────────────
+  detalheConsulta = signal<Consulta | null>(null);
+  editandoDetalhe = signal(false);
+
+  // ── Grelha horária do calendário semanal (9h-19h) ───────────────────────────
+  readonly START_HOUR  = 9;
+  readonly END_HOUR    = 19;
+  readonly HOUR_HEIGHT = 68; // px por hora
+  /** Altura total da grelha, com uma margem extra para o rótulo da última hora (19:00) não ficar cortado. */
+  readonly gridHeight  = (this.END_HOUR - this.START_HOUR) * this.HOUR_HEIGHT + 16;
+
+  /** Marcas horárias (09:00, 10:00, ... 19:00), para os rótulos da grelha. */
+  hourMarks = computed(() => {
+    const marks: { hour: number; label: string }[] = [];
+    for (let h = this.START_HOUR; h <= this.END_HOUR; h++) {
+      marks.push({ hour: h, label: `${h.toString().padStart(2, '0')}:00` });
+    }
+    return marks;
+  });
+
+  /** Posição/altura (em px) do cartão de uma consulta na grelha, com base na hora e duração. */
+  slotStyle(c: Consulta): { top: string; height: string } {
+    const d = new Date(c.data);
+    const startMin = (d.getHours() - this.START_HOUR) * 60 + d.getMinutes();
+    const top = (startMin / 60) * this.HOUR_HEIGHT;
+    const height = (c.duracao / 60) * this.HOUR_HEIGHT;
+    return { top: `${top}px`, height: `${Math.max(height, 32)}px` };
+  }
 
   weekDays = computed<WeekDay[]>(() => {
     const start = this.weekStart();
@@ -97,6 +134,14 @@ export class PsicologoAgendaComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe(params => {
+      const dataParam = params.get('data');
+      if (dataParam) {
+        const d = new Date(dataParam);
+        if (!isNaN(d.getTime())) this.weekStart.set(this.getMonday(d));
+      }
+    });
+
     this.consultaSvc.getConsultasForPsicologo().subscribe({
       next: cs => { this.allConsultas.set(cs); this.loading.set(false); },
       error: () => this.loading.set(false),
@@ -173,6 +218,14 @@ export class PsicologoAgendaComponent implements OnInit {
     }
     if (dataHora.getTime() < Date.now()) {
       this.formError.set('Não é possível agendar uma consulta para uma data/hora que já passou.');
+      return;
+    }
+    if (dataHora.getDay() === 0 || dataHora.getDay() === 6) {
+      this.formError.set('Não é possível agendar consultas ao fim de semana.');
+      return;
+    }
+    if (!this.isWithinClinicHours(dataHora, this.novaDuracao())) {
+      this.formError.set('A consulta deve ser agendada entre as 9:00 e as 19:00.');
       return;
     }
 
@@ -291,6 +344,14 @@ export class PsicologoAgendaComponent implements OnInit {
       this.reagendarError.set('Não é possível reagendar para uma data/hora que já passou.');
       return;
     }
+    if (novaDataHora.getDay() === 0 || novaDataHora.getDay() === 6) {
+      this.reagendarError.set('Não é possível agendar consultas ao fim de semana.');
+      return;
+    }
+    if (!this.isWithinClinicHours(novaDataHora, c.duracao)) {
+      this.reagendarError.set('A consulta deve ser agendada entre as 9:00 e as 19:00.');
+      return;
+    }
 
     this.reagendarSaving.set(true);
     this.consultaSvc.updateConsulta(c._id, { data: novaDataHora.toISOString() }).subscribe({
@@ -298,6 +359,10 @@ export class PsicologoAgendaComponent implements OnInit {
         this.allConsultas.update(list => list.map(x => x._id === updated._id ? updated : x));
         this.reagendarSaving.set(false);
         this.reagendandoId.set(null);
+        if (this.detalheConsulta()?._id === updated._id) {
+          this.detalheConsulta.set(updated);
+          this.editandoDetalhe.set(false);
+        }
       },
       error: err => {
         this.reagendarError.set(err.error?.error ?? 'Erro ao reagendar a consulta.');
@@ -306,13 +371,73 @@ export class PsicologoAgendaComponent implements OnInit {
     });
   }
 
+  // ── Modal de detalhe da consulta (cartões da grelha semanal) ────────────────
+  abrirDetalhe(c: Consulta): void {
+    this.detalheConsulta.set(c);
+    this.editandoDetalhe.set(false);
+  }
+
+  fecharDetalhe(): void {
+    this.detalheConsulta.set(null);
+    this.editandoDetalhe.set(false);
+  }
+
+  editarDetalhe(): void {
+    const c = this.detalheConsulta();
+    if (!c) return;
+    this.toggleReagendar(c);
+    this.editandoDetalhe.set(true);
+  }
+
+  cancelarEdicaoDetalhe(): void {
+    const c = this.detalheConsulta();
+    if (!c) return;
+    this.toggleReagendar(c);
+    this.editandoDetalhe.set(false);
+  }
+
+  confirmarEdicaoDetalhe(): void {
+    const c = this.detalheConsulta();
+    if (!c) return;
+    this.confirmarReagendamento(c);
+  }
+
+  cancelarDaDetalhe(): void {
+    const c = this.detalheConsulta();
+    if (!c) return;
+    this.fecharDetalhe();
+    this.cancelarConsulta(c);
+  }
+
+  marcarRealizadaDaDetalhe(): void {
+    const c = this.detalheConsulta();
+    if (!c) return;
+    this.fecharDetalhe();
+    this.marcarRealizada(c);
+  }
+
+  /** Returns true if `inicio` plus `duracaoMin` minutes falls entirely within 9:00–19:00 on the same day. */
+  private isWithinClinicHours(inicio: Date, duracaoMin: number): boolean {
+    const fim = new Date(inicio.getTime() + duracaoMin * 60_000);
+    const OPEN = 9 * 60;
+    const CLOSE = 19 * 60;
+    const inicioMin = inicio.getHours() * 60 + inicio.getMinutes();
+    const fimMin = fim.getHours() * 60 + fim.getMinutes();
+    const sameDay = inicio.getFullYear() === fim.getFullYear()
+      && inicio.getMonth() === fim.getMonth()
+      && inicio.getDate() === fim.getDate();
+    return sameDay && inicioMin >= OPEN && fimMin <= CLOSE;
+  }
+
   estadoLabel(estado: string): string {
+    if (estado === 'pendente') return 'Por confirmar';
     if (estado === 'realizada') return 'Realizada';
     if (estado === 'cancelada') return 'Cancelada';
     return 'Agendada';
   }
 
   estadoClass(estado: string): string {
+    if (estado === 'pendente') return 'badge--pendente';
     if (estado === 'realizada') return 'badge--realizada';
     if (estado === 'cancelada') return 'badge--cancelada';
     return 'badge--agendada';

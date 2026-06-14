@@ -1,98 +1,105 @@
 <div class="auth-page">
-  <div class="auth-card card">
-    <div class="auth-tabs">
-      <a routerLink="/login" class="auth-tab">Entrar</a>
-      <span class="auth-tab auth-tab--active">Criar conta</span>
-    </div>
+  <div class="auth-shell">
 
-    <div class="auth-card__header">
-      <a routerLink="/" class="auth-card__logo">
-        <img src="/logo.png" alt="MindLink" class="auth-card__logo-img"
-             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline'" />
-        <span style="display:none">MindLink</span>
-      </a>
-      <h1>Criar conta de administrador</h1>
-      <p>Acesso restrito. Necessita de token de validação.</p>
-    </div>
+    <!-- Form panel -->
+    <div class="auth-panel auth-panel--form">
+      <div class="auth-form-wrap">
+        <h1 class="auth-title">Olá!</h1>
+        <p class="auth-subtitle">Crie a sua conta de administrador</p>
 
-    @if (success()) {
-      <div class="auth-success">
-        Conta criada com sucesso! A redirecionar para o login...
+        @if (success()) {
+          <div class="auth-success">
+            Conta criada com sucesso! A redirecionar para o login...
+          </div>
+        } @else {
+
+          @if (error()) {
+            <div class="auth-error">{{ error() }}</div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal__form">
+
+            <mat-form-field appearance="fill" class="form-field">
+              <mat-label>Nome completo</mat-label>
+              <input matInput type="text" formControlName="nome" autocomplete="name" />
+              <mat-icon matSuffix>person_outline</mat-icon>
+              @if (form.get('nome')?.invalid && form.get('nome')?.touched) {
+                <mat-error>Introduza o seu nome (mínimo 2 caracteres).</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="form-field">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" autocomplete="email" />
+              <mat-icon matSuffix>mail_outline</mat-icon>
+              @if (form.get('email')?.invalid && form.get('email')?.touched) {
+                <mat-error>Introduza um email válido.</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Género</mat-label>
+                <mat-select formControlName="genero">
+                  <mat-option value="masculino">Masculino</mat-option>
+                  <mat-option value="feminino">Feminino</mat-option>
+                  <mat-option value="outro">Outro</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" class="form-field">
+                <mat-label>Data de nascimento</mat-label>
+                <input matInput type="date" formControlName="data_nascimento" [min]="minBirthDate" [max]="maxBirthDate" />
+                @if (form.get('data_nascimento')?.invalid && form.get('data_nascimento')?.touched) {
+                  <mat-error>Campo obrigatório.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="fill" class="form-field">
+              <mat-label>Password</mat-label>
+              <input matInput [type]="hidePassword ? 'password' : 'text'"
+                     formControlName="password" autocomplete="new-password" />
+              <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+                <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              @if (form.get('password')?.invalid && form.get('password')?.touched) {
+                <mat-error>Mínimo 6 caracteres, incluindo um número.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="form-field">
+              <mat-label>Token de validação</mat-label>
+              <input matInput [type]="hideToken ? 'password' : 'text'"
+                     formControlName="adminToken" placeholder="Token secreto de administrador" />
+              <button mat-icon-button matSuffix type="button" (click)="hideToken = !hideToken">
+                <mat-icon>{{ hideToken ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              @if (form.get('adminToken')?.invalid && form.get('adminToken')?.touched) {
+                <mat-error>Token obrigatório.</mat-error>
+              }
+            </mat-form-field>
+
+            <button type="submit" class="btn-primary auth-submit"
+                    [disabled]="loading()">
+              {{ loading() ? 'A criar conta...' : 'Criar conta de administrador' }}
+            </button>
+          </form>
+        }
       </div>
-    } @else {
+    </div>
 
-      @if (error()) {
-        <div class="auth-error">{{ error() }}</div>
-      }
+    <!-- Hero panel -->
+    <div class="auth-panel auth-panel--hero">
+      <div class="auth-hero__nav">
+        <a routerLink="/login" class="auth-hero__cta">Entrar</a>
+        <a routerLink="/register" class="auth-hero__link auth-hero__link--active">Criar conta</a>
+      </div>
+      <div class="auth-hero__content">
+        <h2>Junte-se à comunidade MindLink.</h2>
+        <p>Gestão simples e segura de psicólogos, pacientes e consultas, tudo num único lugar.</p>
+      </div>
+    </div>
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal__form">
-
-        <mat-form-field appearance="fill" class="form-field">
-          <mat-label>Nome completo</mat-label>
-          <input matInput type="text" formControlName="nome" autocomplete="name" />
-          <mat-icon matSuffix>person_outline</mat-icon>
-          @if (form.get('nome')?.invalid && form.get('nome')?.touched) {
-            <mat-error>Introduza o seu nome (mínimo 2 caracteres).</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="fill" class="form-field">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" autocomplete="email" />
-          <mat-icon matSuffix>mail_outline</mat-icon>
-          @if (form.get('email')?.invalid && form.get('email')?.touched) {
-            <mat-error>Introduza um email válido.</mat-error>
-          }
-        </mat-form-field>
-
-        <div class="form-row">
-          <mat-form-field appearance="fill" class="form-field">
-            <mat-label>Género</mat-label>
-            <mat-select formControlName="genero">
-              <mat-option value="masculino">Masculino</mat-option>
-              <mat-option value="feminino">Feminino</mat-option>
-              <mat-option value="outro">Outro</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="fill" class="form-field">
-            <mat-label>Data de nascimento</mat-label>
-            <input matInput type="date" formControlName="data_nascimento" [max]="maxBirthDate" />
-            @if (form.get('data_nascimento')?.invalid && form.get('data_nascimento')?.touched) {
-              <mat-error>Campo obrigatório.</mat-error>
-            }
-          </mat-form-field>
-        </div>
-
-        <mat-form-field appearance="fill" class="form-field">
-          <mat-label>Password</mat-label>
-          <input matInput [type]="hidePassword ? 'password' : 'text'"
-                 formControlName="password" autocomplete="new-password" />
-          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
-            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-          @if (form.get('password')?.invalid && form.get('password')?.touched) {
-            <mat-error>Mínimo 6 caracteres.</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="fill" class="form-field">
-          <mat-label>Token de validação</mat-label>
-          <input matInput [type]="hideToken ? 'password' : 'text'"
-                 formControlName="adminToken" placeholder="Token secreto de administrador" />
-          <button mat-icon-button matSuffix type="button" (click)="hideToken = !hideToken">
-            <mat-icon>{{ hideToken ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-          @if (form.get('adminToken')?.invalid && form.get('adminToken')?.touched) {
-            <mat-error>Token obrigatório.</mat-error>
-          }
-        </mat-form-field>
-
-        <button type="submit" class="btn-primary auth-submit"
-                [disabled]="form.invalid || loading()">
-          {{ loading() ? 'A criar conta...' : 'Criar conta de administrador' }}
-        </button>
-      </form>
-    }
   </div>
 </div>

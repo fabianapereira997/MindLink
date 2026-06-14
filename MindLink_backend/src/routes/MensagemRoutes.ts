@@ -9,6 +9,7 @@ import {
 const express  = require('express');
 const router   = express.Router();
 const Mensagem = require('../models/mensagem');
+const Consulta = require('../models/consulta');
 const { verifyToken }       = require('../middleware/VerifyToken');
 const { verifyTokenByRole } = require('../middleware/VerifyTokenByRole');
 
@@ -18,18 +19,20 @@ const { verifyTokenByRole } = require('../middleware/VerifyTokenByRole');
 // remetente is always derived from the authenticated user — never trusted from body.
 router.post('/', verifyToken, verifyTokenByRole('paciente', 'psicologo'), async (req: Request, res: Response) => {
     try {
-        const { mensagem } = req.body;
+        const { mensagem, replyTo } = req.body;
 
         if (req.user!.tipo === 'paciente') {
             const pacienteProfile = await getPacienteByUserId(req.user!.id);
             if (!pacienteProfile) {
                 return res.status(404).json({ error: 'Perfil de paciente não encontrado' });
             }
+
             const msg = new Mensagem({
                 paciente:  pacienteProfile._id,
                 psicologo: pacienteProfile.psicologo,   // auto-derived
                 remetente: 'paciente',                  // never trusted from body
                 mensagem,
+                ...(replyTo ? { replyTo } : {}),
             });
             await msg.save();
             return res.status(201).json(msg);
@@ -56,6 +59,7 @@ router.post('/', verifyToken, verifyTokenByRole('paciente', 'psicologo'), async 
                 psicologo: psicologoProfile._id,        // auto-filled
                 remetente: 'psicologo',                 // never trusted from body
                 mensagem,
+                ...(replyTo ? { replyTo } : {}),
             });
             await msg.save();
             return res.status(201).json(msg);
@@ -188,6 +192,69 @@ router.get('/unread', verifyToken, verifyTokenByRole('paciente', 'psicologo'), a
         }
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
+    }
+});
+
+// ─── PATCH /api/mensagens/:id/responder ────────────────────────────────────────
+// Responds to a "consulta_pedido" (paciente: confirmada/rejeitada) or a
+// "sugestao_horario" (psicologo: aceita/rejeitada) popup message.
+// Must come before /:id.
+router.patch('/:id/responder', verifyToken, verifyTokenByRole('paciente', 'psicologo'), async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ error: 'ID de mensagem inválido' });
+        }
+
+        const msg = await Mensagem.findById(id);
+        if (!msg) {
+            return res.status(404).json({ error: 'Mensagem não encontrada' });
+        }
+
+        const { resposta } = req.body;
+
+        // ── Paciente confirms or rejects a scheduled consulta ──────────────────
+        if (msg.tipo === 'consulta_pedido') {
+            if (req.user!.tipo !== 'paciente') {
+                return res.status(403).json({ error: 'Acesso negado' });
+            }
+            const pacienteProfile = await getPacienteByUserId(req.user!.id);
+            if (!pacienteProfile || msg.paciente.toString() !== pacienteProfile._id.toString()) {
+                return res.status(403).json({ error: 'Acesso negado' });
+            }
+            if (msg.resposta !== 'pendente') {
+                return res.status(400).json({ error: 'Esta mensagem já foi respondida' });
+            }
+            if (!['confirmada', 'rejeitada'].includes(resposta)) {
+                return res.status(400).json({ error: 'Resposta inválida' });
+            }
+
+            msg.resposta = resposta;
+            await msg.save();
+
+            if (resposta === 'confirmada') {
+                if (msg.consulta) {
+                    await Consulta.findByIdAndUpdate(msg.consulta, { estado: 'agendada' });
+                }
+            } else {
+                if (msg.consulta) {
+                    await Consulta.findByIdAndDelete(msg.consulta);
+                }
+                await Mensagem.create({
+                    paciente:  msg.paciente,
+                    psicologo: msg.psicologo,
+                    remetente: 'psicologo',
+                    tipo: 'texto',
+                    mensagem: 'Sugira horários que se encontre disponível',
+                });
+            }
+
+            return res.json(msg);
+        }
+
+        return res.status(400).json({ error: 'Esta mensagem não pode ser respondida' });
+    } catch (error) {
+        res.status(400).json({ error: (error as Error).message });
     }
 });
 

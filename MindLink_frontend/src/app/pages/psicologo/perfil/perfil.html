@@ -11,22 +11,29 @@
           <h1>{{ auth.user()?.nome }}</h1>
           <p>{{ auth.user()?.email }}</p>
         </div>
-        @if (!editing()) {
-          <button type="button" class="btn-primary btn--sm perfil-edit-btn" (click)="startEditing()">Editar perfil</button>
-        }
       </div>
 
       @if (success()) {
         <div class="banner banner--success">Perfil atualizado com sucesso!</div>
       }
 
-      @if (!editing()) {
+      <div class="perfil-grid">
 
-        <div class="perfil-grid">
-
-          <!-- Dados pessoais -->
-          <div class="card perfil-section">
+        <!-- Dados pessoais -->
+        <div class="card perfil-section">
+          <div class="perfil-section__header">
             <h2>Dados pessoais</h2>
+            @if (!editandoPessoais()) {
+              <button type="button" class="edit-btn" aria-label="Editar dados pessoais" (click)="startEditPessoais()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                </svg>
+                Editar
+              </button>
+            }
+          </div>
+
+          @if (!editandoPessoais()) {
             <div class="info-list">
               <div class="info-item">
                 <span class="info-label">Nome completo</span>
@@ -38,18 +45,136 @@
               </div>
               <div class="info-item">
                 <span class="info-label">Género</span>
-                <span class="info-value">{{ auth.user()?.genero }}</span>
+                <span class="info-value">{{ generoLabel() }}</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Data de nascimento</span>
-                <span class="info-value">{{ auth.user()?.data_nascimento | date:'dd/MM/yyyy' }}</span>
+                <span class="info-value">
+                  {{ auth.user()?.data_nascimento | date:'dd/MM/yyyy' }}
+                  @if (idade() !== null) { <span class="info-value__extra">({{ idade() }} anos)</span> }
+                </span>
               </div>
             </div>
+          } @else {
+            @if (pessoaisError()) {
+              <div class="banner banner--error">{{ pessoaisError() }}</div>
+            }
+            <form [formGroup]="pessoaisForm" (ngSubmit)="savePessoais()" class="clinico-form modal__form">
+              <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                <mat-label>Nome completo</mat-label>
+                <input matInput formControlName="nome" />
+                @if (pessoaisForm.get('nome')?.invalid && pessoaisForm.get('nome')?.touched) {
+                  <mat-error>Campo obrigatório.</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                <mat-label>Email</mat-label>
+                <input matInput type="email" formControlName="email" />
+                @if (pessoaisForm.get('email')?.invalid && pessoaisForm.get('email')?.touched) {
+                  <mat-error>Introduza um email válido.</mat-error>
+                }
+              </mat-form-field>
+
+              <div class="form-row">
+                <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                  <mat-label>Género</mat-label>
+                  <mat-select formControlName="genero">
+                    <mat-option value="masculino">Masculino</mat-option>
+                    <mat-option value="feminino">Feminino</mat-option>
+                    <mat-option value="outro">Outro</mat-option>
+                  </mat-select>
+                  @if (pessoaisForm.get('genero')?.invalid && pessoaisForm.get('genero')?.touched) {
+                    <mat-error>Campo obrigatório.</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                  <mat-label>Data de nascimento</mat-label>
+                  <input matInput type="date" formControlName="data_nascimento" [min]="minBirthDate" [max]="maxBirthDate" />
+                  @if (pessoaisForm.get('data_nascimento')?.invalid && pessoaisForm.get('data_nascimento')?.touched) {
+                    <mat-error>Data de nascimento inválida ou em falta.</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <div class="form-divider">Alterar password (opcional)</div>
+
+              <div class="form-row">
+                <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                  <mat-label>Nova password</mat-label>
+                  <input matInput [type]="hideNew ? 'password' : 'text'"
+                         formControlName="newPassword" autocomplete="new-password" />
+                  <button type="button" matSuffix class="password-toggle" (click)="hideNew = !hideNew" [attr.aria-label]="hideNew ? 'Mostrar password' : 'Ocultar password'">
+                    @if (hideNew) {
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    } @else {
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                        <path d="M10.73 5.08A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                        <path d="M6.61 6.61A13.526 13.526 0 0 0 1 12s4 7 11 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                        <line x1="2" x2="22" y1="2" y2="22"/>
+                      </svg>
+                    }
+                  </button>
+                  @if (pessoaisForm.get('newPassword')?.invalid && pessoaisForm.get('newPassword')?.touched) {
+                    <mat-error>Mínimo 6 caracteres, incluindo um número.</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                  <mat-label>Confirmar nova password</mat-label>
+                  <input matInput [type]="hideConfirm ? 'password' : 'text'"
+                         formControlName="confirmPassword" autocomplete="new-password" />
+                  <button type="button" matSuffix class="password-toggle" (click)="hideConfirm = !hideConfirm" [attr.aria-label]="hideConfirm ? 'Mostrar password' : 'Ocultar password'">
+                    @if (hideConfirm) {
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    } @else {
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                        <path d="M10.73 5.08A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                        <path d="M6.61 6.61A13.526 13.526 0 0 0 1 12s4 7 11 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                        <line x1="2" x2="22" y1="2" y2="22"/>
+                      </svg>
+                    }
+                  </button>
+                  @if (pessoaisForm.errors?.['mismatch'] && pessoaisForm.get('confirmPassword')?.touched) {
+                    <mat-error>As passwords não coincidem.</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <div class="modal__actions clinico-form__actions">
+                <button type="button" class="btn-secondary btn--sm" (click)="cancelEditPessoais()" [disabled]="savingPessoais()">Cancelar</button>
+                <button type="submit" class="btn-primary btn--sm" [disabled]="savingPessoais()">
+                  {{ savingPessoais() ? 'A guardar...' : 'Guardar alterações' }}
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+
+        <!-- Dados profissionais -->
+        <div class="card perfil-section">
+          <div class="perfil-section__header">
+            <h2>Dados profissionais</h2>
+            @if (!editandoProfissionais()) {
+              <button type="button" class="edit-btn" aria-label="Editar dados profissionais" (click)="startEditProfissionais()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                </svg>
+                Editar
+              </button>
+            }
           </div>
 
-          <!-- Dados profissionais -->
-          <div class="card perfil-section">
-            <h2>Dados profissionais</h2>
+          @if (!editandoProfissionais()) {
             <div class="info-list">
               <div class="info-item">
                 <span class="info-label">Especialidade</span>
@@ -60,91 +185,31 @@
                 <span class="info-value">{{ profile()?.pacientes?.length ?? 0 }}</span>
               </div>
             </div>
-          </div>
-
-        </div>
-
-      } @else {
-
-        <!-- Edit form -->
-        <div class="card perfil-section perfil-edit">
-          <h2>Editar perfil</h2>
-
-          @if (error()) {
-            <div class="banner banner--error">{{ error() }}</div>
-          }
-
-          <form [formGroup]="form" (ngSubmit)="submit()" class="perfil-form">
-
-            <div class="form-row">
-              <mat-form-field appearance="fill" class="form-field">
-                <mat-label>Nome completo</mat-label>
-                <input matInput formControlName="nome" />
-              </mat-form-field>
-
-              <mat-form-field appearance="fill" class="form-field">
-                <mat-label>Email</mat-label>
-                <input matInput type="email" formControlName="email" />
-              </mat-form-field>
-            </div>
-
-            <div class="form-row">
-              <mat-form-field appearance="fill" class="form-field">
-                <mat-label>Género</mat-label>
-                <mat-select formControlName="genero">
-                  <mat-option value="masculino">Masculino</mat-option>
-                  <mat-option value="feminino">Feminino</mat-option>
-                  <mat-option value="outro">Outro</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="fill" class="form-field">
-                <mat-label>Data de nascimento</mat-label>
-                <input matInput type="date" formControlName="data_nascimento" [max]="maxBirthDate" />
-              </mat-form-field>
-            </div>
-
-            <mat-form-field appearance="fill" class="form-field">
-              <mat-label>Especialidade</mat-label>
-              <input matInput formControlName="especialidade" />
-            </mat-form-field>
-
-            <div class="form-divider">Alterar password (opcional)</div>
-
-            <div class="form-row">
-              <mat-form-field appearance="fill" class="form-field">
-                <mat-label>Nova password</mat-label>
-                <input matInput [type]="hideNew ? 'password' : 'text'"
-                       formControlName="newPassword" autocomplete="new-password" />
-                <button mat-icon-button matSuffix type="button" (click)="hideNew = !hideNew">
-                  <mat-icon>{{ hideNew ? 'visibility_off' : 'visibility' }}</mat-icon>
-                </button>
-              </mat-form-field>
-
-              <mat-form-field appearance="fill" class="form-field">
-                <mat-label>Confirmar nova password</mat-label>
-                <input matInput [type]="hideConfirm ? 'password' : 'text'"
-                       formControlName="confirmPassword" autocomplete="new-password" />
-                <button mat-icon-button matSuffix type="button" (click)="hideConfirm = !hideConfirm">
-                  <mat-icon>{{ hideConfirm ? 'visibility_off' : 'visibility' }}</mat-icon>
-                </button>
-                @if (form.errors?.['mismatch'] && form.get('confirmPassword')?.touched) {
-                  <mat-error>As passwords não coincidem.</mat-error>
+          } @else {
+            @if (profissionaisError()) {
+              <div class="banner banner--error">{{ profissionaisError() }}</div>
+            }
+            <form [formGroup]="profissionaisForm" (ngSubmit)="saveProfissionais()" class="clinico-form modal__form">
+              <mat-form-field appearance="fill" class="form-field" floatLabel="always">
+                <mat-label>Especialidade</mat-label>
+                <input matInput formControlName="especialidade" />
+                @if (profissionaisForm.get('especialidade')?.invalid && profissionaisForm.get('especialidade')?.touched) {
+                  <mat-error>Campo obrigatório.</mat-error>
                 }
               </mat-form-field>
-            </div>
 
-            <div class="perfil-form__actions">
-              <button type="button" class="btn-secondary" (click)="cancelEditing()" [disabled]="saving()">Cancelar</button>
-              <button type="submit" class="btn-primary" [disabled]="form.invalid || saving()">
-                {{ saving() ? 'A guardar...' : 'Guardar alterações' }}
-              </button>
-            </div>
-
-          </form>
+              <div class="modal__actions clinico-form__actions">
+                <button type="button" class="btn-secondary btn--sm" (click)="cancelEditProfissionais()" [disabled]="savingProfissionais()">Cancelar</button>
+                <button type="submit" class="btn-primary btn--sm" [disabled]="savingProfissionais()">
+                  {{ savingProfissionais() ? 'A guardar...' : 'Guardar alterações' }}
+                </button>
+              </div>
+            </form>
+          }
         </div>
 
-      }
+      </div>
+
     }
   </div>
 </div>
